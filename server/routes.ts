@@ -6,6 +6,13 @@ import { insertDoctorSchema, insertReviewSchema } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { randomUUID } from "crypto";
 
+// Extend Express session to include userId
+declare module "express-session" {
+  interface SessionData {
+    userId?: string;
+  }
+}
+
 // Helper to get user ID from session or OIDC token
 function getUserId(req: any): string | null {
   // Check session first (for our username/password auth)

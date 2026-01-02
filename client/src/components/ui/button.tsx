@@ -50,7 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    const MotionComp = asChild ? Comp : motion.button;
+    const MotionComp = asChild ? Comp : (motion.button as any);
     
     return (
       <MotionComp
@@ -64,7 +64,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           damping: 17,
           duration: 0.1
         }}
-        {...props}
+        {...(props as any)}
       />
     )
   },

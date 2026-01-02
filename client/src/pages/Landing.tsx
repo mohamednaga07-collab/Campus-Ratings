@@ -8,7 +8,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 
 export default function Landing() {
-  const { devMode, setUserRole, userRole } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [showRoleSelect, setShowRoleSelect] = useState(false);
 
@@ -18,11 +18,6 @@ export default function Landing() {
 
   const handleLogin = () => {
     setShowRoleSelect(true);
-  };
-
-  const toggleDevMode = () => {
-    localStorage.setItem("devBypassAuth", JSON.stringify(!devMode));
-    window.location.reload();
   };
 
   // Check if a previous action requested the role selector (e.g. header login)

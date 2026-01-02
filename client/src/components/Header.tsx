@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 export function Header() {
-  const { user, isAuthenticated, isLoading, logout, devMode } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -30,11 +30,7 @@ export function Header() {
   };
 
   const handleLogout = () => {
-    if (devMode) {
-      logout();
-    } else {
-      window.location.href = "/api/logout";
-    }
+    logout();
   };
 
   const userInitials = user
@@ -174,46 +170,41 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <Button onClick={() => {
-              if (devMode) {
-                // Check if already on landing page
-                if (location === '/') {
-                  // Already on landing page - just show the form and scroll
-                  localStorage.setItem('showRoleSelect', '1');
-                  
-                  // Multiple scroll attempts to ensure it works
-                  setTimeout(() => {
-                    const authForm = document.getElementById('auth-form-container');
-                    if (authForm) {
-                      // Method 1: scrollIntoView
-                      authForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      
-                      // Method 2: Direct window scroll as backup
-                      setTimeout(() => {
-                        const rect = authForm.getBoundingClientRect();
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                        window.scrollTo({
-                          top: scrollTop + rect.top - 150,
-                          behavior: 'smooth'
-                        });
-                      }, 100);
-                    }
-                  }, 50);
-                } else {
-                  // Not on landing page - navigate first
-                  localStorage.setItem('showRoleSelect', '1');
-                  navigate('/');
-                  
-                  // Scroll after navigation completes
-                  setTimeout(() => {
-                    const authForm = document.getElementById('auth-form-container');
-                    if (authForm) {
-                      authForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                  }, 400);
-                }
+              // Check if already on landing page
+              if (location === '/') {
+                // Already on landing page - just show the form and scroll
+                localStorage.setItem('showRoleSelect', '1');
+                
+                // Multiple scroll attempts to ensure it works
+                setTimeout(() => {
+                  const authForm = document.getElementById('auth-form-container');
+                  if (authForm) {
+                    // Method 1: scrollIntoView
+                    authForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Method 2: Direct window scroll as backup
+                    setTimeout(() => {
+                      const rect = authForm.getBoundingClientRect();
+                      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                      window.scrollTo({
+                        top: scrollTop + rect.top - 150,
+                        behavior: 'smooth'
+                      });
+                    }, 100);
+                  }
+                }, 50);
               } else {
-                // In production, use server-side auth
-                window.location.href = '/api/login';
+                // Not on landing page - navigate first
+                localStorage.setItem('showRoleSelect', '1');
+                navigate('/');
+                
+                // Scroll after navigation completes
+                setTimeout(() => {
+                  const authForm = document.getElementById('auth-form-container');
+                  if (authForm) {
+                    authForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 400);
               }
             }} data-testid="button-login">
               Log in

@@ -40,15 +40,15 @@ interface Review {
 }
 
 export default function TeacherDashboard() {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  // Redirect if not a teacher
+  // Redirect if not authenticated
   useEffect(() => {
-    if (userRole && userRole !== "teacher") {
+    if (!user) {
       navigate("/");
     }
-  }, [userRole, navigate]);
+  }, [user, navigate]);
 
   // Fetch all doctors to find self and see reviews
   const { data: doctors = [], isLoading: doctorsLoading } = useQuery({
