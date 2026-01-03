@@ -183,10 +183,15 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  // In dev mode without auth, skip auth check
-  if (!process.env.REPL_ID) {
-    console.log("⚠️  Skipping auth check (no REPL_ID)");
+  // Check session-based auth first (username/password)
+  if (req.session?.userId) {
     return next();
+  }
+
+  // In dev mode without OIDC, skip OIDC auth check
+  if (!process.env.REPL_ID) {
+    console.log("⚠️  No session and no REPL_ID - user not authenticated");
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   if (!req.isAuthenticated() || !user.expires_at) {
@@ -207,7 +212,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
     const config = await getOidcConfig();
     if (!config) {
-      return next(); // Dev mode
+      return res.status(401).json({ message: "Unauthorized" });
     }
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
     updateUserSession(user, tokenResponse);

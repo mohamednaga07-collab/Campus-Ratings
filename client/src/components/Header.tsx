@@ -176,9 +176,12 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="sm:hidden" />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t("nav.logout")}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-rose-800 dark:text-rose-100 bg-gradient-to-r from-rose-500/22 via-rose-600/18 to-rose-700/16 border border-rose-300 dark:border-rose-700 hover:from-rose-500/28 hover:via-rose-600/22 hover:to-rose-700/20 hover:border-rose-400 dark:hover:border-rose-600 focus:text-rose-900 dark:focus:text-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/70 dark:focus-visible:ring-rose-300/80"
+                >
+                  <LogOut className="h-4 w-4 mr-2 text-rose-600 dark:text-rose-50" />
+                  <span className="font-semibold">{t("nav.logout")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

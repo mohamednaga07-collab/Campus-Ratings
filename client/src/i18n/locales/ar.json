@@ -73,6 +73,7 @@
   "auth": {
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
+    "loginAs": "تسجيل الدخول كـ",
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
     "confirmPassword": "تأكيد كلمة المرور",
@@ -129,8 +130,12 @@
       "passwordRequiredDescription": "يرجى إدخال كلمة المرور",
       "loginFailedTitle": "فشل تسجيل الدخول",
       "loginFailedDescription": "اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من بياناتك أو أنشئ حساباً جديداً.",
+      "serverUnavailableTitle": "تعذر الاتصال بالخادم",
+      "serverUnavailableDescription": "لا يمكن للتطبيق الوصول إلى واجهة API من {{origin}}. شغّل الخادم بالأمر npm run dev (يعمل عادة على http://127.0.0.1:5000) وافتح الموقع من نفس المنفذ.",
       "invalidPasswordTitle": "كلمة مرور غير صحيحة",
       "invalidPasswordDescription": "كلمة المرور التي أدخلتها غير صحيحة. يرجى المحاولة مرة أخرى.",
+      "userNotFoundTitle": "اسم المستخدم غير موجود",
+      "userNotFoundDescription": "لا يمكن العثور على اسم المستخدم هذا. يرجى تسجيل الدخول باسم مستخدم صالح.",
       "recaptchaRequiredTitle": "مطلوب reCAPTCHA",
       "recaptchaRequiredDescription": "يرجى إكمال التحقق من reCAPTCHA.",
       "passwordsDontMatchTitle": "كلمتا المرور غير متطابقتين",
@@ -139,7 +144,43 @@
       "passwordTooWeakDescription": "يجب أن تكون كلمة المرور على الأقل متوسطة القوة.",
       "registrationFailedTitle": "فشل إنشاء الحساب",
       "registrationFailedDescription": "تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى."
-    }
+    },
+    "signIn": "تسجيل الدخول",
+    "signingIn": "جاري تسجيل الدخول...",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "forgotUsername": "هل نسيت اسم المستخدم؟",
+    "forgotPasswordDesc": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.",
+    "forgotUsernameDesc": "أدخل عنوان بريدك الإلكتروني وسنرسل لك اسم المستخدم.",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "resetPasswordDesc": "أدخل كلمة المرور الجديدة أدناه",
+    "newPassword": "كلمة مرور جديدة",
+    "resetLinkSent": "تم إرسال رابط إعادة التعيين!",
+    "resetLinkSentDesc": "تحقق من بريدك الإلكتروني للحصول على رابط لإعادة تعيين كلمة المرور. سينتهي الرابط في 24 ساعة.",
+    "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح!",
+    "passwordResetDesc": "تم إعادة تعيين كلمة المرور. يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة.",
+    "usernameSent": "تم إرسال اسم المستخدم!",
+    "usernameSentDesc": "تحقق من بريدك الإلكتروني للحصول على اسم المستخدم.",
+    "backToLogin": "العودة إلى تسجيل الدخول",
+    "rememberedPassword": "العودة إلى تسجيل الدخول",
+    "rememberedUsername": "العودة إلى تسجيل الدخول",
+    "sendResetLink": "إرسال رابط إعادة التعيين",
+    "sendUsername": "إرسال اسم المستخدم",
+    "sending": "جاري الإرسال...",
+    "resetting": "جاري إعادة التعيين...",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "you@example.com",
+    "invalidResetLink": "رابط إعادة تعيين غير صحيح",
+    "invalidToken": "رمز إعادة التعيين غير صحيح",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "passwordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+    "passwordNeedLower": "يجب أن تحتوي كلمة المرور على أحرف صغيرة",
+    "passwordNeedUpper": "يجب أن تحتوي كلمة المرور على أحرف كبيرة",
+    "passwordNeedNumber": "يجب أن تحتوي كلمة المرور على أرقام",
+    "passwordRequirements": "متطلبات كلمة المرور:",
+    "passReq8Char": "8 أحرف على الأقل",
+    "passReqLower": "أحرف صغيرة",
+    "passReqUpper": "أحرف كبيرة",
+    "passReqNumber": "أرقام"
   },
   "doctors": {
     "title": "الأساتذة",
@@ -151,6 +192,7 @@
     "loading": "جاري التحميل...",
     "error": "خطأ",
     "success": "نجاح",
+    "auto": "تلقائي",
     "cancel": "إلغاء",
     "save": "حفظ",
     "delete": "حذف",
@@ -175,11 +217,27 @@
   ,
   "home": {
     "welcomeBack": "مرحباً بعودتك، {{name}}!",
+    "studentTagline": "قيّم أساتذتك وساعد زملاءك الطلاب على اتخاذ قرارات أفضل.",
     "rateProfessor": "قيّم أستاذاً",
     "roleMessage": {
       "student": "قيّم أساتذتك وساعد زملاءك الطلاب على اتخاذ قرارات أفضل.",
       "teacher": "اطلع على كيفية تقييم الطلاب للأساتذة.",
       "admin": "قم بإدارة الأساتذة والإشراف على المراجعات."
+    },
+    "actions": {
+      "quick": "إجراء سريع",
+      "rateTitle": "قيّم أستاذاً",
+      "rateDesc": "شارك تجربتك في أقل من دقيقة.",
+      "rateCta": "ابدأ التقييم",
+      "compareTitle": "قارن الاختيارات",
+      "compareDesc": "قارن الأساتذة جنباً إلى جنب قبل أن تختار.",
+      "compareCta": "فتح المقارنة",
+      "shortlistTitle": "قائمة مفضّلة ومتابعة",
+      "shortlistDesc": "احفظ المفضّلين وتلقَّ تنبيهات عند تغيّر التقييمات.",
+      "shortlistCta": "عرض المفضّلة",
+      "feedbackTitle": "رؤى الملاحظات",
+      "feedbackDesc": "اطّلع على أبرز محاور تعليقات الطلاب فوراً.",
+      "feedbackCta": "استكشف الرؤى"
     },
     "stats": {
       "totalProfessors": "إجمالي الأساتذة",
@@ -192,6 +250,29 @@
       "subtitle": "الأعلى تقييماً من قبل الطلاب",
       "viewAll": "عرض الكل"
     },
+    "enhance": {
+      "compareLabel": "مقارنة",
+      "compareTitle": "وضوح جنباً إلى جنب",
+      "factor": "العامل",
+      "clarity": "الوضوح",
+      "support": "الدعم",
+      "fairness": "الإنصاف",
+      "compareDesc": "اكتشف نقاط القوة بسرعة قبل أن تقرر.",
+      "compareCta": "فتح المقارنة",
+      "rateLabel": "تقييم",
+      "rateTitle": "تقييم موجه متعدد المعايير",
+      "ratePoint1": "خمسة عوامل مع تلميحات لضمان اتساق الدرجات.",
+      "ratePoint2": "أبرز نقاط القوة وخلاصة سريعة.",
+      "ratePoint3": "اطّلع على ما لاحظه الزملاء مؤخراً.",
+      "rateDesc": "ابق منظماً وسريعاً في آن واحد.",
+      "rateCta": "ابدأ التقييم",
+      "trustLabel": "موثوقية",
+      "trustTitle": "احترام افتراضي",
+      "trustPoint1": "مجهولية افتراضية؛ لا رسائل مزعجة أو كشف هوية.",
+      "trustPoint2": "ضوابط للالتزام تحافظ على بنية التعليقات.",
+      "trustPoint3": "الملفات الموثقة تظهر أولاً للمصداقية.",
+      "trustDesc": "مصمم ليبقى عادلاً للطلاب وأعضاء هيئة التدريس."
+    },
     "empty": {
       "title": "لا يوجد أساتذة بعد",
       "description": "لا يوجد أساتذة في النظام حالياً.",
@@ -203,21 +284,58 @@
     "subtitle": "اعرض التعليقات والتقييمات التي تلقيتها من الطلاب",
     "loading": "جارٍ تحميل التعليقات...",
     "empty": "لا توجد مراجعات بعد. عندما يرسل الطلاب مراجعاتهم، ستظهر ملاحظاتك هنا.",
+    "noProfile": "لا يوجد ملف أستاذ يطابق اسم حسابك ({{name}}). اطلب من المسؤول ربط حساب المعلم بملف أستاذ.",
     "yourFeedback": "ملاحظاتك",
     "reviewsCount_one": "مراجعة",
     "reviewsCount_two": "مراجعتان",
     "reviewsCount_few": "مراجعات",
     "reviewsCount_many": "مراجعة",
     "reviewsCount_other": "مراجعة",
+    "stats": {
+      "overallRating": "التقييم الإجمالي",
+      "overallRatingLabel": "من 5.0",
+      "totalReviews": "إجمالي التقييمات",
+      "totalReviewsLabel": "تقييمات الطلاب",
+      "topStrength": "أقوى عامل",
+      "topStrengthLabel": "الأداء الأفضل",
+      "engagement": "درجة الانخراط",
+      "engagementLabel": "انخراط الطلاب"
+    },
     "chart": {
       "title": "مقارنة متوسط التقييمات",
       "description": "كيف تقارن تقييماتك عبر جميع الفئات",
       "ratingLabel": "التقييم"
+    },
+    "radar": {
+      "description": "تمثيل بصري لمقاييس التدريس الخاصة بك"
     }
   },
   "listing": {
     "title": "الأساتذة",
     "subtitle": "تصفح الأساتذة وقم بتقييمهم في كليتك",
+    "headline": {
+      "tag": "محدّث",
+      "title": "الأساتذة",
+      "subtitle": "تصفح، قيّم، وقارن الأساتذة بمرشحات أوضح وخطوات أسرع."
+    },
+    "statsBar": {
+      "professors": "الأساتذة",
+      "departments": "الأقسام",
+      "reviews": "المراجعات",
+      "avgRating": "متوسط التقييم"
+    },
+    "actions": {
+      "rateLabel": "تقييم",
+      "rateTitle": "تقييم موجه متعدد المعايير",
+      "rateDesc": "حافظ على اتساق التقييم عبر خمسة معايير موجهة.",
+      "rateHint": "مجهول وتستغرق أقل من دقيقة.",
+      "rateCta": "ابدأ التقييم",
+      "compareLabel": "مقارنة",
+      "compareTitle": "قرارات جنباً إلى جنب",
+      "compareDesc": "أضف حتى 3 أساتذة وشاهد الفروق فوراً.",
+      "compareHint": "اختياراتك تبقى محفوظة أثناء التصفح.",
+      "compareCta": "فتح المقارنة"
+    },
     "add": {
       "button": "إضافة أستاذ",
       "title": "إضافة أستاذ جديد",
@@ -325,10 +443,37 @@
   },
   "compare": {
     "backToProfessors": "العودة إلى الأساتذة",
+    "title": "مقارنة الأساتذة",
+    "subtitle": "قارن بين أستاذين عبر معايير التقييم الخمسة",
+    "hero": {
+      "tag": "جنباً إلى جنب",
+      "subtitle": "قارن بين أستاذين عبر معايير التقييم الخمسة بوضوح بصري."
+    },
+    "stats": {
+      "avgDiff": "فرق المتوسط",
+      "reviews": "المراجعات"
+    },
+    "recommendation": {
+      "label": "توصية",
+      "title": "الأنسب",
+      "winnerMsg": "بناءً على التقييم الإجمالي ومراجعات الطلاب.",
+      "tieMsg": "كلا الأستاذين لديهما تقييم إجمالي متساوٍ. تحقق من المعايير الفردية.",
+      "strengthsLabel": "أبرز نقاط القوة",
+      "noData": "لا توجد مراجعات متاحة للتوصية."
+    },
     "overall": "الإجمالي",
+    "overallWinner": "الفائز الإجمالي",
+    "winner": "الفائز",
+    "tie": "تعادل",
+    "notAvailable": "غير متاح",
+    "totalReviews": "إجمالي المراجعات",
     "remove": "إزالة",
     "addProfessor": "أضف أستاذاً",
-    "selectProfessor": "اختر أستاذاً"
+    "selectProfessor": "اختر أستاذاً",
+    "chooseTwo": "اختر أستاذين لتفعيل المقارنة الكاملة.",
+    "viewProfile": "عرض الملف الشخصي",
+    "summaryTitle": "ملخص المقارنة",
+    "noReviewsYet": "لا توجد مراجعات بعد — عندما يضيف الطلاب مراجعات، سيظهر الفائز هنا."
   },
   "notFound": {
     "title": "404 الصفحة غير موجودة",

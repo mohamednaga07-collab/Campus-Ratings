@@ -240,6 +240,16 @@ export const sqliteStorage = {
     }
   },
 
+  async getUserByEmail(email: string) {
+    try {
+      const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
+      return stmt.get(email) as any;
+    } catch (e) {
+      console.error("getUserByEmail error:", e);
+      return null;
+    }
+  },
+
   async getUser(id: string) {
     try {
       const stmt = db.prepare("SELECT * FROM users WHERE id = ?");
@@ -247,6 +257,46 @@ export const sqliteStorage = {
     } catch (e) {
       console.error("getUser error:", e);
       return null;
+    }
+  },
+
+  async getUserByResetToken(token: string) {
+    try {
+      const stmt = db.prepare("SELECT * FROM users WHERE resetToken = ?");
+      return stmt.get(token) as any;
+    } catch (e) {
+      console.error("getUserByResetToken error:", e);
+      return null;
+    }
+  },
+
+  async updateUserResetToken(id: string, token: string, expiry: Date) {
+    try {
+      const stmt = db.prepare("UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?");
+      stmt.run(token, expiry.toISOString(), id);
+    } catch (e) {
+      console.error("updateUserResetToken error:", e);
+      throw e;
+    }
+  },
+
+  async updateUserPassword(id: string, hashedPassword: string) {
+    try {
+      const stmt = db.prepare("UPDATE users SET password = ? WHERE id = ?");
+      stmt.run(hashedPassword, id);
+    } catch (e) {
+      console.error("updateUserPassword error:", e);
+      throw e;
+    }
+  },
+
+  async clearResetToken(id: string) {
+    try {
+      const stmt = db.prepare("UPDATE users SET resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?");
+      stmt.run(id);
+    } catch (e) {
+      console.error("clearResetToken error:", e);
+      throw e;
     }
   },
 };

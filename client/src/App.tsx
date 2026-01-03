@@ -12,6 +12,9 @@ import DoctorListing from "@/pages/DoctorListing";
 import DoctorProfile from "@/pages/DoctorProfile";
 import Compare from "@/pages/Compare";
 import TeacherDashboard from "@/pages/TeacherDashboard";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ForgotUsername from "@/pages/ForgotUsername";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/not-found";
 import { useTranslation } from "react-i18next";
 
@@ -41,7 +44,7 @@ const pageVariants = {
   },
 };
 
-function AnimatedRoute({ component: Component, ...props }: any) {
+function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   
   React.useEffect(() => {
@@ -57,7 +60,7 @@ function AnimatedRoute({ component: Component, ...props }: any) {
       exit="exit"
       style={{ willChange: 'transform, opacity' }}
     >
-      <Component {...props} />
+      {children}
     </motion.div>
   );
 }
@@ -87,18 +90,87 @@ function Router() {
   return (
     <AnimatePresence mode="wait">
       <Switch location={location}>
+        {/* Public routes - always accessible */}
+        <Route path="/reset-password">
+          {() => (
+            <AnimatedPageWrapper>
+              <ResetPassword />
+            </AnimatedPageWrapper>
+          )}
+        </Route>
+        <Route path="/forgot-password">
+          {() => (
+            <AnimatedPageWrapper>
+              <ForgotPassword />
+            </AnimatedPageWrapper>
+          )}
+        </Route>
+        <Route path="/forgot-username">
+          {() => (
+            <AnimatedPageWrapper>
+              <ForgotUsername />
+            </AnimatedPageWrapper>
+          )}
+        </Route>
+        
         {!isAuthenticated ? (
-          <Route path="/">{() => <AnimatedRoute component={Landing} />}</Route>
+          <Route path="/">
+            {() => (
+              <AnimatedPageWrapper>
+                <Landing />
+              </AnimatedPageWrapper>
+            )}
+          </Route>
         ) : (
           <>
-            <Route path="/">{() => <AnimatedRoute component={Home} />}</Route>
-            <Route path="/doctors">{() => <AnimatedRoute component={DoctorListing} />}</Route>
-            <Route path="/doctors/:id">{(params) => <AnimatedRoute component={DoctorProfile} {...params} />}</Route>
-            <Route path="/compare">{() => <AnimatedRoute component={Compare} />}</Route>
-            <Route path="/teacher-dashboard">{() => <AnimatedRoute component={TeacherDashboard} />}</Route>
+            <Route path="/">
+              {() => (
+                <AnimatedPageWrapper>
+                  {user?.role === "teacher" ? (
+                    <TeacherDashboard />
+                  ) : (
+                    <Home />
+                  )}
+                </AnimatedPageWrapper>
+              )}
+            </Route>
+            <Route path="/doctors">
+              {() => (
+                <AnimatedPageWrapper>
+                  <DoctorListing />
+                </AnimatedPageWrapper>
+              )}
+            </Route>
+            <Route path="/doctors/:id">
+              {() => (
+                <AnimatedPageWrapper>
+                  <DoctorProfile />
+                </AnimatedPageWrapper>
+              )}
+            </Route>
+            <Route path="/compare">
+              {() => (
+                <AnimatedPageWrapper>
+                  <Compare />
+                </AnimatedPageWrapper>
+              )}
+            </Route>
+            <Route path="/teacher-dashboard">
+              {() => (
+                <AnimatedPageWrapper>
+                  <TeacherDashboard />
+                </AnimatedPageWrapper>
+              )}
+            </Route>
           </>
         )}
-        <Route>{() => <AnimatedRoute component={NotFound} />}</Route>
+        <Route>
+          {() => (
+            <AnimatedPageWrapper>
+              <NotFound />
+            </AnimatedPageWrapper>
+          )}
+        </Route>
       </Switch>
     </AnimatePresence>
   );

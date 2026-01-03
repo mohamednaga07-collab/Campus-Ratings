@@ -10,6 +10,8 @@ import {
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 import { randomUUID } from "crypto";
+import Database from "better-sqlite3";
+import path from "path";
 
 /**
  * In-memory storage for development without a database.
@@ -18,11 +20,54 @@ import { randomUUID } from "crypto";
 export class MemoryStorage implements IStorage {
   private users = new Map<string, User>();
   private usersByUsername = new Map<string, User>();
+  private usersByEmail = new Map<string, User>();
+  private usersByResetToken = new Map<string, User>();
   private doctors = new Map<number, Doctor>();
   private reviews = new Map<number, Review>();
   private doctorRatings = new Map<number, DoctorRating>();
   private nextDoctorId = 1;
   private nextReviewId = 1;
+
+  constructor() {
+    // Initialize from sqlite database if it exists
+    this.initializeFromDatabase();
+  }
+
+  private initializeFromDatabase() {
+    try {
+      const dbPath = path.join(process.cwd(), "dev.db");
+      const db = new Database(dbPath);
+      const stmt = db.prepare("SELECT * FROM users");
+      const rows = stmt.all() as any[];
+      for (const row of rows) {
+        const user: User = {
+          id: row.id,
+          username: row.username,
+          password: row.password,
+          email: row.email,
+          firstName: row.firstName,
+          lastName: row.lastName,
+          profileImageUrl: row.profileImageUrl,
+          role: row.role || "student",
+          studentId: row.studentId,
+          resetToken: row.resetToken,
+          resetTokenExpiry: row.resetTokenExpiry ? new Date(row.resetTokenExpiry) : null,
+          createdAt: new Date(row.createdAt),
+          updatedAt: new Date(row.updatedAt),
+        };
+        this.users.set(user.id, user);
+        if (user.username) {
+          this.usersByUsername.set(user.username, user);
+        }
+        if (user.email) {
+          this.usersByEmail.set(user.email, user);
+        }
+      }
+      db.close();
+    } catch (e) {
+      // Database doesn't exist yet, that's fine
+    }
+  }
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
@@ -31,6 +76,39 @@ export class MemoryStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return this.usersByUsername.get(username);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return this.usersByEmail.get(email);
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    return this.usersByResetToken.get(token);
+  }
+
+  async updateUserResetToken(id: string, token: string, expiry: Date): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.resetToken = token;
+      user.resetTokenExpiry = expiry;
+      this.usersByResetToken.set(token, user);
+    }
+  }
+
+  async updateUserPassword(id: string, hashedPassword: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.password = hashedPassword;
+    }
+  }
+
+  async clearResetToken(id: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user && user.resetToken) {
+      this.usersByResetToken.delete(user.resetToken);
+      user.resetToken = null;
+      user.resetTokenExpiry = null;
+    }
   }
 
   async createUser(userData: UpsertUser): Promise<User> {
@@ -45,12 +123,17 @@ export class MemoryStorage implements IStorage {
       profileImageUrl: userData.profileImageUrl ?? null,
       role: userData.role ?? "student",
       studentId: userData.studentId ?? null,
+      resetToken: null,
+      resetTokenExpiry: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.users.set(user.id, user);
     if (user.username) {
       this.usersByUsername.set(user.username, user);
+    }
+    if (user.email) {
+      this.usersByEmail.set(user.email, user);
     }
     return user;
   }
@@ -67,12 +150,17 @@ export class MemoryStorage implements IStorage {
       profileImageUrl: userData.profileImageUrl ?? null,
       role: userData.role ?? "student",
       studentId: userData.studentId ?? null,
+      resetToken: null,
+      resetTokenExpiry: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.users.set(user.id, user);
     if (user.username) {
       this.usersByUsername.set(user.username, user);
+    }
+    if (user.email) {
+      this.usersByEmail.set(user.email, user);
     }
     return user;
   }

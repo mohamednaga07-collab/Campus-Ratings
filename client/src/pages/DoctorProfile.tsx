@@ -225,7 +225,7 @@ export default function DoctorProfile() {
                               {t("doctorProfile.writeReview")}
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-lg">
+                          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>
                                 {t("doctorProfile.rateDoctorTitle", {
@@ -238,7 +238,7 @@ export default function DoctorProfile() {
                               </DialogDescription>
                             </DialogHeader>
 
-                            <div className="space-y-6 py-4">
+                            <div className="space-y-6 py-4 pr-2">
                               {[
                                 { key: "teachingQuality", label: t("doctorProfile.factors.teachingQuality") },
                                 { key: "availability", label: t("doctorProfile.factors.availability") },

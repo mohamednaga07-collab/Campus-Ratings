@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useEffect } from "react";
+import { useRef } from "react";
+import { Link } from "wouter";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +27,16 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  const recaptchaEnabled = import.meta.env.VITE_RECAPTCHA_ENABLED === "true";
+  const recaptchaSiteKey =
+    import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+
   // Login form state
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginAs, setLoginAs] = useState<"student" | "teacher">("student");
+  const [loginRecaptchaToken, setLoginRecaptchaToken] = useState<string | null>(null);
+  const loginRecaptchaRef = useRef<ReCAPTCHA>(null);
 
   // Register form state
   const [registerUsername, setRegisterUsername] = useState("");
@@ -38,6 +47,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const [registerLastName, setRegisterLastName] = useState("");
   const [registerRole, setRegisterRole] = useState<"student" | "teacher">("student");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   // Detect dark mode preference
   useEffect(() => {
@@ -56,6 +66,128 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     });
 
     return () => observer.disconnect();
+  }, []);
+
+  // Handle click outside reCAPTCHA modal to dismiss it
+  useEffect(() => {
+    const cleanupRecaptchaBackdrop = () => {
+      try {
+        // Remove any reCAPTCHA backdrop/modal overlays
+        const modals = document.querySelectorAll('[role="presentation"], .grecaptcha-modal, div[style*="position: fixed"][style*="opacity"]');
+        modals.forEach(modal => {
+          try {
+            modal?.remove();
+          } catch (e) {
+            // Ignore errors removing individual modals
+          }
+        });
+        
+        // Reset body styles that reCAPTCHA may have changed
+        if (document.body) {
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+        }
+        if (document.documentElement) {
+          document.documentElement.style.overflow = '';
+        }
+        
+        // Remove any inline styles on html/body that might be hiding content
+        const allDivs = document.querySelectorAll('div[style*="opacity"]');
+        allDivs.forEach(div => {
+          try {
+            const style = div?.getAttribute('style');
+            if (style && (style.includes('opacity: 0') || style.includes('display: none') || style.includes('visibility: hidden'))) {
+              if ((div?.classList?.length ?? 0) === 0 || (div?.id ?? '') === '') {
+                div?.remove();
+              }
+            }
+          } catch (e) {
+            // Ignore errors removing individual divs
+          }
+        });
+      } catch (e) {
+        console.warn('Error cleaning up reCAPTCHA backdrop:', e);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      try {
+        const target = e?.target as HTMLElement;
+        if (!target) return;
+        
+        const recaptchaElements = document.querySelectorAll(".g-recaptcha");
+        
+        // Check if clicked on any reCAPTCHA container
+        let clickedOnRecaptcha = false;
+        recaptchaElements.forEach(elem => {
+          try {
+            if (elem?.contains?.(target)) {
+              clickedOnRecaptcha = true;
+            }
+          } catch (e) {
+            // Ignore errors checking contains
+          }
+        });
+        
+        if (clickedOnRecaptcha) return;
+        
+        // Check if clicking inside any reCAPTCHA iframe
+        const recaptchaIframes = document.querySelectorAll('iframe[src*="recaptcha"], iframe[title*="recaptcha"]');
+        let clickedInsideIframe = false;
+        
+        recaptchaIframes.forEach(iframe => {
+          try {
+            if (iframe?.contains?.(target)) {
+              clickedInsideIframe = true;
+            }
+          } catch (e) {
+            // Ignore iframe errors
+          }
+        });
+        
+        // If clicked outside all reCAPTCHA elements, close them
+        if (!clickedInsideIframe) {
+          try {
+            setRecaptchaToken(null);
+            setLoginRecaptchaToken(null);
+            recaptchaRef.current?.reset?.();
+            loginRecaptchaRef.current?.reset?.();
+            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
+          } catch (e) {
+            console.warn('Error resetting reCAPTCHA:', e);
+          }
+        }
+      } catch (e) {
+        console.warn('Error in handleClickOutside:', e);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      try {
+        // Close reCAPTCHA modal on ESC key
+        if (e?.key === 'Escape') {
+          try {
+            setRecaptchaToken(null);
+            setLoginRecaptchaToken(null);
+            recaptchaRef.current?.reset?.();
+            loginRecaptchaRef.current?.reset?.();
+            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
+          } catch (e) {
+            console.warn('Error resetting reCAPTCHA on ESC:', e);
+          }
+        }
+      } catch (e) {
+        console.warn('Error in handleKeyDown:', e);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   // Calculate password strength
@@ -108,10 +240,21 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     setActiveTab("register");
     // Reset reCAPTCHA when switching to register tab
     setRecaptchaToken(null);
+    setLoginRecaptchaToken(null);
   };
 
   const handleLoginTab = () => {
     setActiveTab("login");
+    setLoginRecaptchaToken(null);
+  };
+
+  const handleLoginRecaptchaChange = (token: string | null) => {
+    setLoginRecaptchaToken(token);
+    if (token) {
+      setTimeout(() => {
+        setLoginRecaptchaToken(null);
+      }, 120000);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -134,6 +277,15 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       });
       return;
     }
+
+    if (recaptchaEnabled && !loginRecaptchaToken) {
+      toast({
+        title: t("auth.errors.recaptchaRequiredTitle"),
+        description: t("auth.errors.recaptchaRequiredDescription"),
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
 
@@ -142,6 +294,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       const responseObj: any = await apiRequest("POST", "/api/auth/login", {
         username: loginUsername,
         password: loginPassword,
+        role: loginAs,
+        recaptchaToken: loginRecaptchaToken,
       });
 
       // apiRequest returns a Response object, we need to parse JSON
@@ -160,24 +314,53 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         // Clear login form
         setLoginUsername("");
         setLoginPassword("");
+        setLoginRecaptchaToken(null);
         
-        console.log("🔄 Step 1: Invalidating auth cache...");
-        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        
-        console.log("🔄 Step 2: Refetching to load user...");
-        const newAuthData = await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
-        
-        console.log("🔄 Step 3: New auth data:", newAuthData);
-        console.log("🔄 Step 4: Page will auto-redirect when auth state updates...");
-        
+        // Update auth state immediately so routing reacts instantly
+        queryClient.setQueryData(["/api/auth/user"], response.user);
+
+        // Redirect based on the selected role button
+        const finalTarget = loginAs === "teacher" ? "/teacher-dashboard" : "/";
+
         if (onSuccess) onSuccess();
+
+        window.location.assign(finalTarget);
       } else {
         throw new Error("Login failed - no user data returned");
       }
     } catch (error: any) {
       console.error("❌ Login error:", error);
       
-      const errorMessage = error.message || "Invalid username or password";
+      const errorMessage = error?.message || "";
+
+      if (/this username cannot be found/i.test(errorMessage)) {
+        toast({
+          title: t("auth.errors.userNotFoundTitle"),
+          description: t("auth.errors.userNotFoundDescription"),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Common failure mode in dev: API server not running or you opened the Vite port
+      // so /api/* returns HTML (index.html) instead of JSON.
+      const looksLikeNetworkError =
+        error instanceof TypeError ||
+        /failed to fetch|networkerror|load failed/i.test(errorMessage);
+      const looksLikeHtmlJsonParseError = /unexpected token </i.test(errorMessage);
+      const looksLikeWrongPortOrNoApi =
+        looksLikeNetworkError || looksLikeHtmlJsonParseError || /404:/i.test(errorMessage);
+
+      if (looksLikeWrongPortOrNoApi) {
+        toast({
+          title: t("auth.errors.serverUnavailableTitle"),
+          description: t("auth.errors.serverUnavailableDescription", {
+            origin: window.location.origin,
+          }),
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Only show specific error if it's about password being invalid
       // Otherwise show generic error (username might not exist)
@@ -205,7 +388,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!recaptchaToken) {
+    if (recaptchaEnabled && !recaptchaToken) {
       toast({
         title: t("auth.errors.recaptchaRequiredTitle"),
         description: t("auth.errors.recaptchaRequiredDescription"),
@@ -378,9 +561,59 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>{t("auth.loginAs")}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={loginAs === "student" ? "default" : "outline"}
+                      onClick={() => setLoginAs("student")}
+                      disabled={isLoading}
+                    >
+                      {t("roles.student")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={loginAs === "teacher" ? "default" : "outline"}
+                      onClick={() => setLoginAs("teacher")}
+                      disabled={isLoading}
+                    >
+                      {t("roles.teacher")}
+                    </Button>
+                  </div>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? t("auth.loggingIn") : t("auth.login")}
                 </Button>
+
+                {recaptchaEnabled && (
+                  <motion.div 
+                    className="recaptcha-wrapper" 
+                    key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
+                    initial={{ opacity: 0.8, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                  >
+                    <ReCAPTCHA
+                      ref={loginRecaptchaRef}
+                      key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
+                      sitekey={recaptchaSiteKey}
+                      onChange={handleLoginRecaptchaChange}
+                      theme={isDarkMode ? "dark" : "light"}
+                    />
+                  </motion.div>
+                )}
+
+                <div className="flex gap-2 justify-center text-sm">
+                  <Link href="/forgot-username" className="text-primary hover:underline">
+                    {t("auth.forgotUsername", { defaultValue: "Forgot username?" })}
+                  </Link>
+                  <span className="text-muted-foreground">•</span>
+                  <Link href="/forgot-password" className="text-primary hover:underline">
+                    {t("auth.forgotPassword", { defaultValue: "Forgot password?" })}
+                  </Link>
+                </div>
               </form>
             </TabsContent>
 
@@ -524,20 +757,23 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   </div>
                 </div>
 
-                <motion.div 
-                  className="recaptcha-wrapper" 
-                  key={isDarkMode ? "dark" : "light"}
-                  initial={{ opacity: 0.8, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                >
-                  <ReCAPTCHA
-                    key={isDarkMode ? "dark-recaptcha" : "light-recaptcha"}
-                    sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-                    onChange={handleRecaptchaChange}
-                    theme={isDarkMode ? "dark" : "light"}
-                  />
-                </motion.div>
+                {recaptchaEnabled && (
+                  <motion.div 
+                    className="recaptcha-wrapper" 
+                    key={isDarkMode ? "dark" : "light"}
+                    initial={{ opacity: 0.8, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                  >
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      key={isDarkMode ? "dark-recaptcha" : "light-recaptcha"}
+                      sitekey={recaptchaSiteKey}
+                      onChange={handleRecaptchaChange}
+                      theme={isDarkMode ? "dark" : "light"}
+                    />
+                  </motion.div>
+                )}
 
                 <Button 
                   type="submit" 

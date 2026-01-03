@@ -21,22 +21,15 @@ export function ThemeToggle() {
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
     
-    // Fade out effect
-    document.documentElement.style.opacity = "0.95";
-    document.documentElement.style.transition = "opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)";
-    
-    // Switch theme after fade
-    setTimeout(() => {
+    // Use View Transitions API for ultra-smooth 120fps theme switching
+    if ('startViewTransition' in document && typeof (document as any).startViewTransition === 'function') {
+      (document as any).startViewTransition(() => {
+        document.documentElement.classList.toggle("dark", newTheme === "dark");
+      });
+    } else {
+      // Fallback for browsers without View Transitions API
       document.documentElement.classList.toggle("dark", newTheme === "dark");
-      document.documentElement.style.opacity = "1";
-      document.documentElement.style.transition = "all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)";
-    }, 75);
-    
-    // Remove transition after animation completes
-    setTimeout(() => {
-      document.documentElement.style.transition = "";
-      document.documentElement.style.opacity = "";
-    }, 410);
+    }
   };
 
   return (

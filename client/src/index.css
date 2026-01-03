@@ -4,6 +4,17 @@
 @tailwind utilities;
 /* stylelint-enable at-rule-no-unknown */
 
+/* Reset body and html margins completely */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
 /* Smooth scrolling and performance optimization */
 * {
   scroll-behavior: smooth;
@@ -15,6 +26,15 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: direction 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  /* Force GPU acceleration for theme transitions */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  /* Create new stacking context for better compositing */
+  isolation: isolate;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 /* RTL Support for Arabic */
@@ -29,12 +49,52 @@ html[dir="rtl"] body {
 
 /* GPU acceleration for better performance */
 body {
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
+  will-change: background-color, color;
+  /* Optimize compositing */
+  isolation: isolate;
 }
 
-/* Optimize animations for 60fps */
+/* Custom scrollbar styling for light and dark modes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+  background-clip: padding-box;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.4);
+  background-clip: padding-box;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+  background-clip: padding-box;
+}
+
+/* Optimize animations for 120fps */
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -45,7 +105,8 @@ body {
   [class*="transition-"],
   button,
   a {
-    transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
     will-change: transform;
   }
   
@@ -59,6 +120,74 @@ body {
   /* Smooth scrolling for internal links */
   a[href^="#"] {
     scroll-behavior: smooth;
+  }
+  
+  /* Butter-smooth 120fps theme color transitions - Maximum GPU optimization */
+  *,
+  *::before,
+  *::after {
+    transition: 
+      background-color 0.03s ease-out,
+      border-color 0.03s ease-out,
+      color 0.03s ease-out,
+      fill 0.03s ease-out,
+      stroke 0.03s ease-out;
+    /* Force GPU acceleration for color transitions */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+  
+  /* Optimize cards and containers for theme switching */
+  .card,
+  [class*="card"],
+  [class*="Card"],
+  [class*="bg-"],
+  [role="dialog"],
+  [role="menu"] {
+    contain: layout style paint;
+    isolation: isolate;
+  }
+  
+  /* Optimize text rendering during theme switch */
+  p, span, h1, h2, h3, h4, h5, h6, label, button {
+    text-rendering: optimizeSpeed;
+  }
+  
+  /* Maximum GPU optimization for main content area */
+  main,
+  [role="main"],
+  .container,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
+  .max-w-xl {
+    contain: layout style paint;
+    isolation: isolate;
+    will-change: background-color, color;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+  
+  /* Optimize grid and flex layouts in center content */
+  .grid,
+  .flex,
+  [class*="grid"],
+  [class*="flex"] {
+    contain: layout;
+    transform: translate3d(0, 0, 0);
+  }
+  
+  /* Optimize form inputs and interactive elements */
+  input,
+  textarea,
+  select,
+  [role="combobox"],
+  [role="listbox"] {
+    contain: layout style;
+    will-change: background-color, border-color, color;
   }
 }
 
@@ -145,6 +274,15 @@ body {
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  
+  /* Ultra-smooth 120fps theme transitions - GPU accelerated */
+  transition: 
+    background-color 0.03s ease-out,
+    color 0.03s ease-out,
+    border-color 0.03s ease-out;
+  will-change: background-color, color, border-color;
+  /* Optimize rendering performance */
+  contain: layout style;
 }
 
 .dark {
@@ -195,6 +333,12 @@ body {
   --shadow-lg: 0px 2px 0px 0px hsl(210 5% 0% / 0.00), 0px 4px 6px -1px hsl(210 5% 0% / 0.00);
   --shadow-xl: 0px 2px 0px 0px hsl(210 5% 0% / 0.00), 0px 8px 10px -1px hsl(210 5% 0% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(210 5% 0% / 0.00);
+  /* optimized for GPU */
+  transition: 
+    background-color 0.05s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.05s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background-color, color, border-color;
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
@@ -350,14 +494,73 @@ body {
 .recaptcha-wrapper {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0.5rem 0 -1rem 0;
+  border-radius: 0;
+  background-color: transparent;
+  border: none;
+  overflow: visible;
+  transform: scale(0.25);
+  transform-origin: top center;
+}
+
+@keyframes recaptchaFadeIn {
+  from {
+    opacity: 0.85;
+    transform: scale(0.98) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.recaptcha-wrapper:hover {
+  border-color: hsl(var(--ring) / 1);
+  background-color: hsl(var(--card) / 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dark mode wrapper */
+.dark .recaptcha-wrapper {
+  background-color: hsl(var(--card) / 1);
+  border-color: hsl(var(--card-border) / 1);
+}
+
+.dark .recaptcha-wrapper:hover {
+  border-color: hsl(var(--ring) / 0.8);
+  background-color: hsl(var(--card) / 0.9);
+}
+
+/* reCAPTCHA container */
+.g-recaptcha,
+.g_recaptcha,
+.recaptcha {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ============ reCAPTCHA Styling ============ */
+
+/* Main wrapper styling */
+.recaptcha-wrapper {
+  display: flex;
+  justify-content: center;
   align-items: center;
   padding: 0.75rem;
   border-radius: 0.5rem;
   background-color: hsl(var(--card) / 1);
   border: 1px solid hsl(var(--card-border) / 1);
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  min-height: 80px;
-  overflow: hidden;
+  min-height: auto;
+  overflow: visible;
   position: relative;
   animation: recaptchaFadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   will-change: transform;
@@ -396,6 +599,7 @@ body {
 }
 
 /* reCAPTCHA container */
+.g-recaptcha,
 .g_recaptcha,
 .recaptcha {
   display: flex !important;
@@ -406,52 +610,40 @@ body {
   z-index: 1 !important;
 }
 
-/* reCAPTCHA iframe - clip to show only checkbox */
+/* reCAPTCHA iframe - display at full size without cropping */
+.recaptcha-wrapper iframe,
+.g-recaptcha iframe,
 .g_recaptcha iframe,
 .recaptcha iframe {
-  clip-path: polygon(0 0, 100% 0, 100% 60%, 0 60%) !important;
-  max-height: 60px !important;
-  min-height: 60px !important;
-  height: auto !important;
+  max-width: 100% !important;
   min-width: 100% !important;
   display: block !important;
   position: relative !important;
-  will-change: clip-path;
 }
 
-/* Hide all text elements */
-.rc-anchor-content,
-.rc-anchor-text,
-.rc-footer,
-.rc-footer-item,
-.rc-footer-items,
-.rc-anchor-normal-footer,
-.rc-anchor-normal-footer span,
-.rc-anchor-normal-footer a,
-[style*="color: red"],
-[style*="color:red"] {
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  overflow: hidden !important;
+/* Smooth transitions for theme changes */
+.g-recaptcha,
+.recaptcha,
+.recaptcha-wrapper {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Hide extra div layers in reCAPTCHA */
-.g_recaptcha > div:not(:first-child),
-.recaptcha > div:not(:first-child) {
-  display: none !important;
+/* If v3 badge appears, keep it visible */
+.grecaptcha-badge {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
-/* Badge styling - hide it */
-.g_recaptcha_badge {
-  opacity: 0 !important;
-  pointer-events: none !important;
+/* Note: we intentionally do NOT hide reCAPTCHA text or badge.
+   The standard "I'm not a robot" UI and challenge popup should be visible when enabled. */
+
+/* If v3 badge ever appears, keep it visible by default */
+.grecaptcha-badge {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 /* Smooth transitions for theme changes */

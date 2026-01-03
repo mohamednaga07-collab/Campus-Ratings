@@ -73,6 +73,7 @@
   "auth": {
     "login": "Login",
     "register": "Register",
+    "loginAs": "Login as",
     "username": "Username",
     "password": "Password",
     "confirmPassword": "Confirm Password",
@@ -129,8 +130,12 @@
       "passwordRequiredDescription": "Please enter your password",
       "loginFailedTitle": "Login Failed",
       "loginFailedDescription": "Invalid username or password. Please check your credentials or create a new account.",
+      "serverUnavailableTitle": "Server Not Reachable",
+      "serverUnavailableDescription": "The app can't reach the API from {{origin}}. Start the backend with 'npm run dev' (it should be on http://127.0.0.1:5000) and open the site from that same port.",
       "invalidPasswordTitle": "Invalid Password",
       "invalidPasswordDescription": "The password you entered is incorrect. Please check your password and try again.",
+      "userNotFoundTitle": "Username Not Found",
+      "userNotFoundDescription": "This username cannot be found. Please login with a valid username.",
       "recaptchaRequiredTitle": "reCAPTCHA Required",
       "recaptchaRequiredDescription": "Please complete the reCAPTCHA verification.",
       "passwordsDontMatchTitle": "Passwords Don't Match",
@@ -139,7 +144,43 @@
       "passwordTooWeakDescription": "Password must be at least Fair strength (yellow).",
       "registrationFailedTitle": "Registration Failed",
       "registrationFailedDescription": "Could not create account. Please try again."
-    }
+    },
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "forgotPassword": "Forgot Password?",
+    "forgotUsername": "Forgot Username?",
+    "forgotPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+    "forgotUsernameDesc": "Enter your email address and we'll send you your username.",
+    "resetPassword": "Reset Password",
+    "resetPasswordDesc": "Enter your new password below",
+    "newPassword": "New Password",
+    "resetLinkSent": "Reset link sent!",
+    "resetLinkSentDesc": "Check your email for a link to reset your password. The link will expire in 24 hours.",
+    "passwordReset": "Password reset successful!",
+    "passwordResetDesc": "Your password has been reset. You can now log in with your new password.",
+    "usernameSent": "Username sent!",
+    "usernameSentDesc": "Check your email for your username.",
+    "backToLogin": "Back to Login",
+    "rememberedPassword": "Back to Login",
+    "rememberedUsername": "Back to Login",
+    "sendResetLink": "Send Reset Link",
+    "sendUsername": "Send Username",
+    "sending": "Sending...",
+    "resetting": "Resetting...",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "invalidResetLink": "Invalid reset link",
+    "invalidToken": "Invalid reset token",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordNeedLower": "Password must contain lowercase letters",
+    "passwordNeedUpper": "Password must contain uppercase letters",
+    "passwordNeedNumber": "Password must contain numbers",
+    "passwordRequirements": "Password requirements:",
+    "passReq8Char": "At least 8 characters",
+    "passReqLower": "Lowercase letters",
+    "passReqUpper": "Uppercase letters",
+    "passReqNumber": "Numbers"
   },
   "doctors": {
     "title": "Professors",
@@ -151,6 +192,7 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
+    "auto": "Auto",
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
@@ -175,11 +217,27 @@
   ,
   "home": {
     "welcomeBack": "Welcome back, {{name}}!",
+    "studentTagline": "Rate your professors and help fellow students make better decisions.",
     "rateProfessor": "Rate a Professor",
     "roleMessage": {
       "student": "Rate your professors and help fellow students make better decisions.",
       "teacher": "View how students rate their professors.",
       "admin": "Manage professors and oversee reviews."
+    },
+    "actions": {
+      "quick": "Quick action",
+      "rateTitle": "Rate a professor",
+      "rateDesc": "Share your experience in under 60 seconds.",
+      "rateCta": "Start rating",
+      "compareTitle": "Compare options",
+      "compareDesc": "Stack educators side by side before you decide.",
+      "compareCta": "Open compare",
+      "shortlistTitle": "Shortlist & follow",
+      "shortlistDesc": "Save favorites and get notified when ratings change.",
+      "shortlistCta": "View shortlist",
+      "feedbackTitle": "Feedback insights",
+      "feedbackDesc": "See themes from recent student feedback instantly.",
+      "feedbackCta": "Explore insights"
     },
     "stats": {
       "totalProfessors": "Total Professors",
@@ -192,6 +250,29 @@
       "subtitle": "Highest rated by students",
       "viewAll": "View All"
     },
+    "enhance": {
+      "compareLabel": "Compare",
+      "compareTitle": "Side-by-side clarity",
+      "factor": "Factor",
+      "clarity": "Clarity",
+      "support": "Support",
+      "fairness": "Fairness",
+      "compareDesc": "Quickly spot strengths before you decide.",
+      "compareCta": "Open compare",
+      "rateLabel": "Rate",
+      "rateTitle": "Guided multi-factor rating",
+      "ratePoint1": "Five factors with tooltips for consistent scores.",
+      "ratePoint2": "Highlight strengths and a quick takeaway.",
+      "ratePoint3": "See what peers recently noticed most.",
+      "rateDesc": "Stay structured while staying fast.",
+      "rateCta": "Start rating",
+      "trustLabel": "Trust",
+      "trustTitle": "Respectful by default",
+      "trustPoint1": "Anonymous by design; no spam or doxxing.",
+      "trustPoint2": "Civility guardrails keep feedback constructive.",
+      "trustPoint3": "Verified profiles surface first for credibility.",
+      "trustDesc": "Built to stay fair for students and faculty."
+    },
     "empty": {
       "title": "No Professors Yet",
       "description": "There are no professors in the system yet.",
@@ -203,18 +284,55 @@
     "subtitle": "View the feedback and ratings you've received from students",
     "loading": "Loading feedback...",
     "empty": "No reviews yet. Once students submit reviews, you'll see your feedback here.",
+    "noProfile": "No professor profile matches your account name ({{name}}). Ask an admin to link your teacher account to a professor profile.",
     "yourFeedback": "Your Feedback",
     "reviewsCount_one": "review",
     "reviewsCount_other": "reviews",
+    "stats": {
+      "overallRating": "Overall Rating",
+      "overallRatingLabel": "out of 5.0",
+      "totalReviews": "Total Reviews",
+      "totalReviewsLabel": "student feedback",
+      "topStrength": "Strongest Factor",
+      "topStrengthLabel": "top performance",
+      "engagement": "Engagement Score",
+      "engagementLabel": "student engagement"
+    },
     "chart": {
       "title": "Average Ratings Comparison",
       "description": "How your ratings compare across all categories",
       "ratingLabel": "Rating"
+    },
+    "radar": {
+      "description": "Visual representation of your teaching metrics"
     }
   },
   "listing": {
     "title": "Professors",
     "subtitle": "Browse and rate professors at your college",
+    "headline": {
+      "tag": "Updated",
+      "title": "Professors",
+      "subtitle": "Browse, rate, and compare professors with clearer filters and quicker actions."
+    },
+    "statsBar": {
+      "professors": "Professors",
+      "departments": "Departments",
+      "reviews": "Reviews",
+      "avgRating": "Avg rating"
+    },
+    "actions": {
+      "rateLabel": "Rate",
+      "rateTitle": "Structured multi-factor rating",
+      "rateDesc": "Keep ratings consistent with five guided factors.",
+      "rateHint": "Anonymous, under 60 seconds.",
+      "rateCta": "Start rating",
+      "compareLabel": "Compare",
+      "compareTitle": "Side-by-side decisions",
+      "compareDesc": "Queue up to 3 professors and see the spread instantly.",
+      "compareHint": "Picks stay saved while you browse.",
+      "compareCta": "Open compare"
+    },
     "add": {
       "button": "Add Professor",
       "title": "Add New Professor",
@@ -316,10 +434,37 @@
   },
   "compare": {
     "backToProfessors": "Back to Professors",
+    "title": "Compare Professors",
+    "subtitle": "Compare two professors across all 5 rating factors",
+    "hero": {
+      "tag": "Side-by-side",
+      "subtitle": "Compare two professors across all 5 rating factors with visual clarity."
+    },
+    "stats": {
+      "avgDiff": "Avg diff",
+      "reviews": "Reviews"
+    },
+    "recommendation": {
+      "label": "Recommendation",
+      "title": "Best match",
+      "winnerMsg": "Based on overall rating and student reviews.",
+      "tieMsg": "Both professors have equal overall ratings. Check individual factors.",
+      "strengthsLabel": "Top strengths",
+      "noData": "No reviews available to recommend."
+    },
     "overall": "Overall",
+    "overallWinner": "Overall winner",
+    "winner": "Winner",
+    "tie": "Tie",
+    "notAvailable": "Not available",
+    "totalReviews": "Total reviews",
     "remove": "Remove",
     "addProfessor": "Add professor",
-    "selectProfessor": "Select professor"
+    "selectProfessor": "Select professor",
+    "chooseTwo": "Choose 2 professors to enable full comparison.",
+    "viewProfile": "View profile",
+    "summaryTitle": "Comparison summary",
+    "noReviewsYet": "No reviews yet — once students submit reviews, the winner will appear here."
   },
   "notFound": {
     "title": "404 Page Not Found",

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -103,7 +104,9 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  const host = "0.0.0.0"; // Bind to all interfaces
+  // Default to IPv4 any-address for best Windows compatibility.
+  // If you need a different bind address, set HOST.
+  const host = process.env.HOST || "0.0.0.0";
 
   httpServer.on("error", (err: any) => {
     console.error("Server error:", err);
@@ -117,7 +120,14 @@ app.use((req, res, next) => {
     console.error("Unhandled rejection at:", promise, "reason:", reason);
   });
 
-  httpServer.listen(port, host, () => {
-    log(`serving on ${host}:${port}`);
-  });
+  const onListening = () => {
+    const addr = httpServer.address();
+    if (addr && typeof addr === "object") {
+      log(`serving on ${addr.address}:${addr.port}`);
+    } else {
+      log(`serving on port ${port}`);
+    }
+  };
+
+  httpServer.listen(port, host, onListening);
 })();

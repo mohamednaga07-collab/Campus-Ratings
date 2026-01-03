@@ -5,6 +5,8 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertDoctorSchema, insertReviewSchema } from "@shared/schema";
 import { hashPassword, verifyPassword } from "./auth";
 import { randomUUID } from "crypto";
+import crypto from "crypto";
+import { sendEmail, generateForgotPasswordEmailHtml, generateForgotUsernameEmailHtml } from "./email";
 
 // Extend Express session to include userId
 declare module "express-session" {
@@ -119,12 +121,47 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Login endpoint
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, role, recaptchaToken } = req.body;
       console.log("🔐 Login attempt for username:", username);
+
+      const recaptchaEnabled = process.env.RECAPTCHA_ENABLED === "true";
 
       if (!username || !password) {
         console.log("❌ Missing username or password");
         return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      if (recaptchaEnabled) {
+        if (!recaptchaToken) {
+          return res.status(400).json({ message: "reCAPTCHA verification is required" });
+        }
+
+        try {
+          const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              secret: process.env.RECAPTCHA_SECRET_KEY || "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+              response: recaptchaToken,
+            }).toString(),
+          });
+
+          const recaptchaData = await recaptchaResponse.json();
+          console.log("reCAPTCHA verification response:", recaptchaData);
+
+          if (!recaptchaData.success) {
+            return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
+          }
+
+          if (recaptchaData.score && recaptchaData.score < 0.5) {
+            return res.status(400).json({ message: "Suspicious activity detected. Please try again." });
+          }
+        } catch (recaptchaError) {
+          console.error("Error verifying reCAPTCHA:", recaptchaError);
+          return res.status(500).json({ message: "reCAPTCHA verification error" });
+        }
       }
 
       const user = await storage.getUserByUsername(username);
@@ -133,6 +170,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!user || !user.password) {
         console.log("❌ User not found");
         return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // If the client specifies a role (student/teacher), require the account to match.
+      if (role && (role === "student" || role === "teacher")) {
+        const userRole = (user as any).role as string | undefined;
+        if (userRole !== role) {
+          console.log("❌ Role mismatch for user:", username, "expected:", role, "actual:", userRole);
+          return res
+            .status(404)
+            .json({ message: "This username cannot be found. Please login with a valid username." });
+        }
       }
 
       const isValid = verifyPassword(password, user.password);
@@ -177,41 +225,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const { username, password, firstName, lastName, role, recaptchaToken } = req.body;
 
+      const recaptchaEnabled = process.env.RECAPTCHA_ENABLED === "true";
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      if (!recaptchaToken) {
-        return res.status(400).json({ message: "reCAPTCHA verification is required" });
-      }
-
-      // Verify reCAPTCHA token with Google
-      try {
-        const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            secret: process.env.RECAPTCHA_SECRET_KEY || "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
-            response: recaptchaToken,
-          }).toString(),
-        });
-
-        const recaptchaData = await recaptchaResponse.json();
-        console.log("reCAPTCHA verification response:", recaptchaData);
-
-        if (!recaptchaData.success) {
-          return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
+      if (recaptchaEnabled) {
+        if (!recaptchaToken) {
+          return res.status(400).json({ message: "reCAPTCHA verification is required" });
         }
 
-        // Check score (for v3) - scores closer to 1.0 are more human-like
-        if (recaptchaData.score && recaptchaData.score < 0.5) {
-          return res.status(400).json({ message: "Suspicious activity detected. Please try again." });
+        // Verify reCAPTCHA token with Google
+        try {
+          const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              secret: process.env.RECAPTCHA_SECRET_KEY || "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+              response: recaptchaToken,
+            }).toString(),
+          });
+
+          const recaptchaData = await recaptchaResponse.json();
+          console.log("reCAPTCHA verification response:", recaptchaData);
+
+          if (!recaptchaData.success) {
+            return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
+          }
+
+          // Check score (for v3) - scores closer to 1.0 are more human-like
+          if (recaptchaData.score && recaptchaData.score < 0.5) {
+            return res.status(400).json({ message: "Suspicious activity detected. Please try again." });
+          }
+        } catch (recaptchaError) {
+          console.error("Error verifying reCAPTCHA:", recaptchaError);
+          return res.status(500).json({ message: "reCAPTCHA verification error" });
         }
-      } catch (recaptchaError) {
-        console.error("Error verifying reCAPTCHA:", recaptchaError);
-        return res.status(500).json({ message: "reCAPTCHA verification error" });
       }
 
       if (!role || !["student", "teacher", "admin"].includes(role)) {
@@ -432,6 +484,103 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  // Forgot Password Route
+  app.post("/api/auth/forgot-password", async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // For security, don't reveal if email exists
+        return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await storage.updateUserResetToken(user.id, resetToken, resetTokenExpiry);
+
+      // Send email with reset link
+      const resetLink = `${process.env.APP_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+      const emailHtml = generateForgotPasswordEmailHtml(user.username || "User", resetLink);
+      await sendEmail({
+        to: email,
+        subject: "Reset Your Campus Ratings Password",
+        html: emailHtml,
+      });
+
+      res.status(200).json({ message: "If an account exists, a reset link has been sent." });
+    } catch (error) {
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ message: "Failed to process forgot password request" });
+    }
+  });
+
+  // Reset Password Route
+  app.post("/api/auth/reset-password", async (req: any, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+
+      const user = await storage.getUserByResetToken(token);
+      if (!user || !user.resetTokenExpiry) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      if (new Date() > user.resetTokenExpiry) {
+        return res.status(400).json({ message: "Reset token has expired" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+      await storage.clearResetToken(user.id);
+
+      res.status(200).json({ message: "Password has been reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // Forgot Username Route
+  app.post("/api/auth/forgot-username", async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      console.log(`[forgot-username] Received request for email: ${email}`);
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      console.log(`[forgot-username] Found user: ${user ? user.username : "NOT FOUND"}`);
+      
+      if (!user) {
+        // For security, don't reveal if email exists
+        return res.status(200).json({ message: "If an account exists, your username has been sent to the email on file." });
+      }
+
+      // Send email with username
+      console.log(`[forgot-username] Sending email to ${email}`);
+      const emailHtml = generateForgotUsernameEmailHtml(user.username || "Your Username");
+      await sendEmail({
+        to: email,
+        subject: "Your Campus Ratings Username",
+        html: emailHtml,
+      });
+
+      res.status(200).json({ message: "If an account exists, your username has been sent to the email on file." });
+    } catch (error) {
+      console.error("Error in forgot username:", error);
+      res.status(500).json({ message: "Failed to process forgot username request" });
     }
   });
 
