@@ -7570,3 +7570,46 @@ A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cau
 [2m11:40:08 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx?v=U4o4Ig_07B8KfEaX44B6u, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
 ⚠️  No authenticated user found
 11:40:09 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:43:07 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:43:20 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:43:41 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:49:27 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:49:28 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:50:58 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:50:59 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotUsername.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:50:59 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResetPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:51:00 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:51:04 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:54:13 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:54:14 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotUsername.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:54:14 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResetPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:54:16 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:54:31 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:34 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx?v=U4o4Ig_07B8KfEaX44B6u, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:34 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:34 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ThemeToggle.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotUsername.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResetPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/pages/index.ts[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:55:35 AM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/pages/index.ts[22m
+⚠️  No authenticated user found
+11:55:38 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:55:52 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:56:05 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:56:18 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:57:20 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:57:29 AM [express] GET /api/auth/user 200 in 1ms

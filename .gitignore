@@ -4,3 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# VS Code may auto-generate this but it conflicts with tsconfig.json
+client/jsconfig.json
+jsconfig.json
