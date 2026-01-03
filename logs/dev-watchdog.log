@@ -7567,3 +7567,6 @@ A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cau
 11:32:56 AM [express] GET /api/auth/user 200 in 1ms
 ⚠️  No authenticated user found
 11:33:09 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:40:08 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx?v=U4o4Ig_07B8KfEaX44B6u, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:40:09 AM [express] GET /api/auth/user 200 in 1ms
