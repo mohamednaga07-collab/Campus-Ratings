@@ -9,20 +9,10 @@ import {
 import { Globe } from 'lucide-react';
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('language', lang);
-    
-    // Update document direction for RTL languages
-    if (lang === 'ar') {
-      document.documentElement.dir = 'rtl';
-      document.documentElement.lang = 'ar';
-    } else {
-      document.documentElement.dir = 'ltr';
-      document.documentElement.lang = 'en';
-    }
   };
 
   return (
@@ -32,17 +22,17 @@ export function LanguageSwitcher() {
           variant="ghost" 
           size="icon"
           className="h-9 w-9"
-          title="Change Language"
+          title={t('language.change')}
         >
           <Globe className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
-          🇺🇸 English
+          🇺🇸 {t('language.english')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleLanguageChange('ar')}>
-          🇸🇦 العربية
+          🇸🇦 {t('language.arabic')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

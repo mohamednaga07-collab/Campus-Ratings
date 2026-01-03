@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GraduationCap, User, Lock, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useTranslation } from "react-i18next";
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -17,6 +18,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -81,9 +83,9 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   };
 
   const getPasswordStrengthText = (): string => {
-    if (passwordStrength < 40) return "Weak";
-    if (passwordStrength < 70) return "Fair";
-    return "Strong";
+    if (passwordStrength < 40) return t("auth.passwordStrength.weak");
+    if (passwordStrength < 70) return t("auth.passwordStrength.fair");
+    return t("auth.passwordStrength.strong");
   };
 
   const canSubmitRegister = (): boolean => {
@@ -117,8 +119,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     
     if (!loginUsername.trim()) {
       toast({
-        title: "❌ Username Required",
-        description: "Please enter your username",
+        title: t("auth.errors.usernameRequiredTitle"),
+        description: t("auth.errors.usernameRequiredDescription"),
         variant: "destructive",
       });
       return;
@@ -126,8 +128,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     
     if (!loginPassword.trim()) {
       toast({
-        title: "❌ Password Required",
-        description: "Please enter your password",
+        title: t("auth.errors.passwordRequiredTitle"),
+        description: t("auth.errors.passwordRequiredDescription"),
         variant: "destructive",
       });
       return;
@@ -151,8 +153,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         
         // Show success message
         toast({ 
-          title: "✅ Welcome Back!",
-          description: `Logged in as ${response.user.firstName || loginUsername}.`,
+          title: t("auth.success.welcomeBackTitle"),
+          description: t("auth.success.welcomeBackDescription", { name: response.user.firstName || loginUsername }),
         });
         
         // Clear login form
@@ -183,11 +185,11 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       let description = "";
       
       if (errorMessage.toLowerCase().includes("invalid password")) {
-        title = "❌ Invalid Password";
-        description = "The password you entered is incorrect. Please check your password and try again.";
+        title = t("auth.errors.invalidPasswordTitle");
+        description = t("auth.errors.invalidPasswordDescription");
       } else {
-        title = "❌ Login Failed";
-        description = "Invalid username or password. Please check your credentials or create a new account.";
+        title = t("auth.errors.loginFailedTitle");
+        description = t("auth.errors.loginFailedDescription");
       }
       
       toast({
@@ -205,8 +207,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     
     if (!recaptchaToken) {
       toast({
-        title: "❌ reCAPTCHA Required",
-        description: "Please complete the reCAPTCHA verification.",
+        title: t("auth.errors.recaptchaRequiredTitle"),
+        description: t("auth.errors.recaptchaRequiredDescription"),
         variant: "destructive",
       });
       return;
@@ -214,8 +216,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
     if (registerPassword !== registerPasswordConfirm) {
       toast({
-        title: "❌ Passwords Don't Match",
-        description: "Please make sure both passwords are the same.",
+        title: t("auth.errors.passwordsDontMatchTitle"),
+        description: t("auth.errors.passwordsDontMatchDescription"),
         variant: "destructive",
       });
       return;
@@ -223,8 +225,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
     if (passwordStrength < 40) {
       toast({
-        title: "❌ Password Too Weak",
-        description: "Password must be at least Fair strength (yellow).",
+        title: t("auth.errors.passwordTooWeakTitle"),
+        description: t("auth.errors.passwordTooWeakDescription"),
         variant: "destructive",
       });
       return;
@@ -252,8 +254,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         
         // Show success toast
         toast({
-          title: "🎉 Account Created!",
-          description: `Welcome ${registerFirstName || registerUsername}! Your account has been created successfully.`,
+          title: t("auth.success.accountCreatedTitle"),
+          description: t("auth.success.accountCreatedDescription", { name: registerFirstName || registerUsername }),
         });
 
         // Set success state and switch to login tab after showing message
@@ -277,8 +279,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
-        title: "❌ Registration Failed",
-        description: error.message || "Could not create account. Please try again.",
+        title: t("auth.errors.registrationFailedTitle"),
+        description: error.message || t("auth.errors.registrationFailedDescription"),
         variant: "destructive",
       });
     } finally {
@@ -313,9 +315,9 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
               >
                 ✅
               </motion.div>
-              <h2 className="text-2xl font-bold text-green-600">Account Created!</h2>
+              <h2 className="text-2xl font-bold text-green-600">{t("auth.success.overlayTitle")}</h2>
               <p className="text-muted-foreground">
-                Your account has been successfully created. Redirecting you to login...
+                {t("auth.success.overlayDescription")}
               </p>
             </CardContent>
           </Card>
@@ -329,27 +331,27 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
               <GraduationCap className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to ProfRate</CardTitle>
+          <CardTitle className="text-2xl text-center">{t("auth.welcomeTitle")}</CardTitle>
           <CardDescription className="text-center">
-            Login or create an account to get started
+            {t("auth.welcomeDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="login">{t("auth.loginTab")}</TabsTrigger>
+              <TabsTrigger value="register">{t("auth.registerTab")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-username">Username</Label>
+                  <Label htmlFor="login-username">{t("auth.username")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="login-username"
-                      placeholder="Enter your username"
+                      placeholder={t("auth.placeholders.username")}
                       value={loginUsername}
                       onChange={(e) => setLoginUsername(e.target.value)}
                       className="pl-10"
@@ -360,13 +362,13 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">{t("auth.password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="login-password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder={t("auth.placeholders.password")}
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       className="pl-10"
@@ -377,7 +379,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+                  {isLoading ? t("auth.loggingIn") : t("auth.login")}
                 </Button>
               </form>
             </TabsContent>
@@ -385,12 +387,12 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="register-username">Username</Label>
+                  <Label htmlFor="register-username">{t("auth.username")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="register-username"
-                      placeholder="Choose a username"
+                      placeholder={t("auth.placeholders.chooseUsername")}
                       value={registerUsername}
                       onChange={(e) => setRegisterUsername(e.target.value)}
                       className="pl-10"
@@ -401,13 +403,13 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">Password</Label>
+                  <Label htmlFor="register-password">{t("auth.password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="register-password"
                       type="password"
-                      placeholder="Choose a password"
+                      placeholder={t("auth.placeholders.choosePassword")}
                       value={registerPassword}
                       onChange={handlePasswordChange}
                       className="pl-10"
@@ -421,7 +423,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   {registerPassword && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Strength:</span>
+                        <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
                         <span className={`font-semibold ${
                           passwordStrength < 40 ? "text-red-500" : 
                           passwordStrength < 70 ? "text-yellow-500" : 
@@ -443,13 +445,13 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-password-confirm">Confirm Password</Label>
+                  <Label htmlFor="register-password-confirm">{t("auth.confirmPassword")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="register-password-confirm"
                       type="password"
-                      placeholder="Re-enter your password"
+                      placeholder={t("auth.placeholders.confirmPassword")}
                       value={registerPasswordConfirm}
                       onChange={(e) => setRegisterPasswordConfirm(e.target.value)}
                       className={`pl-10 ${
@@ -465,19 +467,19 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                     />
                   </div>
                   {registerPasswordConfirm && registerPassword !== registerPasswordConfirm && (
-                    <p className="text-sm text-red-500">Passwords don't match</p>
+                    <p className="text-sm text-red-500">{t("auth.validation.passwordsDontMatch")}</p>
                   )}
                   {registerPasswordConfirm && registerPassword === registerPasswordConfirm && (
-                    <p className="text-sm text-green-500">✓ Passwords match</p>
+                    <p className="text-sm text-green-500">{t("auth.validation.passwordsMatch")}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-firstname">First Name</Label>
+                    <Label htmlFor="register-firstname">{t("auth.firstName")}</Label>
                     <Input
                       id="register-firstname"
-                      placeholder="First name"
+                      placeholder={t("auth.placeholders.firstName")}
                       value={registerFirstName}
                       onChange={(e) => setRegisterFirstName(e.target.value)}
                       disabled={isLoading}
@@ -485,10 +487,10 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register-lastname">Last Name</Label>
+                    <Label htmlFor="register-lastname">{t("auth.lastName")}</Label>
                     <Input
                       id="register-lastname"
-                      placeholder="Last name"
+                      placeholder={t("auth.placeholders.lastName")}
                       value={registerLastName}
                       onChange={(e) => setRegisterLastName(e.target.value)}
                       disabled={isLoading}
@@ -497,7 +499,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>I am a</Label>
+                  <Label>{t("auth.iAm")}</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <Button
                       type="button"
@@ -507,7 +509,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                       className="w-full"
                     >
                       <UserCircle className="h-4 w-4 mr-2" />
-                      Student
+                      {t("roles.student")}
                     </Button>
                     <Button
                       type="button"
@@ -517,7 +519,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                       className="w-full"
                     >
                       <GraduationCap className="h-4 w-4 mr-2" />
-                      Teacher
+                      {t("roles.teacher")}
                     </Button>
                   </div>
                 </div>
@@ -542,16 +544,16 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   className="w-full" 
                   disabled={isLoading || !canSubmitRegister()}
                 >
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {isLoading ? t("auth.creatingAccount") : t("auth.createAccount")}
                 </Button>
                 
                 {!canSubmitRegister() && (registerPassword || registerPasswordConfirm) && (
                   <p className="text-sm text-muted-foreground text-center">
                     {registerPassword !== registerPasswordConfirm 
-                      ? "Passwords must match" 
+                      ? t("auth.validation.passwordsMustMatch") 
                       : passwordStrength < 40
-                      ? "Password must be at least Fair strength"
-                      : "Password requirements not met"}
+                      ? t("auth.validation.passwordMustBeAtLeastFair")
+                      : t("auth.validation.passwordRequirementsNotMet")}
                   </p>
                 )}
               </form>

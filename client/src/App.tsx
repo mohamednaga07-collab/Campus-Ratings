@@ -13,6 +13,7 @@ import DoctorProfile from "@/pages/DoctorProfile";
 import Compare from "@/pages/Compare";
 import TeacherDashboard from "@/pages/TeacherDashboard";
 import NotFound from "@/pages/not-found";
+import { useTranslation } from "react-i18next";
 
 const pageVariants = {
   initial: {
@@ -64,6 +65,7 @@ function AnimatedRoute({ component: Component, ...props }: any) {
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();
+  const { t } = useTranslation();
 
   console.log("🔄 Router render - isAuthenticated:", isAuthenticated, "isLoading:", isLoading, "user:", user?.username);
 
@@ -76,7 +78,7 @@ function Router() {
       >
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t("common.loading")}</p>
         </div>
       </motion.div>
     );

@@ -14,6 +14,20 @@ const resources = {
 
 const savedLanguage = localStorage.getItem('language') || 'en';
 
+function applyDocumentLanguage(lang: string) {
+  if (typeof document === 'undefined') return;
+  if (lang === 'ar') {
+    document.documentElement.dir = 'rtl';
+    document.documentElement.lang = 'ar';
+  } else {
+    document.documentElement.dir = 'ltr';
+    document.documentElement.lang = 'en';
+  }
+}
+
+// Apply immediately on boot (important on refresh)
+applyDocumentLanguage(savedLanguage);
+
 i18n
   .use(initReactI18next)
   .init({
@@ -24,5 +38,11 @@ i18n
       escapeValue: false,
     },
   });
+
+// Keep html dir/lang and saved preference in sync
+i18n.on('languageChanged', (lng) => {
+  localStorage.setItem('language', lng);
+  applyDocumentLanguage(lng);
+});
 
 export default i18n;

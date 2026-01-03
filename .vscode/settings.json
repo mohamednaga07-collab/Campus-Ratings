@@ -2,7 +2,7 @@
   "css.lint.unknownAtRules": "ignore",
   "[css]": {
     "editor.codeActionsOnSave": {
-      "source.fixAll.stylelint": true
+      "source.fixAll.stylelint": "explicit"
     }
   }
 }

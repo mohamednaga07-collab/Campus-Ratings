@@ -8,8 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Star, Users, BarChart3, TrendingUp, ArrowRight } from "lucide-react";
 import type { DoctorWithRatings } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const { data: doctors, isLoading: doctorsLoading } = useQuery<DoctorWithRatings[]>({
@@ -34,21 +36,21 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-bold mb-1">
-                Welcome back, {user?.firstName || "Student"}!
+                {t("home.welcomeBack", { name: user?.firstName || t("roles.student") })}
               </h1>
               <p className="text-muted-foreground">
                 {user?.role === "student"
-                  ? "Rate your professors and help fellow students make better decisions."
+                  ? t("home.roleMessage.student")
                   : user?.role === "teacher"
-                  ? "View how students rate their professors."
-                  : "Manage professors and oversee reviews."}
+                  ? t("home.roleMessage.teacher")
+                  : t("home.roleMessage.admin")}
               </p>
             </div>
             {user?.role === "student" && (
               <Button asChild data-testid="button-rate-professor">
                 <Link href="/doctors">
                   <Star className="h-4 w-4 mr-2" />
-                  Rate a Professor
+                  {t("home.rateProfessor")}
                 </Link>
               </Button>
             )}
@@ -62,7 +64,7 @@ export default function Home() {
                     <Users className="h-6 w-6 text-chart-1" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Professors</p>
+                    <p className="text-sm text-muted-foreground">{t("home.stats.totalProfessors")}</p>
                     <p className="text-2xl font-bold" data-testid="stat-total-doctors">
                       {stats?.totalDoctors ?? doctors?.length ?? 0}
                     </p>
@@ -78,7 +80,7 @@ export default function Home() {
                     <Star className="h-6 w-6 text-chart-2" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Reviews</p>
+                    <p className="text-sm text-muted-foreground">{t("home.stats.totalReviews")}</p>
                     <p className="text-2xl font-bold" data-testid="stat-total-reviews">
                       {stats?.totalReviews ?? 0}
                     </p>
@@ -94,7 +96,7 @@ export default function Home() {
                     <TrendingUp className="h-6 w-6 text-chart-3" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Avg Rating</p>
+                    <p className="text-sm text-muted-foreground">{t("home.stats.avgRating")}</p>
                     <p className="text-2xl font-bold">
                       {doctors && doctors.length > 0
                         ? (
@@ -115,7 +117,7 @@ export default function Home() {
                     <BarChart3 className="h-6 w-6 text-chart-4" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Departments</p>
+                    <p className="text-sm text-muted-foreground">{t("home.stats.departments")}</p>
                     <p className="text-2xl font-bold">
                       {doctors ? new Set(doctors.map((d) => d.department)).size : 0}
                     </p>
@@ -129,12 +131,12 @@ export default function Home() {
         <section>
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Top Rated Professors</h2>
-              <p className="text-muted-foreground">Highest rated by students</p>
+              <h2 className="text-2xl font-bold">{t("home.topRated.title")}</h2>
+              <p className="text-muted-foreground">{t("home.topRated.subtitle")}</p>
             </div>
             <Button variant="outline" asChild>
               <Link href="/doctors">
-                View All
+                {t("home.topRated.viewAll")}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
@@ -167,13 +169,13 @@ export default function Home() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Professors Yet</h3>
+                <h3 className="text-lg font-semibold mb-2">{t("home.empty.title")}</h3>
                 <p className="text-muted-foreground mb-4">
-                  There are no professors in the system yet.
+                  {t("home.empty.description")}
                 </p>
                 {user?.role === "admin" && (
                   <Button asChild>
-                    <Link href="/doctors">Add Professor</Link>
+                    <Link href="/doctors">{t("home.empty.addProfessor")}</Link>
                   </Button>
                 )}
               </CardContent>

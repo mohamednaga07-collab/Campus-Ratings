@@ -40,15 +40,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-const addDoctorSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  department: z.string().min(2, "Department is required"),
-  title: z.string().optional(),
-  bio: z.string().optional(),
-});
+import { useTranslation } from "react-i18next";
 
 export default function DoctorListing() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [location] = useLocation();
@@ -62,7 +57,20 @@ export default function DoctorListing() {
     queryKey: ["/api/doctors"],
   });
 
-  const form = useForm<z.infer<typeof addDoctorSchema>>({
+  const addDoctorSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(2, t("listing.add.validation.nameMin")),
+        department: z.string().min(2, t("listing.add.validation.departmentRequired")),
+        title: z.string().optional(),
+        bio: z.string().optional(),
+      }),
+    [t]
+  );
+
+  type AddDoctorFormValues = z.infer<typeof addDoctorSchema>;
+
+  const form = useForm<AddDoctorFormValues>({
     resolver: zodResolver(addDoctorSchema),
     defaultValues: {
       name: "",
@@ -73,17 +81,17 @@ export default function DoctorListing() {
   });
 
   const addDoctorMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof addDoctorSchema>) => {
+    mutationFn: async (data: AddDoctorFormValues) => {
       return apiRequest("POST", "/api/doctors", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({ title: "Professor added successfully!" });
+      toast({ title: t("listing.add.success") });
       setIsAddDialogOpen(false);
       form.reset();
     },
     onError: () => {
-      toast({ title: "Failed to add professor", variant: "destructive" });
+      toast({ title: t("listing.add.error"), variant: "destructive" });
     },
   });
 
@@ -154,9 +162,9 @@ export default function DoctorListing() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Professors</h1>
+            <h1 className="text-3xl font-bold">{t("listing.title")}</h1>
             <p className="text-muted-foreground">
-              Browse and rate professors at your college
+              {t("listing.subtitle")}
             </p>
           </div>
 
@@ -165,12 +173,12 @@ export default function DoctorListing() {
               <DialogTrigger asChild>
                 <Button data-testid="button-add-doctor">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Professor
+                  {t("listing.add.button")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Professor</DialogTitle>
+                  <DialogTitle>{t("listing.add.title")}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                   <form
@@ -182,9 +190,9 @@ export default function DoctorListing() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>{t("listing.add.fields.fullName")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="John Smith" {...field} data-testid="input-doctor-name" />
+                            <Input placeholder={t("listing.add.placeholders.fullName")} {...field} data-testid="input-doctor-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -195,9 +203,9 @@ export default function DoctorListing() {
                       name="department"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Department</FormLabel>
+                          <FormLabel>{t("listing.add.fields.department")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Computer Science" {...field} data-testid="input-doctor-department" />
+                            <Input placeholder={t("listing.add.placeholders.department")} {...field} data-testid="input-doctor-department" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -208,9 +216,9 @@ export default function DoctorListing() {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title (Optional)</FormLabel>
+                          <FormLabel>{t("listing.add.fields.titleOptional")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Associate Professor" {...field} data-testid="input-doctor-title" />
+                            <Input placeholder={t("listing.add.placeholders.title")} {...field} data-testid="input-doctor-title" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -221,10 +229,10 @@ export default function DoctorListing() {
                       name="bio"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bio (Optional)</FormLabel>
+                          <FormLabel>{t("listing.add.fields.bioOptional")}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Brief biography..."
+                              placeholder={t("listing.add.placeholders.bio")}
                               {...field}
                               data-testid="input-doctor-bio"
                             />
@@ -239,7 +247,7 @@ export default function DoctorListing() {
                       disabled={addDoctorMutation.isPending}
                       data-testid="button-submit-doctor"
                     >
-                      {addDoctorMutation.isPending ? "Adding..." : "Add Professor"}
+                      {addDoctorMutation.isPending ? t("listing.add.adding") : t("listing.add.button")}
                     </Button>
                   </form>
                 </Form>
@@ -253,7 +261,7 @@ export default function DoctorListing() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search professors..."
+              placeholder={t("doctors.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -263,10 +271,10 @@ export default function DoctorListing() {
 
           <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
             <SelectTrigger className="w-full md:w-48" data-testid="select-department">
-              <SelectValue placeholder="All Departments" />
+              <SelectValue placeholder={t("listing.filters.allDepartments")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
+              <SelectItem value="all">{t("listing.filters.allDepartments")}</SelectItem>
               {departments.map((dept) => (
                 <SelectItem key={dept} value={dept}>
                   {dept}
@@ -277,12 +285,13 @@ export default function DoctorListing() {
 
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
             <SelectTrigger className="w-full md:w-40" data-testid="select-sort">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={t("listing.filters.sortBy")}
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="rating">Highest Rating</SelectItem>
-              <SelectItem value="reviews">Most Reviews</SelectItem>
-              <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="rating">{t("listing.sort.highestRating")}</SelectItem>
+              <SelectItem value="reviews">{t("listing.sort.mostReviews")}</SelectItem>
+              <SelectItem value="name">{t("listing.sort.nameAz")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -293,7 +302,7 @@ export default function DoctorListing() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2 flex-wrap">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Comparing:</span>
+                  <span className="font-medium">{t("listing.compare.comparing")}</span>
                   {comparingDoctors.map((id) => {
                     const doctor = doctors?.find((d) => d.id === id);
                     return (
@@ -311,12 +320,12 @@ export default function DoctorListing() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={clearComparison}>
-                    Clear
+                    {t("listing.compare.clear")}
                   </Button>
                   <Button asChild size="sm" disabled={comparingDoctors.length < 2}>
                     <Link href={`/compare?ids=${comparingDoctors.join(",")}`}>
                       <BarChart3 className="h-4 w-4 mr-2" />
-                      Compare ({comparingDoctors.length})
+                      {t("listing.compare.compareWithCount", { count: comparingDoctors.length })}
                     </Link>
                   </Button>
                 </div>
@@ -357,11 +366,11 @@ export default function DoctorListing() {
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Professors Found</h3>
+                <h3 className="text-lg font-semibold mb-2">{t("listing.empty.title")}</h3>
               <p className="text-muted-foreground">
                 {searchQuery || selectedDepartment !== "all"
-                  ? "Try adjusting your search or filter criteria."
-                  : "There are no professors in the system yet."}
+                    ? t("listing.empty.tryAdjusting")
+                    : t("listing.empty.noneYet")}
               </p>
             </CardContent>
           </Card>

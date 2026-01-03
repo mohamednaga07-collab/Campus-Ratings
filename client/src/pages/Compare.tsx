@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import type { DoctorWithRatings } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 export default function Compare() {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -33,7 +35,7 @@ export default function Compare() {
   if (isLoading) return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">Loading...</main>
+      <main className="container mx-auto px-4 py-8">{t("common.loading")}</main>
     </div>
   );
 
@@ -44,7 +46,7 @@ export default function Compare() {
         <Button variant="ghost" asChild className="mb-6">
           <Link href="/doctors">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Professors
+            {t("compare.backToProfessors")}
           </Link>
         </Button>
 
@@ -54,9 +56,9 @@ export default function Compare() {
               <CardContent>
                 <div className="font-semibold">Dr. {d.name.replace(/^Dr\.?\s+/i, "")}</div>
                 <div className="text-sm text-muted-foreground">{d.department}</div>
-                <div className="mt-2">Overall: {(d.ratings?.overallRating ?? 0).toFixed(1)}</div>
+                <div className="mt-2">{t("compare.overall")}: {(d.ratings?.overallRating ?? 0).toFixed(1)}</div>
                 <div className="mt-2">
-                  <button onClick={() => removeDoctor(d.id)} className="text-xs text-red-600">Remove</button>
+                  <button onClick={() => removeDoctor(d.id)} className="text-xs text-red-600">{t("compare.remove")}</button>
                 </div>
               </CardContent>
             </Card>
@@ -65,10 +67,10 @@ export default function Compare() {
           {selectedDoctors.length < 3 && (
             <Card className="border-dashed">
               <CardContent>
-                <div className="mb-2">Add professor</div>
+                <div className="mb-2">{t("compare.addProfessor")}</div>
                 <Select onValueChange={(v) => addDoctor(Number(v))}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select professor" />
+                    <SelectValue placeholder={t("compare.selectProfessor")} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableDoctors.map((doc) => (

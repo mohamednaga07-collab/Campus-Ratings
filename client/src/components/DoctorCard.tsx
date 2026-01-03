@@ -7,6 +7,7 @@ import { User, BarChart3, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import type { DoctorWithRatings } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 interface DoctorCardProps {
   doctor: DoctorWithRatings;
@@ -15,6 +16,7 @@ interface DoctorCardProps {
 }
 
 export function DoctorCard({ doctor, onCompareToggle, isComparing }: DoctorCardProps) {
+  const { t } = useTranslation();
   const formatName = (name: string) => name.replace(/^Dr\.?\s+/i, "");
   const initials = doctor.name
     .split(" ")
@@ -60,7 +62,7 @@ export function DoctorCard({ doctor, onCompareToggle, isComparing }: DoctorCardP
             <StarRating rating={overallRating} size="lg" showValue />
           </div>
           <p className="text-sm text-muted-foreground">
-            {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+            {totalReviews} {t("doctorCard.reviews", { count: totalReviews })}
           </p>
 
           {doctor.ratings && (
@@ -94,7 +96,7 @@ export function DoctorCard({ doctor, onCompareToggle, isComparing }: DoctorCardP
         <Button asChild variant="default" className="flex-1" data-testid={`button-view-doctor-${doctor.id}`}>
           <Link href={`/doctors/${doctor.id}`}>
             <Eye className="h-4 w-4 mr-2" />
-            View Profile
+            {t("doctorCard.viewProfile")}
           </Link>
         </Button>
         {onCompareToggle && (

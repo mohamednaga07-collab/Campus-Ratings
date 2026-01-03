@@ -16,8 +16,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { GraduationCap, BarChart3, Home, Star, LogOut, User, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Header() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,12 +50,24 @@ export function Header() {
     }
   };
 
+  const roleLabel = (role: string) => {
+    switch (role) {
+      case "admin":
+        return t("roles.admin");
+      case "teacher":
+        return t("roles.teacher");
+      case "student":
+      default:
+        return t("roles.student");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between gap-4 px-4 mx-auto">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <GraduationCap className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl hidden sm:inline">ProfRate</span>
+          <span className="font-bold text-xl hidden sm:inline">{t("brand.name")}</span>
         </Link>
 
         {isAuthenticated && (
@@ -62,7 +76,7 @@ export function Header() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search professors..."
+                placeholder={t("doctors.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4"
@@ -83,7 +97,7 @@ export function Header() {
               >
                 <Link href="/">
                   <Home className="h-4 w-4 mr-2" />
-                  Home
+                  {t("nav.home")}
                 </Link>
               </Button>
               <Button
@@ -94,7 +108,7 @@ export function Header() {
               >
                 <Link href="/doctors">
                   <Star className="h-4 w-4 mr-2" />
-                  Rate
+                  {t("nav.rate")}
                 </Link>
               </Button>
               <Button
@@ -105,7 +119,7 @@ export function Header() {
               >
                 <Link href="/compare">
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Compare
+                  {t("nav.compare")}
                 </Link>
               </Button>
             </>
@@ -125,7 +139,7 @@ export function Header() {
                   data-testid="button-user-menu"
                 >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? "User"} />
+                    <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? t("common.user")} />
                     <AvatarFallback>{userInitials}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -138,7 +152,7 @@ export function Header() {
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     <Badge variant={getRoleBadgeVariant(user.role)} className="w-fit mt-2">
-                      {user.role}
+                      {roleLabel(user.role)}
                     </Badge>
                   </div>
                 </DropdownMenuLabel>
@@ -146,25 +160,25 @@ export function Header() {
                 <DropdownMenuItem asChild className="sm:hidden">
                   <Link href="/">
                     <Home className="h-4 w-4 mr-2" />
-                    Home
+                    {t("nav.home")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="sm:hidden">
                   <Link href="/doctors">
                     <Star className="h-4 w-4 mr-2" />
-                    Rate Professors
+                    {t("nav.rateProfessors")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="sm:hidden">
                   <Link href="/compare">
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    Compare
+                    {t("nav.compare")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="sm:hidden" />
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="h-4 w-4 mr-2" />
-                  Log out
+                  {t("nav.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -207,7 +221,7 @@ export function Header() {
                 }, 400);
               }
             }} data-testid="button-login">
-              Log in
+              {t("auth.login")}
             </Button>
           )}
         </nav>

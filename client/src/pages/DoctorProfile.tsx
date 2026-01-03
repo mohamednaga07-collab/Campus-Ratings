@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
@@ -24,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useTranslation } from "react-i18next";
 import {
   Star,
   ArrowLeft,
@@ -49,6 +49,7 @@ export default function DoctorProfile() {
   const doctorId = params?.id;
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   const [ratings, setRatings] = useState({
@@ -76,15 +77,15 @@ export default function DoctorProfile() {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors", doctorId] });
       queryClient.invalidateQueries({ queryKey: ["/api/doctors", doctorId, "reviews"] });
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({ title: "Review submitted successfully!" });
+      toast({ title: t("doctorProfile.toast.reviewSubmitted") });
       setIsReviewDialogOpen(false);
       resetForm();
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: t("doctorProfile.toast.unauthorized.title"),
+          description: t("doctorProfile.toast.unauthorized.description"),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -92,7 +93,7 @@ export default function DoctorProfile() {
         }, 500);
         return;
       }
-      toast({ title: "Failed to submit review", variant: "destructive" });
+      toast({ title: t("doctorProfile.toast.submitFailed"), variant: "destructive" });
     },
   });
 
@@ -110,7 +111,7 @@ export default function DoctorProfile() {
   const handleSubmitReview = () => {
     const allRated = Object.values(ratings).every((r) => r > 0);
     if (!allRated) {
-      toast({ title: "Please rate all factors", variant: "destructive" });
+      toast({ title: t("doctorProfile.toast.rateAll"), variant: "destructive" });
       return;
     }
 
@@ -164,12 +165,12 @@ export default function DoctorProfile() {
         <main className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="py-12 text-center">
-              <h2 className="text-xl font-semibold mb-2">Professor Not Found</h2>
+              <h2 className="text-xl font-semibold mb-2">{t("doctorProfile.notFound.title")}</h2>
               <p className="text-muted-foreground mb-4">
-                The professor you're looking for doesn't exist.
+                {t("doctorProfile.notFound.description")}
               </p>
               <Button asChild>
-                <Link href="/doctors">Back to Professors</Link>
+                <Link href="/doctors">{t("doctorProfile.backToProfessors")}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -186,7 +187,7 @@ export default function DoctorProfile() {
         <Button variant="ghost" asChild className="mb-6">
           <Link href="/doctors">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Professors
+            {t("doctorProfile.backToProfessors")}
           </Link>
         </Button>
 
@@ -206,7 +207,7 @@ export default function DoctorProfile() {
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <h1 className="text-2xl font-bold" data-testid="text-doctor-name">
-                          Dr. {doctor.name.replace(/^Dr\.?\s+/i, "")}
+                          {t("doctorProfile.doctorPrefix")} {doctor.name.replace(/^Dr\.?\s+/i, "")}
                         </h1>
                         <p className="text-muted-foreground">{doctor.department}</p>
                         {doctor.title && (
@@ -221,25 +222,29 @@ export default function DoctorProfile() {
                           <DialogTrigger asChild>
                             <Button data-testid="button-write-review">
                               <Star className="h-4 w-4 mr-2" />
-                              Write Review
+                              {t("doctorProfile.writeReview")}
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-lg">
                             <DialogHeader>
-                              <DialogTitle>Rate Dr. {doctor.name.replace(/^Dr\.?\s+/i, "")}</DialogTitle>
+                              <DialogTitle>
+                                {t("doctorProfile.rateDoctorTitle", {
+                                  name: doctor.name.replace(/^Dr\.?\s+/i, ""),
+                                })}
+                              </DialogTitle>
                               <DialogDescription className="flex items-center gap-2 pt-2">
                                 <Shield className="h-4 w-4 text-chart-2" />
-                                Your review is completely anonymous
+                                {t("doctorProfile.anonymous")}
                               </DialogDescription>
                             </DialogHeader>
 
                             <div className="space-y-6 py-4">
                               {[
-                                { key: "teachingQuality", label: "Teaching Quality" },
-                                { key: "availability", label: "Availability" },
-                                { key: "communication", label: "Communication" },
-                                { key: "knowledge", label: "Subject Knowledge" },
-                                { key: "fairness", label: "Fairness" },
+                                { key: "teachingQuality", label: t("doctorProfile.factors.teachingQuality") },
+                                { key: "availability", label: t("doctorProfile.factors.availability") },
+                                { key: "communication", label: t("doctorProfile.factors.communication") },
+                                { key: "knowledge", label: t("doctorProfile.factors.knowledge") },
+                                { key: "fairness", label: t("doctorProfile.factors.fairness") },
                               ].map(({ key, label }) => (
                                 <div key={key} className="space-y-2">
                                   <Label>{label}</Label>
@@ -258,9 +263,9 @@ export default function DoctorProfile() {
                               ))}
 
                               <div className="space-y-2">
-                                <Label>Comments (Optional)</Label>
+                                <Label>{t("doctorProfile.commentsOptional")}</Label>
                                 <Textarea
-                                  placeholder="Share your experience..."
+                                  placeholder={t("doctorProfile.commentPlaceholder")}
                                   value={comment}
                                   onChange={(e) => setComment(e.target.value)}
                                   className="min-h-24"
@@ -274,7 +279,9 @@ export default function DoctorProfile() {
                                 disabled={submitReviewMutation.isPending}
                                 data-testid="button-submit-review"
                               >
-                                {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                                {submitReviewMutation.isPending
+                                  ? t("doctorProfile.submitting")
+                                  : t("doctorProfile.submitReview")}
                               </Button>
                             </div>
                           </DialogContent>
@@ -293,7 +300,7 @@ export default function DoctorProfile() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {doctor.ratings?.totalReviews ?? 0} reviews
+                        {doctor.ratings?.totalReviews ?? 0} {t("doctorProfile.reviewsCount", { count: doctor.ratings?.totalReviews ?? 0 })}
                       </p>
                     </div>
                   </div>
@@ -312,7 +319,7 @@ export default function DoctorProfile() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Reviews
+                  {t("doctorProfile.reviewsTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -350,17 +357,17 @@ export default function DoctorProfile() {
                             <Calendar className="h-4 w-4" />
                             {review.createdAt
                               ? new Date(review.createdAt).toLocaleDateString()
-                              : "Unknown date"}
+                              : t("doctorProfile.unknownDate")}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-5 gap-2 mb-3 text-xs">
                           {[
-                            { label: "Teaching", value: review.teachingQuality },
-                            { label: "Availability", value: review.availability },
-                            { label: "Communication", value: review.communication },
-                            { label: "Knowledge", value: review.knowledge },
-                            { label: "Fairness", value: review.fairness },
+                            { label: t("doctorProfile.factorsShort.teaching"), value: review.teachingQuality },
+                            { label: t("doctorProfile.factorsShort.availability"), value: review.availability },
+                            { label: t("doctorProfile.factorsShort.communication"), value: review.communication },
+                            { label: t("doctorProfile.factorsShort.knowledge"), value: review.knowledge },
+                            { label: t("doctorProfile.factorsShort.fairness"), value: review.fairness },
                           ].map(({ label, value }) => (
                             <div
                               key={label}
@@ -383,9 +390,9 @@ export default function DoctorProfile() {
                 ) : (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-semibold mb-2">No Reviews Yet</h3>
+                    <h3 className="font-semibold mb-2">{t("doctorProfile.noReviews.title")}</h3>
                     <p className="text-muted-foreground mb-4">
-                      Be the first to review this professor!
+                      {t("doctorProfile.noReviews.description")}
                     </p>
                   </div>
                 )}
@@ -396,27 +403,27 @@ export default function DoctorProfile() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Rating Breakdown</CardTitle>
+                <CardTitle>{t("doctorProfile.ratingBreakdown")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <RatingBar
-                  label="Teaching Quality"
+                  label={t("doctorProfile.factors.teachingQuality")}
                   value={doctor.ratings?.avgTeachingQuality ?? 0}
                 />
                 <RatingBar
-                  label="Availability"
+                  label={t("doctorProfile.factors.availability")}
                   value={doctor.ratings?.avgAvailability ?? 0}
                 />
                 <RatingBar
-                  label="Communication"
+                  label={t("doctorProfile.factors.communication")}
                   value={doctor.ratings?.avgCommunication ?? 0}
                 />
                 <RatingBar
-                  label="Subject Knowledge"
+                  label={t("doctorProfile.factors.knowledge")}
                   value={doctor.ratings?.avgKnowledge ?? 0}
                 />
                 <RatingBar
-                  label="Fairness"
+                  label={t("doctorProfile.factors.fairness")}
                   value={doctor.ratings?.avgFairness ?? 0}
                 />
               </CardContent>
@@ -426,11 +433,12 @@ export default function DoctorProfile() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3 mb-3">
                   <Shield className="h-5 w-5 text-chart-2" />
-                  <h3 className="font-semibold">Anonymous Reviews</h3>
+                  <h3 className="font-semibold">{t("doctorProfile.anonymousCard.title")}</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  All reviews on ProfRate are completely anonymous. Your identity is
-                  never shared with professors or administrators.
+                  {t("doctorProfile.anonymousCard.description", {
+                    brand: t("brand.name"),
+                  })}
                 </p>
               </CardContent>
             </Card>

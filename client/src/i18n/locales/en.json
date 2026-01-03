@@ -1,7 +1,22 @@
 {
+  "brand": {
+    "name": "ProfRate"
+  },
+  "language": {
+    "change": "Change language",
+    "english": "English",
+    "arabic": "Arabic"
+  },
+  "roles": {
+    "student": "Student",
+    "teacher": "Teacher",
+    "admin": "Admin"
+  },
   "nav": {
     "home": "Home",
     "doctors": "Doctors",
+    "rate": "Rate",
+    "rateProfessors": "Rate Professors",
     "compare": "Compare",
     "dashboard": "Dashboard",
     "logout": "Logout"
@@ -10,13 +25,57 @@
     "title": "Campus Ratings",
     "subtitle": "Rate and Compare Your Professors",
     "description": "Share your experience and help other students find the best teachers",
-    "getStarted": "Get Started"
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "badge": {
+      "anonymous": "100% Anonymous Reviews"
+    },
+    "hero": {
+      "title": "Rate Your Professors",
+      "highlight": "Honestly & Anonymously",
+      "description": "Help fellow students make informed decisions. Rate professors on teaching quality, availability, communication, knowledge, and fairness."
+    },
+    "features": {
+      "title": "Why Use ProfRate?",
+      "subtitle": "Make better academic decisions with honest reviews from real students",
+      "cards": {
+        "factors": {
+          "title": "5-Factor Ratings",
+          "description": "Rate professors on teaching quality, availability, communication, knowledge, and fairness for comprehensive evaluations."
+        },
+        "comparison": {
+          "title": "Side-by-Side Comparison",
+          "description": "Compare multiple professors across all rating factors to find the best fit for your learning style."
+        },
+        "anonymity": {
+          "title": "Complete Anonymity",
+          "description": "Your reviews are completely anonymous. Share honest feedback without any worry about repercussions."
+        }
+      }
+    },
+    "roles": {
+      "title": "For Students, Teachers & Admins",
+      "subtitle": "Different roles with tailored access levels",
+      "cards": {
+        "student": "Rate professors, compare them, and read reviews from fellow students.",
+        "teacher": "View ratings and feedback to understand how students perceive your teaching.",
+        "admin": "Manage professors, moderate reviews, and oversee the entire platform."
+      }
+    },
+    "final": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of students making better academic decisions with honest professor reviews."
+    },
+    "footer": {
+      "tagline": "Helping students make informed decisions since 2024"
+    }
   },
   "auth": {
     "login": "Login",
     "register": "Register",
     "username": "Username",
     "password": "Password",
+    "confirmPassword": "Confirm Password",
     "firstName": "First Name",
     "lastName": "Last Name",
     "iAm": "I am a",
@@ -28,7 +87,59 @@
     "loginTab": "Login",
     "registerTab": "Register",
     "successTitle": "Account Created!",
-    "successDescription": "Your account has been created successfully."
+    "successDescription": "Your account has been created successfully.",
+    "welcomeTitle": "Welcome to ProfRate",
+    "welcomeDescription": "Login or create an account to get started",
+    "loggingIn": "Logging in...",
+    "creatingAccount": "Creating account...",
+    "placeholders": {
+      "username": "Enter your username",
+      "password": "Enter your password",
+      "chooseUsername": "Choose a username",
+      "choosePassword": "Choose a password",
+      "confirmPassword": "Re-enter your password",
+      "firstName": "First name",
+      "lastName": "Last name"
+    },
+    "passwordStrength": {
+      "label": "Strength:",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong"
+    },
+    "success": {
+      "welcomeBackTitle": "Welcome Back!",
+      "welcomeBackDescription": "Logged in as {{name}}.",
+      "accountCreatedTitle": "Account Created!",
+      "accountCreatedDescription": "Welcome {{name}}! Your account has been created successfully.",
+      "overlayTitle": "Account Created!",
+      "overlayDescription": "Your account has been successfully created. Redirecting you to login..."
+    },
+    "validation": {
+      "passwordsDontMatch": "Passwords don't match",
+      "passwordsMatch": "✓ Passwords match",
+      "passwordsMustMatch": "Passwords must match",
+      "passwordMustBeAtLeastFair": "Password must be at least Fair strength",
+      "passwordRequirementsNotMet": "Password requirements not met"
+    },
+    "errors": {
+      "usernameRequiredTitle": "Username Required",
+      "usernameRequiredDescription": "Please enter your username",
+      "passwordRequiredTitle": "Password Required",
+      "passwordRequiredDescription": "Please enter your password",
+      "loginFailedTitle": "Login Failed",
+      "loginFailedDescription": "Invalid username or password. Please check your credentials or create a new account.",
+      "invalidPasswordTitle": "Invalid Password",
+      "invalidPasswordDescription": "The password you entered is incorrect. Please check your password and try again.",
+      "recaptchaRequiredTitle": "reCAPTCHA Required",
+      "recaptchaRequiredDescription": "Please complete the reCAPTCHA verification.",
+      "passwordsDontMatchTitle": "Passwords Don't Match",
+      "passwordsDontMatchDescription": "Please make sure both passwords are the same.",
+      "passwordTooWeakTitle": "Password Too Weak",
+      "passwordTooWeakDescription": "Password must be at least Fair strength (yellow).",
+      "registrationFailedTitle": "Registration Failed",
+      "registrationFailedDescription": "Could not create account. Please try again."
+    }
   },
   "doctors": {
     "title": "Professors",
@@ -43,6 +154,175 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "edit": "Edit"
+    "edit": "Edit",
+    "user": "User",
+    "a11y": {
+      "close": "Close",
+      "more": "More",
+      "morePages": "More pages",
+      "pagination": "Pagination",
+      "previous": "Previous",
+      "next": "Next",
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "goToPreviousPage": "Go to previous page",
+      "goToNextPage": "Go to next page",
+      "sidebarTitle": "Sidebar",
+      "sidebarDescription": "Displays the mobile sidebar.",
+      "toggleSidebar": "Toggle Sidebar"
+    }
+  }
+  ,
+  "home": {
+    "welcomeBack": "Welcome back, {{name}}!",
+    "rateProfessor": "Rate a Professor",
+    "roleMessage": {
+      "student": "Rate your professors and help fellow students make better decisions.",
+      "teacher": "View how students rate their professors.",
+      "admin": "Manage professors and oversee reviews."
+    },
+    "stats": {
+      "totalProfessors": "Total Professors",
+      "totalReviews": "Total Reviews",
+      "avgRating": "Avg Rating",
+      "departments": "Departments"
+    },
+    "topRated": {
+      "title": "Top Rated Professors",
+      "subtitle": "Highest rated by students",
+      "viewAll": "View All"
+    },
+    "empty": {
+      "title": "No Professors Yet",
+      "description": "There are no professors in the system yet.",
+      "addProfessor": "Add Professor"
+    }
+  },
+  "teacherDashboard": {
+    "title": "Teacher Dashboard",
+    "subtitle": "View the feedback and ratings you've received from students",
+    "loading": "Loading feedback...",
+    "empty": "No reviews yet. Once students submit reviews, you'll see your feedback here.",
+    "yourFeedback": "Your Feedback",
+    "reviewsCount_one": "review",
+    "reviewsCount_other": "reviews",
+    "chart": {
+      "title": "Average Ratings Comparison",
+      "description": "How your ratings compare across all categories",
+      "ratingLabel": "Rating"
+    }
+  },
+  "listing": {
+    "title": "Professors",
+    "subtitle": "Browse and rate professors at your college",
+    "add": {
+      "button": "Add Professor",
+      "title": "Add New Professor",
+      "adding": "Adding...",
+      "success": "Professor added successfully!",
+      "error": "Failed to add professor",
+      "fields": {
+        "fullName": "Full Name",
+        "department": "Department",
+        "titleOptional": "Title (Optional)",
+        "bioOptional": "Bio (Optional)"
+      },
+      "placeholders": {
+        "fullName": "John Smith",
+        "department": "Computer Science",
+        "title": "Associate Professor",
+        "bio": "Brief biography..."
+      },
+      "validation": {
+        "nameMin": "Name must be at least 2 characters",
+        "departmentRequired": "Department is required"
+      }
+    },
+    "filters": {
+      "allDepartments": "All Departments",
+      "sortBy": "Sort by"
+    },
+    "sort": {
+      "highestRating": "Highest Rating",
+      "mostReviews": "Most Reviews",
+      "nameAz": "Name A-Z"
+    },
+    "compare": {
+      "comparing": "Comparing:",
+      "clear": "Clear",
+      "compareWithCount": "Compare ({{count}})"
+    },
+    "empty": {
+      "title": "No Professors Found",
+      "tryAdjusting": "Try adjusting your search or filter criteria.",
+      "noneYet": "There are no professors in the system yet."
+    }
+  },
+  "doctorProfile": {
+    "doctorPrefix": "Dr.",
+    "backToProfessors": "Back to Professors",
+    "writeReview": "Write Review",
+    "rateDoctorTitle": "Rate Dr. {{name}}",
+    "anonymous": "Your review is completely anonymous",
+    "commentsOptional": "Comments (Optional)",
+    "commentPlaceholder": "Share your experience...",
+    "submitting": "Submitting...",
+    "submitReview": "Submit Review",
+    "reviewsTitle": "Reviews",
+    "unknownDate": "Unknown date",
+    "noReviews": {
+      "title": "No Reviews Yet",
+      "description": "Be the first to review this professor!"
+    },
+    "ratingBreakdown": "Rating Breakdown",
+    "reviewsCount_one": "review",
+    "reviewsCount_other": "reviews",
+    "notFound": {
+      "title": "Professor Not Found",
+      "description": "The professor you're looking for doesn't exist."
+    },
+    "factors": {
+      "teachingQuality": "Teaching Quality",
+      "availability": "Availability",
+      "communication": "Communication",
+      "knowledge": "Subject Knowledge",
+      "fairness": "Fairness"
+    },
+    "factorsShort": {
+      "teaching": "Teaching",
+      "availability": "Availability",
+      "communication": "Communication",
+      "knowledge": "Knowledge",
+      "fairness": "Fairness"
+    },
+    "anonymousCard": {
+      "title": "Anonymous Reviews",
+      "description": "All reviews on {{brand}} are completely anonymous. Your identity is never shared with professors or administrators."
+    },
+    "toast": {
+      "reviewSubmitted": "Review submitted successfully!",
+      "submitFailed": "Failed to submit review",
+      "rateAll": "Please rate all factors",
+      "unauthorized": {
+        "title": "Unauthorized",
+        "description": "You are logged out. Logging in again..."
+      }
+    }
+  },
+  "doctorCard": {
+    "viewProfile": "View Profile",
+    "reviews_one": "review",
+    "reviews_other": "reviews"
+  },
+  "compare": {
+    "backToProfessors": "Back to Professors",
+    "overall": "Overall",
+    "remove": "Remove",
+    "addProfessor": "Add professor",
+    "selectProfessor": "Select professor"
+  },
+  "notFound": {
+    "title": "404 Page Not Found",
+    "description": "Did you forget to add the page to the router?"
   }
 }

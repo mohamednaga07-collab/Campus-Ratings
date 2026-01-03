@@ -7,8 +7,20 @@ function hashPassword(password: string): string {
 
 const db = new Database("dev.db");
 
+type DbUser = {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  password: string;
+};
+
 // Check if user exists
-const user = db.prepare("SELECT * FROM users WHERE username = 'test123'").get();
+const user = db
+  .prepare<[], DbUser>("SELECT * FROM users WHERE username = 'test123'")
+  .get();
 
 if (user) {
   console.log("✅ Test user exists in database:");
@@ -35,7 +47,11 @@ if (user) {
 // Show all users
 console.log("");
 console.log("📋 All users in database:");
-const allUsers = db.prepare("SELECT id, username, email, firstName, lastName FROM users").all();
+const allUsers = db
+  .prepare<[], Pick<DbUser, "id" | "username" | "email" | "firstName" | "lastName">>(
+    "SELECT id, username, email, firstName, lastName FROM users"
+  )
+  .all();
 if (allUsers.length === 0) {
   console.log("   (none)");
 } else {

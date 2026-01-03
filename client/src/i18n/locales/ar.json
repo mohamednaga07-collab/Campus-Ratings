@@ -1,7 +1,22 @@
 {
+  "brand": {
+    "name": "بروف ريت"
+  },
+  "language": {
+    "change": "تغيير اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية"
+  },
+  "roles": {
+    "student": "طالب",
+    "teacher": "معلم",
+    "admin": "مسؤول"
+  },
   "nav": {
     "home": "الصفحة الرئيسية",
     "doctors": "الأساتذة",
+    "rate": "قيّم",
+    "rateProfessors": "قيّم الأساتذة",
     "compare": "مقارنة",
     "dashboard": "لوحة التحكم",
     "logout": "تسجيل الخروج"
@@ -10,13 +25,57 @@
     "title": "تقييمات الحرم الجامعي",
     "subtitle": "قيّم وقارن أساتذتك",
     "description": "شارك تجربتك وساعد الطلاب الآخرين في العثور على أفضل المعلمين",
-    "getStarted": "ابدأ الآن"
+    "getStarted": "ابدأ الآن",
+    "learnMore": "اعرف المزيد",
+    "badge": {
+      "anonymous": "مراجعات مجهولة 100%"
+    },
+    "hero": {
+      "title": "قيّم أساتذتك",
+      "highlight": "بصدق وبشكل مجهول",
+      "description": "ساعد الطلاب الآخرين على اتخاذ قرارات أفضل. قيّم الأساتذة بناءً على جودة التدريس، التوفر، التواصل، المعرفة، والإنصاف."
+    },
+    "features": {
+      "title": "لماذا تستخدم بروف ريت؟",
+      "subtitle": "اتخذ قرارات أكاديمية أفضل من خلال مراجعات صادقة من طلاب حقيقيين",
+      "cards": {
+        "factors": {
+          "title": "تقييم بخمسة معايير",
+          "description": "قيّم الأساتذة حسب جودة التدريس، التوفر، التواصل، المعرفة، والإنصاف لتقييم شامل."
+        },
+        "comparison": {
+          "title": "مقارنة جنباً إلى جنب",
+          "description": "قارن بين عدة أساتذة عبر جميع معايير التقييم لاختيار الأنسب لطريقة تعلمك."
+        },
+        "anonymity": {
+          "title": "مجهولية كاملة",
+          "description": "مراجعاتك مجهولة بالكامل. شارك رأيك بصراحة بدون قلق من أي تبعات."
+        }
+      }
+    },
+    "roles": {
+      "title": "للطلاب والمعلمين والمسؤولين",
+      "subtitle": "أدوار مختلفة بصلاحيات وصول مناسبة",
+      "cards": {
+        "student": "قيّم الأساتذة، قارن بينهم، واقرأ المراجعات من الطلاب الآخرين.",
+        "teacher": "اطلع على التقييمات والملاحظات لفهم كيف يرى الطلاب أسلوب تدريسِك.",
+        "admin": "إدارة الأساتذة، الإشراف على المراجعات، وإدارة المنصة بالكامل."
+      }
+    },
+    "final": {
+      "title": "جاهز للبدء؟",
+      "subtitle": "انضم إلى آلاف الطلاب لاتخاذ قرارات أكاديمية أفضل عبر مراجعات صادقة للأساتذة."
+    },
+    "footer": {
+      "tagline": "نساعد الطلاب على اتخاذ قرارات أفضل منذ 2024"
+    }
   },
   "auth": {
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
     "firstName": "الاسم الأول",
     "lastName": "الاسم الأخير",
     "iAm": "أنا",
@@ -28,7 +87,59 @@
     "loginTab": "تسجيل الدخول",
     "registerTab": "إنشاء حساب",
     "successTitle": "تم إنشاء الحساب!",
-    "successDescription": "تم إنشاء حسابك بنجاح."
+    "successDescription": "تم إنشاء حسابك بنجاح.",
+    "welcomeTitle": "مرحباً بك في بروف ريت",
+    "welcomeDescription": "سجّل الدخول أو أنشئ حساباً للبدء",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "creatingAccount": "جاري إنشاء الحساب...",
+    "placeholders": {
+      "username": "أدخل اسم المستخدم",
+      "password": "أدخل كلمة المرور",
+      "chooseUsername": "اختر اسم مستخدم",
+      "choosePassword": "اختر كلمة مرور",
+      "confirmPassword": "أعد إدخال كلمة المرور",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة"
+    },
+    "passwordStrength": {
+      "label": "القوة:",
+      "weak": "ضعيفة",
+      "fair": "متوسطة",
+      "strong": "قوية"
+    },
+    "success": {
+      "welcomeBackTitle": "مرحباً بعودتك!",
+      "welcomeBackDescription": "تم تسجيل الدخول باسم {{name}}.",
+      "accountCreatedTitle": "تم إنشاء الحساب!",
+      "accountCreatedDescription": "مرحباً {{name}}! تم إنشاء حسابك بنجاح.",
+      "overlayTitle": "تم إنشاء الحساب!",
+      "overlayDescription": "تم إنشاء حسابك بنجاح. سيتم تحويلك إلى تسجيل الدخول..."
+    },
+    "validation": {
+      "passwordsDontMatch": "كلمتا المرور غير متطابقتين",
+      "passwordsMatch": "✓ كلمتا المرور متطابقتان",
+      "passwordsMustMatch": "يجب أن تتطابق كلمتا المرور",
+      "passwordMustBeAtLeastFair": "يجب أن تكون كلمة المرور على الأقل متوسطة القوة",
+      "passwordRequirementsNotMet": "لم يتم استيفاء متطلبات كلمة المرور"
+    },
+    "errors": {
+      "usernameRequiredTitle": "اسم المستخدم مطلوب",
+      "usernameRequiredDescription": "يرجى إدخال اسم المستخدم",
+      "passwordRequiredTitle": "كلمة المرور مطلوبة",
+      "passwordRequiredDescription": "يرجى إدخال كلمة المرور",
+      "loginFailedTitle": "فشل تسجيل الدخول",
+      "loginFailedDescription": "اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من بياناتك أو أنشئ حساباً جديداً.",
+      "invalidPasswordTitle": "كلمة مرور غير صحيحة",
+      "invalidPasswordDescription": "كلمة المرور التي أدخلتها غير صحيحة. يرجى المحاولة مرة أخرى.",
+      "recaptchaRequiredTitle": "مطلوب reCAPTCHA",
+      "recaptchaRequiredDescription": "يرجى إكمال التحقق من reCAPTCHA.",
+      "passwordsDontMatchTitle": "كلمتا المرور غير متطابقتين",
+      "passwordsDontMatchDescription": "يرجى التأكد من تطابق كلمتي المرور.",
+      "passwordTooWeakTitle": "كلمة المرور ضعيفة",
+      "passwordTooWeakDescription": "يجب أن تكون كلمة المرور على الأقل متوسطة القوة.",
+      "registrationFailedTitle": "فشل إنشاء الحساب",
+      "registrationFailedDescription": "تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى."
+    }
   },
   "doctors": {
     "title": "الأساتذة",
@@ -43,6 +154,184 @@
     "cancel": "إلغاء",
     "save": "حفظ",
     "delete": "حذف",
-    "edit": "تعديل"
+    "edit": "تعديل",
+      "user": "مستخدم",
+      "a11y": {
+        "close": "إغلاق",
+        "more": "المزيد",
+        "morePages": "صفحات أخرى",
+        "pagination": "ترقيم الصفحات",
+        "previous": "السابق",
+        "next": "التالي",
+        "previousSlide": "الشريحة السابقة",
+        "nextSlide": "الشريحة التالية",
+        "goToPreviousPage": "الانتقال إلى الصفحة السابقة",
+        "goToNextPage": "الانتقال إلى الصفحة التالية",
+        "sidebarTitle": "الشريط الجانبي",
+        "sidebarDescription": "يعرض الشريط الجانبي على الهاتف.",
+        "toggleSidebar": "تبديل الشريط الجانبي"
+      }
+  }
+  ,
+  "home": {
+    "welcomeBack": "مرحباً بعودتك، {{name}}!",
+    "rateProfessor": "قيّم أستاذاً",
+    "roleMessage": {
+      "student": "قيّم أساتذتك وساعد زملاءك الطلاب على اتخاذ قرارات أفضل.",
+      "teacher": "اطلع على كيفية تقييم الطلاب للأساتذة.",
+      "admin": "قم بإدارة الأساتذة والإشراف على المراجعات."
+    },
+    "stats": {
+      "totalProfessors": "إجمالي الأساتذة",
+      "totalReviews": "إجمالي المراجعات",
+      "avgRating": "متوسط التقييم",
+      "departments": "الأقسام"
+    },
+    "topRated": {
+      "title": "أفضل الأساتذة تقييماً",
+      "subtitle": "الأعلى تقييماً من قبل الطلاب",
+      "viewAll": "عرض الكل"
+    },
+    "empty": {
+      "title": "لا يوجد أساتذة بعد",
+      "description": "لا يوجد أساتذة في النظام حالياً.",
+      "addProfessor": "أضف أستاذاً"
+    }
+  },
+  "teacherDashboard": {
+    "title": "لوحة الأستاذ",
+    "subtitle": "اعرض التعليقات والتقييمات التي تلقيتها من الطلاب",
+    "loading": "جارٍ تحميل التعليقات...",
+    "empty": "لا توجد مراجعات بعد. عندما يرسل الطلاب مراجعاتهم، ستظهر ملاحظاتك هنا.",
+    "yourFeedback": "ملاحظاتك",
+    "reviewsCount_one": "مراجعة",
+    "reviewsCount_two": "مراجعتان",
+    "reviewsCount_few": "مراجعات",
+    "reviewsCount_many": "مراجعة",
+    "reviewsCount_other": "مراجعة",
+    "chart": {
+      "title": "مقارنة متوسط التقييمات",
+      "description": "كيف تقارن تقييماتك عبر جميع الفئات",
+      "ratingLabel": "التقييم"
+    }
+  },
+  "listing": {
+    "title": "الأساتذة",
+    "subtitle": "تصفح الأساتذة وقم بتقييمهم في كليتك",
+    "add": {
+      "button": "إضافة أستاذ",
+      "title": "إضافة أستاذ جديد",
+      "adding": "جاري الإضافة...",
+      "success": "تمت إضافة الأستاذ بنجاح!",
+      "error": "فشل في إضافة الأستاذ",
+      "fields": {
+        "fullName": "الاسم الكامل",
+        "department": "القسم",
+        "titleOptional": "اللقب (اختياري)",
+        "bioOptional": "نبذة (اختياري)"
+      },
+      "placeholders": {
+        "fullName": "محمد أحمد",
+        "department": "علوم الحاسب",
+        "title": "أستاذ مشارك",
+        "bio": "نبذة قصيرة..."
+      },
+      "validation": {
+        "nameMin": "يجب أن يكون الاسم على الأقل حرفين",
+        "departmentRequired": "القسم مطلوب"
+      }
+    },
+    "filters": {
+      "allDepartments": "كل الأقسام",
+      "sortBy": "ترتيب حسب"
+    },
+    "sort": {
+      "highestRating": "أعلى تقييم",
+      "mostReviews": "أكثر مراجعات",
+      "nameAz": "الاسم أ-ي"
+    },
+    "compare": {
+      "comparing": "جارٍ المقارنة:",
+      "clear": "مسح",
+      "compareWithCount": "مقارنة ({{count}})"
+    },
+    "empty": {
+      "title": "لم يتم العثور على أساتذة",
+      "tryAdjusting": "حاول تعديل البحث أو معايير التصفية.",
+      "noneYet": "لا يوجد أساتذة في النظام حالياً."
+    }
+  },
+  "doctorProfile": {
+    "doctorPrefix": "د.",
+    "backToProfessors": "العودة إلى الأساتذة",
+    "writeReview": "اكتب مراجعة",
+    "rateDoctorTitle": "قيّم د. {{name}}",
+    "anonymous": "مراجعتك مجهولة تمامًا",
+    "commentsOptional": "تعليقات (اختياري)",
+    "commentPlaceholder": "شارك تجربتك...",
+    "submitting": "جارٍ الإرسال...",
+    "submitReview": "إرسال المراجعة",
+    "reviewsTitle": "المراجعات",
+    "unknownDate": "تاريخ غير معروف",
+    "noReviews": {
+      "title": "لا توجد مراجعات بعد",
+      "description": "كن أول من يراجع هذا الأستاذ!"
+    },
+    "ratingBreakdown": "تفاصيل التقييم",
+    "reviewsCount_one": "مراجعة",
+    "reviewsCount_two": "مراجعتان",
+    "reviewsCount_few": "مراجعات",
+    "reviewsCount_many": "مراجعة",
+    "reviewsCount_other": "مراجعة",
+    "notFound": {
+      "title": "الأستاذ غير موجود",
+      "description": "الأستاذ الذي تبحث عنه غير موجود."
+    },
+    "factors": {
+      "teachingQuality": "جودة التدريس",
+      "availability": "التوفر",
+      "communication": "التواصل",
+      "knowledge": "معرفة المادة",
+      "fairness": "الإنصاف"
+    },
+    "factorsShort": {
+      "teaching": "التدريس",
+      "availability": "التوفر",
+      "communication": "التواصل",
+      "knowledge": "المعرفة",
+      "fairness": "الإنصاف"
+    },
+    "anonymousCard": {
+      "title": "مراجعات مجهولة",
+      "description": "جميع المراجعات على {{brand}} مجهولة تمامًا. لا تتم مشاركة هويتك أبدًا مع الأساتذة أو الإدارة."
+    },
+    "toast": {
+      "reviewSubmitted": "تم إرسال المراجعة بنجاح!",
+      "submitFailed": "فشل إرسال المراجعة",
+      "rateAll": "يرجى تقييم جميع العوامل",
+      "unauthorized": {
+        "title": "غير مصرح",
+        "description": "تم تسجيل خروجك. جارٍ إعادة تسجيل الدخول..."
+      }
+    }
+  },
+  "doctorCard": {
+    "viewProfile": "عرض الملف الشخصي",
+    "reviews_one": "مراجعة",
+    "reviews_two": "مراجعتان",
+    "reviews_few": "مراجعات",
+    "reviews_many": "مراجعة",
+    "reviews_other": "مراجعة"
+  },
+  "compare": {
+    "backToProfessors": "العودة إلى الأساتذة",
+    "overall": "الإجمالي",
+    "remove": "إزالة",
+    "addProfessor": "أضف أستاذاً",
+    "selectProfessor": "اختر أستاذاً"
+  },
+  "notFound": {
+    "title": "404 الصفحة غير موجودة",
+    "description": "هل نسيت إضافة الصفحة إلى الموجّه (Router)؟"
   }
 }

@@ -5,7 +5,7 @@ export function useAuth() {
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
-    refetchOnMount: "stale", // Refetch on mount if stale
+    refetchOnMount: true,
     staleTime: 0, // Always considered stale
     gcTime: 0, // Don't cache in garbage collection
   });

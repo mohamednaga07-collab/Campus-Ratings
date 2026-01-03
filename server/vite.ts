@@ -22,7 +22,9 @@ export async function setupVite(server: Server, app: Express) {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        process.exit(1);
+        // Do not terminate the entire server process on Vite logger errors.
+        // Vite can emit errors (e.g. transient HMR issues) that should not
+        // bring down the Express/HTTP server.
       },
     },
     server: serverOptions,
