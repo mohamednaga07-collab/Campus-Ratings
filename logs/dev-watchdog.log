@@ -7551,3 +7551,19 @@ A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cau
 [2m11:26:48 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
 ⚠️  No authenticated user found
 11:28:18 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:30:11 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:30:13 AM [express] GET /api/auth/user 200 in 1ms
+[2m11:30:16 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotUsername.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:30:21 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResetPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:30:26 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:31:57 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:32:04 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ForgotUsername.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:32:11 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ResetPassword.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+[2m11:32:21 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/AuthForm.tsx, /src/index.css?v=U4o4Ig_07B8KfEaX44B6u[22m
+⚠️  No authenticated user found
+11:32:45 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:32:56 AM [express] GET /api/auth/user 200 in 1ms
+⚠️  No authenticated user found
+11:33:09 AM [express] GET /api/auth/user 200 in 1ms

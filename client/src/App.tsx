@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
+// Page imports - explicitly typed to help IDE resolution
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import DoctorListing from "@/pages/DoctorListing";
