@@ -5,36 +5,41 @@
 /* stylelint-enable at-rule-no-unknown */
 
 /* Reset body and html margins completely */
-html, body {
+html,
+body {
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: inherit;
 }
 
-/* Smooth scrolling and performance optimization */
-* {
-  scroll-behavior: smooth;
-}
-
+/* Performance optimization for 120fps */
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 100px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: direction 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  /* Force GPU acceleration for theme transitions */
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  /* Create new stacking context for better compositing */
-  isolation: isolate;
+  scroll-behavior: smooth;
 }
 
 body {
   overflow-x: hidden;
+}
+
+/* Smooth transitions for all elements - optimized for 120fps */
+* {
+  @apply transition-colors duration-200;
+}
+
+button,
+input,
+textarea,
+select {
+  @apply transition-all duration-200 ease-out;
 }
 
 /* RTL Support for Arabic */
@@ -47,51 +52,46 @@ html[dir="rtl"] body {
   direction: rtl;
 }
 
-/* GPU acceleration for better performance */
-body {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  will-change: background-color, color;
-  /* Optimize compositing */
-  isolation: isolate;
+/* Custom scrollbar styling - Refined for visibility */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
 }
 
-/* Custom scrollbar styling for light and dark modes */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.3) transparent;
-}
-
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-*::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-*::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.3);
-  border-radius: 5px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-*::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb {
   background: hsl(var(--primary) / 0.5);
-  background-clip: padding-box;
+  border-radius: 9999px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease-in-out;
 }
 
-.dark *::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.4);
-  background-clip: padding-box;
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
 }
 
-.dark *::-webkit-scrollbar-thumb:hover {
+/* Dark mode specific thumb */
+.dark ::-webkit-scrollbar-thumb {
   background: hsl(var(--primary) / 0.6);
-  background-clip: padding-box;
+  border: 4px solid transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+/* Base scrollbar styles for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.5) transparent;
+}
+
+.dark {
+  scrollbar-color: hsl(var(--primary) / 0.7) transparent;
 }
 
 /* Optimize animations for 120fps */
@@ -99,105 +99,95 @@ body {
   * {
     -webkit-tap-highlight-color: transparent;
   }
-  
-  /* Hardware acceleration for animated elements */
-  [class*="animate-"],
-  [class*="transition-"],
+
+  /* Professional button animations */
   button,
-  a {
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    will-change: transform;
-  }
-  
-  /* Smooth transitions */
-  button,
-  a,
-  [role="button"] {
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  
-  /* Smooth scrolling for internal links */
-  a[href^="#"] {
-    scroll-behavior: smooth;
-  }
-  
-  /* Butter-smooth 120fps theme color transitions - Maximum GPU optimization */
-  *,
-  *::before,
-  *::after {
-    transition: 
-      background-color 0.03s ease-out,
-      border-color 0.03s ease-out,
-      color 0.03s ease-out,
-      fill 0.03s ease-out,
-      stroke 0.03s ease-out;
-    /* Force GPU acceleration for color transitions */
+  [role="button"],
+  a[class*="button"] {
+    @apply transition-all duration-200 ease-out;
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
   }
-  
-  /* Optimize cards and containers for theme switching */
-  .card,
-  [class*="card"],
-  [class*="Card"],
-  [class*="bg-"],
-  [role="dialog"],
-  [role="menu"] {
-    contain: layout style paint;
-    isolation: isolate;
+
+  button:active:not(:disabled),
+  [role="button"]:active {
+    transform: scale(0.98);
   }
-  
-  /* Optimize text rendering during theme switch */
-  p, span, h1, h2, h3, h4, h5, h6, label, button {
-    text-rendering: optimizeSpeed;
+
+  button:focus-visible {
+    outline-offset: 2px;
   }
-  
-  /* Maximum GPU optimization for main content area */
-  main,
-  [role="main"],
-  .container,
-  .max-w-7xl,
-  .max-w-6xl,
-  .max-w-5xl,
-  .max-w-4xl,
-  .max-w-3xl,
-  .max-w-2xl,
-  .max-w-xl {
-    contain: layout style paint;
-    isolation: isolate;
-    will-change: background-color, color;
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-  }
-  
-  /* Optimize grid and flex layouts in center content */
-  .grid,
-  .flex,
-  [class*="grid"],
-  [class*="flex"] {
-    contain: layout;
-    transform: translate3d(0, 0, 0);
-  }
-  
-  /* Optimize form inputs and interactive elements */
+
+  /* Input field animations */
   input,
   textarea,
-  select,
-  [role="combobox"],
-  [role="listbox"] {
-    contain: layout style;
-    will-change: background-color, border-color, color;
+  select {
+    @apply transition-all duration-200;
+    transform: translate3d(0, 0, 0);
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Snappy color transitions for high performance */
+  * {
+    transition:
+      background-color 0.1s ease-in-out,
+      border-color 0.1s ease-in-out,
+      color 0.1s ease-in-out,
+      fill 0.1s ease-in-out,
+      stroke 0.1s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+  }
+
+  /* Card and container optimization */
+  .card,
+  [role="dialog"],
+  [role="menu"],
+  .rounded-lg {
+    @apply transition-shadow duration-150;
+  }
+
+  /* Hardware acceleration for main containers */
+  main,
+  .container,
+  [role="main"],
+  .max-w-md,
+  .max-w-lg,
+  .max-w-4xl {
+    contain: layout style paint;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+
+  /* Tab animations */
+  [role="tab"],
+  [role="tabpanel"] {
+    @apply transition-all duration-300;
+  }
+
+  /* Smooth icon animations */
+  svg {
+    @apply transition-transform duration-200;
+  }
+
+  /* Professional hover effects */
+  a:not([class*="button"]) {
+    @apply transition-colors duration-200;
   }
 }
 
 /* LIGHT MODE */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  --button-outline: rgba(0, 0, 0, .10);
+  --badge-outline: rgba(0, 0, 0, .05);
   --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0, 0, 0, .03);
+  --elevate-2: rgba(0, 0, 0, .08);
   --background: 210 4% 98%;
   --foreground: 210 6% 12%;
   --border: 210 4% 90%;
@@ -247,7 +237,7 @@ body {
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
-/* Fallback for older browsers */
+  /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
@@ -274,23 +264,17 @@ body {
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
-  
-  /* Ultra-smooth 120fps theme transitions - GPU accelerated */
-  transition: 
-    background-color 0.03s ease-out,
-    color 0.03s ease-out,
-    border-color 0.03s ease-out;
-  will-change: background-color, color, border-color;
-  /* Optimize rendering performance */
+
+  /* Transition settings inherited by * selector */
   contain: layout style;
 }
 
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255, 255, 255, .10);
+  --badge-outline: rgba(255, 255, 255, .05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255, 255, 255, .04);
+  --elevate-2: rgba(255, 255, 255, .09);
   --background: 210 5% 8%;
   --foreground: 210 4% 95%;
   --border: 210 5% 18%;
@@ -333,14 +317,10 @@ body {
   --shadow-lg: 0px 2px 0px 0px hsl(210 5% 0% / 0.00), 0px 4px 6px -1px hsl(210 5% 0% / 0.00);
   --shadow-xl: 0px 2px 0px 0px hsl(210 5% 0% / 0.00), 0px 8px 10px -1px hsl(210 5% 0% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(210 5% 0% / 0.00);
-  /* optimized for GPU */
-  transition: 
-    background-color 0.05s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.05s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Transition settings inherited by * selector */
   will-change: background-color, color, border-color;
 
-/* Fallback for older browsers */
+  /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
@@ -488,64 +468,7 @@ body {
   }
 }
 
-/* ============ reCAPTCHA Styling ============ */
 
-/* Main wrapper styling */
-.recaptcha-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 0;
-  margin: 0.5rem 0 -1rem 0;
-  border-radius: 0;
-  background-color: transparent;
-  border: none;
-  overflow: visible;
-  transform: scale(0.25);
-  transform-origin: top center;
-}
-
-@keyframes recaptchaFadeIn {
-  from {
-    opacity: 0.85;
-    transform: scale(0.98) translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.recaptcha-wrapper:hover {
-  border-color: hsl(var(--ring) / 1);
-  background-color: hsl(var(--card) / 0.8);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Dark mode wrapper */
-.dark .recaptcha-wrapper {
-  background-color: hsl(var(--card) / 1);
-  border-color: hsl(var(--card-border) / 1);
-}
-
-.dark .recaptcha-wrapper:hover {
-  border-color: hsl(var(--ring) / 0.8);
-  background-color: hsl(var(--card) / 0.9);
-}
-
-/* reCAPTCHA container */
-.g-recaptcha,
-.g_recaptcha,
-.recaptcha {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
 
 /* ============ reCAPTCHA Styling ============ */
 
@@ -573,6 +496,7 @@ body {
     opacity: 0.85;
     transform: scale(0.98) translateY(-2px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -656,3 +580,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Allow scrolling even when Radix Dialog (Settings) is open */
+html[data-radix-scroll-lock],
+body[data-radix-scroll-lock] {
+  overflow: auto !important;
+  margin-right: 0 !important;
+}
+
+[data-radix-scroll-lock] button,
+[data-radix-scroll-lock] a,
+[data-radix-scroll-lock] [role="button"] {
+  pointer-events: auto !important;
+}

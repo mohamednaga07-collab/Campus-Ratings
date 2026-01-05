@@ -83,6 +83,7 @@
     "student": "طالب",
     "teacher": "معلم",
     "createAccount": "إنشاء حساب",
+    "createNewAccount": "إنشاء حساب جديد",
     "haveAccount": "هل لديك حساب بالفعل؟",
     "noAccount": "ليس لديك حساب؟",
     "loginTab": "تسجيل الدخول",
@@ -136,6 +137,8 @@
       "invalidPasswordDescription": "كلمة المرور التي أدخلتها غير صحيحة. يرجى المحاولة مرة أخرى.",
       "userNotFoundTitle": "اسم المستخدم غير موجود",
       "userNotFoundDescription": "لا يمكن العثور على اسم المستخدم هذا. يرجى تسجيل الدخول باسم مستخدم صالح.",
+      "accountNotFound": "لم يتم العثور على اسم المستخدم \"{{username}}\" في نظامنا.",
+      "wouldYouLikeToRegister": "هل ترغب في إنشاء حساب جديد؟",
       "recaptchaRequiredTitle": "مطلوب reCAPTCHA",
       "recaptchaRequiredDescription": "يرجى إكمال التحقق من reCAPTCHA.",
       "passwordsDontMatchTitle": "كلمتا المرور غير متطابقتين",
@@ -197,24 +200,23 @@
     "save": "حفظ",
     "delete": "حذف",
     "edit": "تعديل",
-      "user": "مستخدم",
-      "a11y": {
-        "close": "إغلاق",
-        "more": "المزيد",
-        "morePages": "صفحات أخرى",
-        "pagination": "ترقيم الصفحات",
-        "previous": "السابق",
-        "next": "التالي",
-        "previousSlide": "الشريحة السابقة",
-        "nextSlide": "الشريحة التالية",
-        "goToPreviousPage": "الانتقال إلى الصفحة السابقة",
-        "goToNextPage": "الانتقال إلى الصفحة التالية",
-        "sidebarTitle": "الشريط الجانبي",
-        "sidebarDescription": "يعرض الشريط الجانبي على الهاتف.",
-        "toggleSidebar": "تبديل الشريط الجانبي"
-      }
-  }
-  ,
+    "user": "مستخدم",
+    "a11y": {
+      "close": "إغلاق",
+      "more": "المزيد",
+      "morePages": "صفحات أخرى",
+      "pagination": "ترقيم الصفحات",
+      "previous": "السابق",
+      "next": "التالي",
+      "previousSlide": "الشريحة السابقة",
+      "nextSlide": "الشريحة التالية",
+      "goToPreviousPage": "الانتقال إلى الصفحة السابقة",
+      "goToNextPage": "الانتقال إلى الصفحة التالية",
+      "sidebarTitle": "الشريط الجانبي",
+      "sidebarDescription": "يعرض الشريط الجانبي على الهاتف.",
+      "toggleSidebar": "تبديل الشريط الجانبي"
+    }
+  },
   "home": {
     "welcomeBack": "مرحباً بعودتك، {{name}}!",
     "studentTagline": "قيّم أساتذتك وساعد زملاءك الطلاب على اتخاذ قرارات أفضل.",
@@ -478,5 +480,136 @@
   "notFound": {
     "title": "404 الصفحة غير موجودة",
     "description": "هل نسيت إضافة الصفحة إلى الموجّه (Router)؟"
+  },
+  "admin": {
+    "header": {
+      "title": "مركز تحكم المسؤول",
+      "subtitle": "قم بإدارة منصتك بالكامل مع إشراف تام",
+      "export": "تصدير البيانات",
+      "settings": "الإعدادات"
+    },
+    "stats": {
+      "totalUsers": "إجمالي المستخدمين",
+      "totalDoctors": "إجمالي الأساتذة",
+      "totalReviews": "إجمالي المراجعات",
+      "systemHealth": "حالة النظام",
+      "activeMembers": "الأعضاء النشطون",
+      "registeredProfiles": "الملفات المسجلة",
+      "submittedRatings": "التقييمات المرسلة",
+      "uptimeStatus": "حالة التشغيل",
+      "live": "مباشر"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "manageUsers": "إدارة المستخدمين",
+      "manageDoctors": "إدارة الأساتذة",
+      "viewReviews": "عرض المراجعات",
+      "exportData": "تصدير البيانات"
+    },
+    "activity": {
+      "title": "النشاط الأخير",
+      "empty": "لا يوجد نشاط أخير",
+      "byUser": "بواسطة {{username}} ({{role}})",
+      "topRated": "الأعلى تقييماً",
+      "reviewsCount": "{{count}} مراجعة"
+    },
+    "tabs": {
+      "users": "المستخدمون",
+      "doctors": "الأساتذة",
+      "reviews": "المراجعات"
+    },
+    "users": {
+      "title": "إدارة المستخدمين",
+      "subtitle": "عرض وإدارة المستخدمين المسجلين",
+      "searchPlaceholder": "البحث عن المستخدمين...",
+      "allRoles": "كل الأدوار",
+      "table": {
+        "username": "اسم المستخدم",
+        "email": "البريد الإلكتروني",
+        "name": "الاسم",
+        "role": "الدور",
+        "joined": "تاريخ الانضمام",
+        "actions": "الإجراءات"
+      },
+      "edit": {
+        "title": "تعديل دور المستخدم",
+        "subtitle": "تغيير الدور لـ {{username}}",
+        "role": "الدور",
+        "save": "حفظ التغييرات"
+      },
+      "delete": {
+        "confirm": "هل تريد حذف المستخدم {{username}}؟"
+      }
+    },
+    "doctors": {
+      "title": "إدارة الأساتذة",
+      "subtitle": "عرض وإدارة ملفات الأساتذة",
+      "add": {
+        "title": "إضافة أستاذ جديد",
+        "subtitle": "إنشاء ملف أستاذ جديد",
+        "name": "الاسم *",
+        "department": "القسم *",
+        "doctorTitle": "اللقب",
+        "bio": "السيرة الذاتية",
+        "button": "إضافة أستاذ",
+        "placeholder": {
+          "name": "د. محمد أحمد",
+          "department": "علوم الحاسب",
+          "title": "أستاذ",
+          "bio": "سيرة ذاتية مختصرة..."
+        }
+      },
+      "table": {
+        "name": "الاسم",
+        "department": "القسم",
+        "title": "اللقب",
+        "created": "تاريخ الإنشاء",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "confirm": "هل تريد حذف الأستاذ {{name}}؟"
+      }
+    },
+    "reviews": {
+      "title": "إدارة المراجعات",
+      "subtitle": "مراقبة وإدارة المراجعات",
+      "table": {
+        "doctor": "الأستاذ",
+        "ratings": "التقييمات",
+        "comment": "التعليق",
+        "date": "التاريخ",
+        "actions": "الإجراءات",
+        "teaching": "التدريس",
+        "knowledge": "المعرفة"
+      },
+      "delete": {
+        "confirm": "هل تريد حذف هذه المراجعة؟"
+      }
+    },
+    "settings": {
+      "title": "إعدادات المسؤول",
+      "subtitle": "تكوين تفضيلات لوحة تحكم المسؤول",
+      "exportFormat": "صيغة التصدير",
+      "exportFormatDesc": "اختر الصيغة الافتراضية لتصدير البيانات",
+      "jsonFormat": "صيغة JSON",
+      "csvFormat": "صيغة CSV (المستخدمون)",
+      "statsTitle": "إحصائيات المنصة",
+      "exportAll": "تصدير كل البيانات",
+      "close": "إغلاق"
+    },
+    "toasts": {
+      "exportSuccess": "تم تصدير البيانات بنجاح",
+      "exportDesc": "تم التحميل بصيغة {{format}}",
+      "userDeleted": "تم حذف المستخدم بنجاح",
+      "userDeleteFailed": "فشل في حذف المستخدم",
+      "userRoleUpdated": "تم تحديث دور المستخدم بنجام",
+      "userRoleUpdateFailed": "فشل في تحديث دور المستخدم",
+      "doctorCreated": "تم إنشاء ملف الأستاذ بنجاح",
+      "doctorCreateFailed": "فشل في إنشاء ملف الأستاذ",
+      "doctorDeleted": "تم حذف ملف الأستاذ بنجاح",
+      "doctorDeleteFailed": "فشل في حذف ملف الأستاذ",
+      "reviewDeleted": "تم حذف المراجعة بنجاح",
+      "reviewDeleteFailed": "فشل في حذف المراجعة"
+    }
   }
 }

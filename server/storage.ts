@@ -17,7 +17,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { MemoryStorage } from "./memoryStorage";
 
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
+  // User operations (mandatory for Antigravity Auth)
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -41,6 +41,19 @@ export interface IStorage {
 
   // Stats
   getStats(): Promise<{ totalDoctors: number; totalReviews: number }>;
+  
+  // Activity logging (optional - may not be implemented in all storage types)
+  logActivity?(data: {
+    userId: string;
+    username: string;
+    role: string;
+    action: string;
+    type: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<void>;
+  
+  getActivityLogs?(limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {

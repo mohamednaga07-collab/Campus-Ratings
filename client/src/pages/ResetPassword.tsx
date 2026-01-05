@@ -44,157 +44,21 @@ export default function ResetPassword() {
   }, [t]);
 
   useEffect(() => {
-    try {
-      const isDark = document?.documentElement?.classList?.contains("dark") ?? false;
-      setIsDarkMode(isDark);
+    const isDark = document.documentElement.classList.contains("dark");
+    setIsDarkMode(isDark);
 
-      const observer = new MutationObserver(() => {
-        try {
-          const isDarkNow = document?.documentElement?.classList?.contains("dark") ?? false;
-          setIsDarkMode(isDarkNow);
-        } catch (e) {
-          console.warn('Error detecting dark mode:', e);
-        }
-      });
+    const observer = new MutationObserver(() => {
+      const isDarkNow = document.documentElement.classList.contains("dark");
+      setIsDarkMode(isDarkNow);
+    });
 
-      if (document?.documentElement) {
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["class"],
-        });
-      }
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
-      return () => {
-        try {
-          observer.disconnect();
-        } catch (e) {
-          // Ignore disconnect errors
-        }
-      };
-    } catch (e) {
-      console.warn('Error setting up dark mode observer:', e);
-      return () => {};
-    }
+    return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    const cleanupRecaptchaBackdrop = () => {
-      try {
-        // Remove any reCAPTCHA backdrop/modal overlays
-        const modals = document.querySelectorAll('[role="presentation"], .grecaptcha-modal, div[style*="position: fixed"][style*="opacity"]');
-        modals.forEach(modal => {
-          try {
-            modal?.remove();
-          } catch (e) {
-            // Ignore errors removing individual modals
-          }
-        });
-        
-        // Reset body styles that reCAPTCHA may have changed
-        try {
-          if (document?.body?.style) {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-          }
-        } catch (e) {
-          // Ignore body style errors
-        }
-        
-        try {
-          if (document?.documentElement?.style) {
-            document.documentElement.style.overflow = '';
-          }
-        } catch (e) {
-          // Ignore html style errors
-        }
-        
-        // Remove any inline styles on html/body that might be hiding content
-        const allDivs = document.querySelectorAll('div[style*="opacity"]');
-        allDivs.forEach(div => {
-          try {
-            const style = div?.getAttribute('style');
-            if (style && (style.includes('opacity: 0') || style.includes('display: none') || style.includes('visibility: hidden'))) {
-              if ((div?.classList?.length ?? 0) === 0 || (div?.id ?? '') === '') {
-                div?.remove();
-              }
-            }
-          } catch (e) {
-            // Ignore errors removing individual divs
-          }
-        });
-      } catch (e) {
-        console.warn('Error cleaning up reCAPTCHA backdrop:', e);
-      }
-    };
-
-    const handleClickOutside = (e: MouseEvent) => {
-      try {
-        const target = e?.target as HTMLElement;
-        if (!target) return;
-        
-        const recaptchaElement = document.querySelector(".g-recaptcha");
-        
-        // If there's no reCAPTCHA element or we clicked on it, do nothing
-        if (!recaptchaElement || recaptchaElement.contains(target)) return;
-        
-        // Check if clicking inside any reCAPTCHA iframe
-        const recaptchaIframes = document.querySelectorAll('iframe[src*="recaptcha"], iframe[title*="recaptcha"]');
-        let clickedInsideIframe = false;
-        
-        recaptchaIframes.forEach(iframe => {
-          try {
-            if (iframe?.contains?.(target)) {
-              clickedInsideIframe = true;
-            }
-          } catch (e) {
-            // Ignore iframe errors
-          }
-        });
-        
-        // If clicked outside reCAPTCHA container and iframes, close it
-        if (!clickedInsideIframe) {
-          try {
-            setRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleClickOutside:', e);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      try {
-        // Close reCAPTCHA modal on ESC key if token is set
-        if (e?.key === 'Escape' && recaptchaToken) {
-          try {
-            setRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA on ESC:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleKeyDown:', e);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      try {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleKeyDown);
-      } catch (e) {
-        console.warn('Error removing event listeners:', e);
-      }
-    };
-  }, [recaptchaToken]);
 
   const validatePassword = (password: string) => {
     if (password.length < 8) {
@@ -462,7 +326,7 @@ export default function ResetPassword() {
                   </div>
 
                   {recaptchaEnabled && (
-                    <div className="flex justify-center items-center gap-3">
+                    <div className="flex justify-center">
                       <ReCAPTCHA
                         ref={recaptchaRef}
                         key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
@@ -470,20 +334,6 @@ export default function ResetPassword() {
                         onChange={handleRecaptchaChange}
                         theme={isDarkMode ? "dark" : "light"}
                       />
-                      {recaptchaToken && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setRecaptchaToken(null);
-                            recaptchaRef.current?.reset();
-                          }}
-                          className="text-xs"
-                        >
-                          ✕
-                        </Button>
-                      )}
                     </div>
                   )}
 

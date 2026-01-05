@@ -83,6 +83,7 @@
     "student": "Student",
     "teacher": "Teacher",
     "createAccount": "Create Account",
+    "createNewAccount": "Create New Account",
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
     "loginTab": "Login",
@@ -136,6 +137,8 @@
       "invalidPasswordDescription": "The password you entered is incorrect. Please check your password and try again.",
       "userNotFoundTitle": "Username Not Found",
       "userNotFoundDescription": "This username cannot be found. Please login with a valid username.",
+      "accountNotFound": "The username \"{{username}}\" was not found in our system.",
+      "wouldYouLikeToRegister": "Would you like to create a new account?",
       "recaptchaRequiredTitle": "reCAPTCHA Required",
       "recaptchaRequiredDescription": "Please complete the reCAPTCHA verification.",
       "passwordsDontMatchTitle": "Passwords Don't Match",
@@ -213,8 +216,7 @@
       "sidebarDescription": "Displays the mobile sidebar.",
       "toggleSidebar": "Toggle Sidebar"
     }
-  }
-  ,
+  },
   "home": {
     "welcomeBack": "Welcome back, {{name}}!",
     "studentTagline": "Rate your professors and help fellow students make better decisions.",
@@ -469,5 +471,136 @@
   "notFound": {
     "title": "404 Page Not Found",
     "description": "Did you forget to add the page to the router?"
+  },
+  "admin": {
+    "header": {
+      "title": "Admin Control Center",
+      "subtitle": "Manage your platform with complete control and oversight",
+      "export": "Export Data",
+      "settings": "Settings"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalDoctors": "Total Professors",
+      "totalReviews": "Total Reviews",
+      "systemHealth": "System Health",
+      "activeMembers": "Active members",
+      "registeredProfiles": "Registered profiles",
+      "submittedRatings": "Submitted ratings",
+      "uptimeStatus": "Uptime status",
+      "live": "Live"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "manageUsers": "Manage Users",
+      "manageDoctors": "Manage Professors",
+      "viewReviews": "View Reviews",
+      "exportData": "Export Data"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "empty": "No recent activity",
+      "byUser": "by {{username}} ({{role}})",
+      "topRated": "Top Rated",
+      "reviewsCount": "{{count}} reviews"
+    },
+    "tabs": {
+      "users": "Users",
+      "doctors": "Professors",
+      "reviews": "Reviews"
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "View and manage registered users",
+      "searchPlaceholder": "Search users...",
+      "allRoles": "All Roles",
+      "table": {
+        "username": "Username",
+        "email": "Email",
+        "name": "Name",
+        "role": "Role",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "edit": {
+        "title": "Edit User Role",
+        "subtitle": "Change the role for {{username}}",
+        "role": "Role",
+        "save": "Save Changes"
+      },
+      "delete": {
+        "confirm": "Delete user {{username}}?"
+      }
+    },
+    "doctors": {
+      "title": "Professor Management",
+      "subtitle": "View and manage professor profiles",
+      "add": {
+        "title": "Add New Professor",
+        "subtitle": "Create a new professor profile",
+        "name": "Name *",
+        "department": "Department *",
+        "doctorTitle": "Title",
+        "bio": "Bio",
+        "button": "Add Professor",
+        "placeholder": {
+          "name": "Dr. John Doe",
+          "department": "Computer Science",
+          "title": "Professor",
+          "bio": "Brief bio..."
+        }
+      },
+      "table": {
+        "name": "Name",
+        "department": "Department",
+        "title": "Title",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "delete": {
+        "confirm": "Delete professor {{name}}?"
+      }
+    },
+    "reviews": {
+      "title": "Review Management",
+      "subtitle": "Monitor and moderate reviews",
+      "table": {
+        "doctor": "Professor",
+        "ratings": "Ratings",
+        "comment": "Comment",
+        "date": "Date",
+        "actions": "Actions",
+        "teaching": "Teaching",
+        "knowledge": "Knowledge"
+      },
+      "delete": {
+        "confirm": "Delete this review?"
+      }
+    },
+    "settings": {
+      "title": "Admin Settings",
+      "subtitle": "Configure admin dashboard preferences",
+      "exportFormat": "Export Format",
+      "exportFormatDesc": "Choose default format for data exports",
+      "jsonFormat": "JSON Format",
+      "csvFormat": "CSV Format (Users)",
+      "statsTitle": "Platform Statistics",
+      "exportAll": "Export All Data",
+      "close": "Close"
+    },
+    "toasts": {
+      "exportSuccess": "Data exported successfully",
+      "exportDesc": "Downloaded as {{format}}",
+      "userDeleted": "User deleted successfully",
+      "userDeleteFailed": "Failed to delete user",
+      "userRoleUpdated": "User role updated successfully",
+      "userRoleUpdateFailed": "Failed to update user role",
+      "doctorCreated": "Professor created successfully",
+      "doctorCreateFailed": "Failed to create professor",
+      "doctorDeleted": "Professor deleted successfully",
+      "doctorDeleteFailed": "Failed to delete professor",
+      "reviewDeleted": "Review deleted successfully",
+      "reviewDeleteFailed": "Failed to delete review"
+    }
   }
 }

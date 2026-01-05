@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthForm } from "@/components/AuthForm";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { GraduationCap, Star, BarChart3, Shield, Users, ChevronRight, CheckCircle, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,13 +52,16 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header
+        className="fixed top-0 left-0 right-0 z-[100] w-full border-b bg-background/98 backdrop-blur-md supports-[backdrop-filter]:bg-background/90 shadow-sm"
+      >
         <div className="container flex h-16 items-center justify-between gap-4 px-4 mx-auto">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl">{t("brand.name")}</span>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button onClick={handleLogin} data-testid="button-landing-login">
               {t("auth.login")}
@@ -65,6 +69,9 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {/* Spacer for fixed header */}
+      <div className="h-16" />
 
       <main>
         {/* Hero Section with Image Carousel */}
@@ -87,10 +94,10 @@ export default function Landing() {
               }}
             />
           </AnimatePresence>
-          
+
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/60 to-black/50 pointer-events-none" />
-          
+
           {/* Content Overlay */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <div className="container mx-auto max-w-4xl text-center px-4">
@@ -132,9 +139,8 @@ export default function Landing() {
               <motion.button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentImageIndex ? "bg-white w-6" : "bg-white/40 w-2"
-                }`}
+                className={`h-2 rounded-full transition-all ${index === currentImageIndex ? "bg-white w-6" : "bg-white/40 w-2"
+                  }`}
                 whileHover={{ scale: 1.2 }}
               />
             ))}
@@ -219,17 +225,17 @@ export default function Landing() {
                 {
                   icon: Users,
                   role: "student",
-                  color: "chart-1",
+                  color: "primary",
                 },
                 {
                   icon: GraduationCap,
                   role: "teacher",
-                  color: "chart-2",
+                  color: "primary",
                 },
                 {
                   icon: Shield,
                   role: "admin",
-                  color: "chart-4",
+                  color: "primary",
                 },
               ].map((item, index) => (
                 <motion.div

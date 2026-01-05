@@ -17,168 +17,68 @@ export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
   const recaptchaEnabled = import.meta.env.VITE_RECAPTCHA_ENABLED === "true";
   const recaptchaSiteKey =
     import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  useEffect(() => {
-    try {
-      const isDark = document?.documentElement?.classList?.contains("dark") ?? false;
-      setIsDarkMode(isDark);
+  const checkRecaptchaVerification = () => {
+    const verification = localStorage.getItem('recaptcha_verified');
+    if (verification) {
+      const timestamp = parseInt(verification, 10);
+      const now = Date.now();
+      const thirtyMinutes = 30 * 60 * 1000;
 
-      const observer = new MutationObserver(() => {
-        try {
-          const isDarkNow = document?.documentElement?.classList?.contains("dark") ?? false;
-          setIsDarkMode(isDarkNow);
-        } catch (e) {
-          console.warn('Error detecting dark mode:', e);
-        }
-      });
-
-      if (document?.documentElement) {
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["class"],
-        });
+      if (now - timestamp < thirtyMinutes) {
+        setIsSessionVerified(true);
+        return true;
+      } else {
+        localStorage.removeItem('recaptcha_verified');
+        setIsSessionVerified(false);
+        return false;
       }
-
-      return () => {
-        try {
-          observer.disconnect();
-        } catch (e) {
-          // Ignore disconnect errors
-        }
-      };
-    } catch (e) {
-      console.warn('Error setting up dark mode observer:', e);
-      return () => {};
     }
-  }, []);
+    return false;
+  };
+
+  const markRecaptchaVerified = () => {
+    const now = Date.now();
+    localStorage.setItem('recaptcha_verified', now.toString());
+    setIsSessionVerified(true);
+  };
 
   useEffect(() => {
-    const cleanupRecaptchaBackdrop = () => {
-      try {
-        // Remove any reCAPTCHA backdrop/modal overlays
-        const modals = document.querySelectorAll('[role="presentation"], .grecaptcha-modal, div[style*="position: fixed"][style*="opacity"]');
-        modals.forEach(modal => {
-          try {
-            modal?.remove();
-          } catch (e) {
-            // Ignore errors removing individual modals
-          }
-        });
-        
-        // Reset body styles that reCAPTCHA may have changed
-        try {
-          if (document?.body?.style) {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-          }
-        } catch (e) {
-          // Ignore body style errors
-        }
-        
-        try {
-          if (document?.documentElement?.style) {
-            document.documentElement.style.overflow = '';
-          }
-        } catch (e) {
-          // Ignore html style errors
-        }
-        
-        // Remove any inline styles on html/body that might be hiding content
-        const allDivs = document.querySelectorAll('div[style*="opacity"]');
-        allDivs.forEach(div => {
-          try {
-            const style = div?.getAttribute('style');
-            if (style && (style.includes('opacity: 0') || style.includes('display: none') || style.includes('visibility: hidden'))) {
-              if ((div?.classList?.length ?? 0) === 0 || (div?.id ?? '') === '') {
-                div?.remove();
-              }
-            }
-          } catch (e) {
-            // Ignore errors removing individual divs
-          }
-        });
-      } catch (e) {
-        console.warn('Error cleaning up reCAPTCHA backdrop:', e);
-      }
-    };
+    const isDark = document.documentElement.classList.contains("dark");
+    setIsDarkMode(isDark);
 
-    const handleClickOutside = (e: MouseEvent) => {
-      try {
-        const target = e?.target as HTMLElement;
-        if (!target) return;
-        
-        const recaptchaElement = document.querySelector(".g-recaptcha");
-        
-        // If there's no reCAPTCHA element or we clicked on it, do nothing
-        if (!recaptchaElement || recaptchaElement.contains(target)) return;
-        
-        // Check if clicking inside any reCAPTCHA iframe
-        const recaptchaIframes = document.querySelectorAll('iframe[src*="recaptcha"], iframe[title*="recaptcha"]');
-        let clickedInsideIframe = false;
-        
-        recaptchaIframes.forEach(iframe => {
-          try {
-            if (iframe?.contains?.(target)) {
-              clickedInsideIframe = true;
-            }
-          } catch (e) {
-            // Ignore iframe errors
-          }
-        });
-        
-        // If clicked outside reCAPTCHA container and iframes, close it
-        if (!clickedInsideIframe) {
-          try {
-            setRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleClickOutside:', e);
-      }
-    };
+    // Initial check
+    checkRecaptchaVerification();
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      try {
-        // Close reCAPTCHA modal on ESC key if token is set
-        if (e?.key === 'Escape' && recaptchaToken) {
-          try {
-            setRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA on ESC:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleKeyDown:', e);
-      }
-    };
+    // Check expiration every second
+    const interval = setInterval(checkRecaptchaVerification, 1000);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
+    const observer = new MutationObserver(() => {
+      const isDarkNow = document.documentElement.classList.contains("dark");
+      setIsDarkMode(isDarkNow);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => {
-      try {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleKeyDown);
-      } catch (e) {
-        console.warn('Error removing event listeners:', e);
-      }
+      observer.disconnect();
+      clearInterval(interval);
     };
-  }, [recaptchaToken]);
+  }, []);
 
   const handleRecaptchaChange = (token: string | null) => {
     setRecaptchaToken(token);
     if (token) {
+      markRecaptchaVerified();
       setTimeout(() => setRecaptchaToken(null), 120000);
     }
   };
@@ -187,7 +87,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError("");
 
-    if (recaptchaEnabled && !recaptchaToken) {
+    if (recaptchaEnabled && !recaptchaToken && !isSessionVerified) {
       setError(t("auth.errors.recaptchaRequiredDescription", { defaultValue: "Please complete the reCAPTCHA" }));
       return;
     }
@@ -197,7 +97,11 @@ export default function ForgotPassword() {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, recaptchaToken }),
+        body: JSON.stringify({
+          email,
+          recaptchaToken,
+          skipRecaptcha: isSessionVerified && !recaptchaToken
+        }),
       });
 
       if (!response.ok) {
@@ -296,29 +200,50 @@ export default function ForgotPassword() {
                     </div>
 
                     {recaptchaEnabled && (
-                      <div className="flex justify-center items-center gap-3">
-                        <ReCAPTCHA
-                          ref={recaptchaRef}
-                          key={isDarkMode ? "forgot-pass-dark" : "forgot-pass-light"}
-                          sitekey={recaptchaSiteKey}
-                          onChange={handleRecaptchaChange}
-                          theme={isDarkMode ? "dark" : "light"}
-                        />
-                        {recaptchaToken && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setRecaptchaToken(null);
-                              recaptchaRef.current?.reset();
-                            }}
-                            className="text-xs"
+                      isSessionVerified ? (
+                        <motion.div
+                          className="flex items-center justify-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+                          initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                          animate={{ scale: 1, opacity: 1, y: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        >
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 20 }}
                           >
-                            ✕
-                          </Button>
-                        )}
-                      </div>
+                            <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <motion.path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: 1, opacity: 1 }}
+                                transition={{ duration: 0.5, ease: "circOut", delay: 0.2 }}
+                              />
+                            </svg>
+                          </motion.div>
+                          <motion.span
+                            className="text-sm font-medium text-green-500"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2, duration: 0.3 }}
+                          >
+                            {t("auth.verifiedHuman", { defaultValue: "Verified Human" })}
+                          </motion.span>
+                        </motion.div>
+                      ) : (
+                        <div className="flex justify-center">
+                          <ReCAPTCHA
+                            ref={recaptchaRef}
+                            key={isDarkMode ? "forgot-pass-dark" : "forgot-pass-light"}
+                            sitekey={recaptchaSiteKey}
+                            onChange={handleRecaptchaChange}
+                            theme={isDarkMode ? "dark" : "light"}
+                          />
+                        </div>
+                      )
                     )}
 
                     <Button

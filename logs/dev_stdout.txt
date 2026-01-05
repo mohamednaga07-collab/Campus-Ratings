@@ -1,0 +1,44 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+✓ Using SQLite storage for development
+✅ Email service connected successfully
+3:50:33 AM [express] serving on 0.0.0.0:5000
+3:51:53 AM [express] GET /api/auth/user 200 in 6ms
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:51:57 AM [express] POST /api/auth/login 400 in 11ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:51:58 AM [express] POST /api/auth/login 400 in 8ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:51:59 AM [express] POST /api/auth/login 400 in 2ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:51:59 AM [express] POST /api/auth/login 400 in 3ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:00 AM [express] POST /api/auth/login 400 in 2ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:00 AM [express] POST /api/auth/login 400 in 2ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:01 AM [express] POST /api/auth/login 400 in 2ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:01 AM [express] POST /api/auth/login 400 in 3ms :: {"message":"Invalid username format"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:01 AM [express] POST /api/auth/login 400 in 2ms :: {"message":"Invalid username format"}
+❌ Invalid username format: mohamednaga07@gmail.com
+3:52:08 AM [express] POST /api/auth/register 400 in 7ms :: {"message":"Username must be 3-30 characters and contain only letters, numbers, dots, underscores, or hyphens"}
+❌ Invalid username format: mohamednaga07@gmail.com
+3:52:09 AM [express] POST /api/auth/register 400 in 6ms :: {"message":"Username must be 3-30 characters and contain only letters, numbers, dots, underscores, or hyphens"}
+🔐 Login attempt for username: mohamednaga07gmail.com
+❌ Invalid username format
+3:52:11 AM [express] POST /api/auth/login 400 in 8ms :: {"message":"Invalid username format"}
+[2m3:56:07 AM[22m [36m[1m[vite][22m[39m [32mclient/.env changed, restarting server...[39m
+[2m3:56:07 AM[22m [36m[1m[vite][22m[39m server restarted.

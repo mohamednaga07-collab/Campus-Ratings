@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, User, Lock, UserCircle } from "lucide-react";
+import { GraduationCap, User, Lock, UserCircle, Mail, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
+  const authCardRef = useRef<HTMLDivElement>(null);
 
   const recaptchaEnabled = import.meta.env.VITE_RECAPTCHA_ENABLED === "true";
   const recaptchaSiteKey =
@@ -40,179 +43,77 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
   // Register form state
   const [registerUsername, setRegisterUsername] = useState("");
+  // const [registerEmail, setRegisterEmail] = useState(""); // Removed per user request
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [registerFirstName, setRegisterFirstName] = useState("");
   const [registerLastName, setRegisterLastName] = useState("");
   const [registerRole, setRegisterRole] = useState<"student" | "teacher">("student");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  // Detect dark mode preference
-  useEffect(() => {
-    try {
-      const isDark = document?.documentElement?.classList?.contains("dark") ?? false;
-      setIsDarkMode(isDark);
+  // Check for existing reCAPTCHA verification in session
+  const checkRecaptchaVerification = () => {
+    const verification = localStorage.getItem('recaptcha_verified');
+    console.log('🔍 Checking reCAPTCHA verification:', verification);
+    if (verification) {
+      const timestamp = parseInt(verification, 10);
+      const now = Date.now();
+      const thirtyMinutes = 30 * 60 * 1000;
+      const timeLeft = thirtyMinutes - (now - timestamp);
 
-      // Listen for theme changes
-      const observer = new MutationObserver(() => {
-        try {
-          const isDarkNow = document?.documentElement?.classList?.contains("dark") ?? false;
-          setIsDarkMode(isDarkNow);
-        } catch (e) {
-          console.warn('Error detecting dark mode:', e);
-        }
-      });
+      console.log('⏰ Time since verification:', Math.floor((now - timestamp) / 1000), 'seconds');
+      console.log('⏰ Time left:', Math.floor(timeLeft / 1000), 'seconds');
 
-      if (document?.documentElement) {
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["class"],
-        });
+      if (now - timestamp < thirtyMinutes) {
+        console.log('✅ Session is verified!');
+        setIsSessionVerified(true);
+        return true;
+      } else {
+        console.log('❌ Session expired, removing verification');
+        localStorage.removeItem('recaptcha_verified');
+        setIsSessionVerified(false);
+        return false;
       }
-
-      return () => {
-        try {
-          observer.disconnect();
-        } catch (e) {
-          // Ignore disconnect errors
-        }
-      };
-    } catch (e) {
-      console.warn('Error setting up dark mode observer:', e);
-      return () => {};
     }
-  }, []);
+    console.log('❌ No verification found');
+    return false;
+  };
 
-  // Handle click outside reCAPTCHA modal to dismiss it
+  const markRecaptchaVerified = () => {
+    const now = Date.now();
+    console.log('✅ Marking reCAPTCHA as verified at:', new Date(now).toISOString());
+    localStorage.setItem('recaptcha_verified', now.toString());
+    setIsSessionVerified(true);
+  };
+
+  // Detect dark mode preference and check reCAPTCHA verification
   useEffect(() => {
-    const cleanupRecaptchaBackdrop = () => {
-      try {
-        // Remove any reCAPTCHA backdrop/modal overlays
-        const modals = document.querySelectorAll('[role="presentation"], .grecaptcha-modal, div[style*="position: fixed"][style*="opacity"]');
-        modals.forEach(modal => {
-          try {
-            modal?.remove();
-          } catch (e) {
-            // Ignore errors removing individual modals
-          }
-        });
-        
-        // Reset body styles that reCAPTCHA may have changed
-        try {
-          if (document?.body?.style) {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-          }
-        } catch (e) {
-          // Ignore body style errors
-        }
-        
-        try {
-          if (document?.documentElement?.style) {
-            document.documentElement.style.overflow = '';
-          }
-        } catch (e) {
-          // Ignore html style errors
-        }
-        
-        // Remove any inline styles on html/body that might be hiding content
-        const allDivs = document.querySelectorAll('div[style*="opacity"]');
-        allDivs.forEach(div => {
-          try {
-            const style = div?.getAttribute('style');
-            if (style && (style.includes('opacity: 0') || style.includes('display: none') || style.includes('visibility: hidden'))) {
-              if ((div?.classList?.length ?? 0) === 0 || (div?.id ?? '') === '') {
-                div?.remove();
-              }
-            }
-          } catch (e) {
-            // Ignore errors removing individual divs
-          }
-        });
-      } catch (e) {
-        console.warn('Error cleaning up reCAPTCHA backdrop:', e);
-      }
-    };
+    const isDark = document.documentElement.classList.contains("dark");
+    setIsDarkMode(isDark);
 
-    const handleClickOutside = (e: MouseEvent) => {
-      try {
-        const target = e?.target as HTMLElement;
-        if (!target) return;
-        
-        const recaptchaElements = document.querySelectorAll(".g-recaptcha");
-        
-        // Check if clicked on any reCAPTCHA container
-        let clickedOnRecaptcha = false;
-        recaptchaElements.forEach(elem => {
-          try {
-            if (elem?.contains?.(target)) {
-              clickedOnRecaptcha = true;
-            }
-          } catch (e) {
-            // Ignore errors checking contains
-          }
-        });
-        
-        if (clickedOnRecaptcha) return;
-        
-        // Check if clicking inside any reCAPTCHA iframe
-        const recaptchaIframes = document.querySelectorAll('iframe[src*="recaptcha"], iframe[title*="recaptcha"]');
-        let clickedInsideIframe = false;
-        
-        recaptchaIframes.forEach(iframe => {
-          try {
-            if (iframe?.contains?.(target)) {
-              clickedInsideIframe = true;
-            }
-          } catch (e) {
-            // Ignore iframe errors
-          }
-        });
-        
-        // If clicked outside all reCAPTCHA elements, close them
-        if (!clickedInsideIframe) {
-          try {
-            setRecaptchaToken(null);
-            setLoginRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            loginRecaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleClickOutside:', e);
-      }
-    };
+    // Initial check
+    checkRecaptchaVerification();
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      try {
-        // Close reCAPTCHA modal on ESC key
-        if (e?.key === 'Escape') {
-          try {
-            setRecaptchaToken(null);
-            setLoginRecaptchaToken(null);
-            recaptchaRef.current?.reset?.();
-            loginRecaptchaRef.current?.reset?.();
-            setTimeout(() => cleanupRecaptchaBackdrop(), 100);
-          } catch (e) {
-            console.warn('Error resetting reCAPTCHA on ESC:', e);
-          }
-        }
-      } catch (e) {
-        console.warn('Error in handleKeyDown:', e);
-      }
-    };
+    // Check expiration every second
+    const interval = setInterval(checkRecaptchaVerification, 1000);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
+    // Listen for theme changes
+    const observer = new MutationObserver(() => {
+      const isDarkNow = document.documentElement.classList.contains("dark");
+      setIsDarkMode(isDarkNow);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
+      observer.disconnect();
+      clearInterval(interval);
     };
   }, []);
 
@@ -232,6 +133,37 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     const newPassword = e.target.value;
     setRegisterPassword(newPassword);
     setPasswordStrength(calculatePasswordStrength(newPassword));
+    setValidationErrors([]); // Clear validation errors on password change
+  };
+
+  const validateRegisterForm = () => {
+    const errors: string[] = [];
+
+    // Validate Username as Email
+    // Validate Username as Email
+    if (!registerUsername) {
+      errors.push(t("auth.validation.usernameRequired", { defaultValue: "Username is required" }));
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerUsername)) {
+      errors.push(t("auth.validation.usernameInvalid", { defaultValue: "Username must be a valid email address" }));
+    }
+
+    if (!registerPassword) errors.push(t("auth.validation.passwordRequired", { defaultValue: "Password is required" }));
+    if (registerPassword !== registerPasswordConfirm) errors.push(t("auth.validation.passwordsDontMatch", { defaultValue: "Passwords do not match" }));
+
+    // Relaxed password rules check (>= 40 is fair)
+    if (passwordStrength < 40) {
+      errors.push("Password is too weak. Please make it at least 'Fair'.");
+    }
+
+    if (recaptchaEnabled && !recaptchaToken && !isSessionVerified) {
+      errors.push(t("auth.validation.recaptchaRequired", { defaultValue: "Please verify you are human" }));
+    }
+
+    if (!registerFirstName.trim()) errors.push(t("auth.validation.firstNameRequired", { defaultValue: "First Name is required" }));
+    if (!registerLastName.trim()) errors.push(t("auth.validation.lastNameRequired", { defaultValue: "Last Name is required" }));
+
+    setValidationErrors(errors);
+    return errors.length === 0;
   };
 
   const getPasswordStrengthColor = (): string => {
@@ -247,15 +179,18 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   };
 
   const canSubmitRegister = (): boolean => {
-    const passwordsMatch = registerPassword === registerPasswordConfirm;
-    const passwordStrong = passwordStrength >= 70 || passwordStrength >= 40;
-    return passwordsMatch && passwordStrong;
+    const hasUsername = registerUsername.trim().length >= 3; // Username is now email, so length check is still relevant
+    const passwordsMatch = registerPassword === registerPasswordConfirm && registerPassword.length >= 8;
+    const passwordStrong = passwordStrength >= 40; // Relaxed check
+    const namesFilled = registerFirstName.trim().length > 0 && registerLastName.trim().length > 0;
+    return hasUsername && passwordsMatch && passwordStrong && namesFilled;
   };
 
   const handleRecaptchaChange = (token: string | null) => {
     setRecaptchaToken(token);
-    // Auto-reset reCAPTCHA token after 2 minutes (120 seconds)
+    // Mark user as verified for 30 minutes across all forms
     if (token) {
+      markRecaptchaVerified();
       setTimeout(() => {
         setRecaptchaToken(null);
       }, 120000);
@@ -264,7 +199,6 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
   const handleRegisterTab = () => {
     setActiveTab("register");
-    // Reset reCAPTCHA when switching to register tab
     setRecaptchaToken(null);
     setLoginRecaptchaToken(null);
   };
@@ -276,7 +210,9 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
   const handleLoginRecaptchaChange = (token: string | null) => {
     setLoginRecaptchaToken(token);
+    // Mark user as verified for 30 minutes across all forms
     if (token) {
+      markRecaptchaVerified();
       setTimeout(() => {
         setLoginRecaptchaToken(null);
       }, 120000);
@@ -285,8 +221,11 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    console.log("🔄 handleLogin called");
+
     if (!loginUsername.trim()) {
+      console.log("⚠️ Showing username required toast");
       toast({
         title: t("auth.errors.usernameRequiredTitle"),
         description: t("auth.errors.usernameRequiredDescription"),
@@ -294,8 +233,9 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       });
       return;
     }
-    
+
     if (!loginPassword.trim()) {
+      console.log("⚠️ Showing password required toast");
       toast({
         title: t("auth.errors.passwordRequiredTitle"),
         description: t("auth.errors.passwordRequiredDescription"),
@@ -304,7 +244,11 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       return;
     }
 
-    if (recaptchaEnabled && !loginRecaptchaToken) {
+    // Admin bypass - no need to select role for admin users
+    const isAdminLogin = loginUsername.toLowerCase() === "admin";
+
+    if (!isAdminLogin && recaptchaEnabled && !loginRecaptchaToken && !isSessionVerified) {
+      console.log("⚠️ Showing reCAPTCHA required toast");
       toast({
         title: t("auth.errors.recaptchaRequiredTitle"),
         description: t("auth.errors.recaptchaRequiredDescription"),
@@ -312,17 +256,27 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       });
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
-      console.log("🔐 Attempting login with username:", loginUsername);
-      const responseObj: any = await apiRequest("POST", "/api/auth/login", {
+      const requestData = {
         username: loginUsername,
         password: loginPassword,
-        role: loginAs,
+        role: isAdminLogin ? "admin" : loginAs,
         recaptchaToken: loginRecaptchaToken,
+        skipRecaptcha: isSessionVerified && !loginRecaptchaToken,
+      };
+
+      console.log("🔐 Attempting login with:", {
+        username: loginUsername,
+        hasToken: !!loginRecaptchaToken,
+        skipRecaptcha: requestData.skipRecaptcha,
+        isSessionVerified: isSessionVerified,
+        recaptchaEnabled: recaptchaEnabled
       });
+
+      const responseObj: any = await apiRequest("POST", "/api/auth/login", requestData);
 
       // apiRequest returns a Response object, we need to parse JSON
       const response = await responseObj.json();
@@ -330,41 +284,69 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
       if (response?.user) {
         console.log("✅ Login successful! User:", response.user);
-        
+
         // Show success message
-        toast({ 
-          title: t("auth.success.welcomeBackTitle"),
-          description: t("auth.success.welcomeBackDescription", { name: response.user.firstName || loginUsername }),
+        console.log("📢 Showing success toast");
+        toast({
+          title: "✅ Logged In Successfully!",
+          description: `Welcome back ${response.user.firstName || loginUsername}! Ready to explore?`,
         });
-        
+
         // Clear login form
         setLoginUsername("");
         setLoginPassword("");
         setLoginRecaptchaToken(null);
-        
+
         // Update auth state immediately so routing reacts instantly
         queryClient.setQueryData(["/api/auth/user"], response.user);
 
-        // Redirect based on the selected role button
-        const finalTarget = loginAs === "teacher" ? "/teacher-dashboard" : "/";
+        // Redirect based on user role
+        let finalTarget = "/";
+        if (response.user.role === "admin") {
+          finalTarget = "/admin";
+        } else if (response.user.role === "teacher" || loginAs === "teacher") {
+          finalTarget = "/teacher-dashboard";
+        }
 
         if (onSuccess) onSuccess();
 
-        window.location.assign(finalTarget);
+        // Delay redirect slightly to show toast
+        console.log("🔄 Redirecting to:", finalTarget);
+        setTimeout(() => {
+          window.location.assign(finalTarget);
+        }, 500);
       } else {
         throw new Error("Login failed - no user data returned");
       }
     } catch (error: any) {
       console.error("❌ Login error:", error);
-      
-      const errorMessage = error?.message || "";
 
-      if (/this username cannot be found/i.test(errorMessage)) {
+      const errorMessage = error?.message || "";
+      console.log("📝 Error message:", errorMessage);
+
+      // Check for user not found errors (invalid username or password)
+      if (/invalid username or password|username.*found|cannot be found|check your username or create/i.test(errorMessage) || error?.response?.status === 401) {
+        console.log("📢 Login failed - Invalid credentials or unregistered username");
         toast({
-          title: t("auth.errors.userNotFoundTitle"),
-          description: t("auth.errors.userNotFoundDescription"),
+          title: "❌ Login Failed",
+          description: `The username "${loginUsername}" doesn't exist or the password is incorrect. Please check and try again, or create a new account.`,
+          variant: "destructive",
+          duration: 5000,
+        });
+
+        setIsLoading(false);
+        return;
+      }
+
+      // Check for reCAPTCHA errors
+      if (/recaptcha verification/i.test(errorMessage)) {
+        console.log("📢 Showing reCAPTCHA error toast");
+        toast({
+          title: t("auth.errors.recaptchaRequiredTitle"),
+          description: errorMessage,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -385,73 +367,62 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
           }),
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
-      
-      // Only show specific error if it's about password being invalid
-      // Otherwise show generic error (username might not exist)
+
+      // Check for specific error messages
       let title = "❌ Login Failed";
-      let description = "";
-      
+      let description = errorMessage || "An error occurred during login. Please try again.";
+
       if (errorMessage.toLowerCase().includes("invalid password")) {
-        title = t("auth.errors.invalidPasswordTitle");
-        description = t("auth.errors.invalidPasswordDescription");
-      } else {
-        title = t("auth.errors.loginFailedTitle");
-        description = t("auth.errors.loginFailedDescription");
+        title = "❌ Incorrect Password";
+        description = "The password you entered is incorrect. Please try again.";
+      } else if (errorMessage.toLowerCase().includes("role mismatch") || errorMessage.toLowerCase().includes("invalid username or password")) {
+        title = "❌ Account Type Mismatch";
+        description = `This account is not registered as a ${loginAs}. Please select the correct role or create a new account.`;
+      } else if (errorMessage.toLowerCase().includes("account locked")) {
+        title = "🔒 Account Locked";
+        description = errorMessage;
+      } else if (errorMessage.toLowerCase().includes("user not found")) {
+        title = "❓ Invalid Username";
+        description = "Invalid username. Did you forget your username? or Create a new account";
+      } else if (errorMessage.toLowerCase().includes("recaptcha")) {
+        title = "🤖 Verification Failed";
+        description = errorMessage;
       }
-      
+
+      console.log("📢 Showing error toast:", { title, description });
       toast({
         title: title,
         description: description,
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (recaptchaEnabled && !recaptchaToken) {
-      toast({
-        title: t("auth.errors.recaptchaRequiredTitle"),
-        description: t("auth.errors.recaptchaRequiredDescription"),
-        variant: "destructive",
-      });
-      return;
-    }
 
-    if (registerPassword !== registerPasswordConfirm) {
-      toast({
-        title: t("auth.errors.passwordsDontMatchTitle"),
-        description: t("auth.errors.passwordsDontMatchDescription"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (passwordStrength < 40) {
-      toast({
-        title: t("auth.errors.passwordTooWeakTitle"),
-        description: t("auth.errors.passwordTooWeakDescription"),
-        variant: "destructive",
-      });
+    if (!validateRegisterForm()) {
+      // Errors are displayed in the Alert component
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log("Attempting registration with username:", registerUsername);
+      console.log("Attempting registration with email as username:", registerUsername);
       const responseObj: any = await apiRequest("POST", "/api/auth/register", {
-        username: registerUsername,
+        username: registerUsername, // Email is the username
         password: registerPassword,
+        email: registerUsername,    // Send same value for email
         firstName: registerFirstName,
         lastName: registerLastName,
         role: registerRole,
         recaptchaToken,
+        skipRecaptcha: isSessionVerified && !recaptchaToken,
       });
 
       // apiRequest returns a Response object, we need to parse JSON
@@ -460,11 +431,11 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
       if (response?.user) {
         console.log("Registration successful, user:", response.user);
-        
-        // Show success toast
+
+        // Show success toast with celebratory message
         toast({
-          title: t("auth.success.accountCreatedTitle"),
-          description: t("auth.success.accountCreatedDescription", { name: registerFirstName || registerUsername }),
+          title: "🎉 Account Created Successfully!",
+          description: `Welcome ${registerFirstName || registerUsername}! Your account has been created. You can now log in.`,
         });
 
         // Set success state and switch to login tab after showing message
@@ -480,16 +451,31 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
           setRegisterLastName("");
           setRecaptchaToken(null);
         }, 2000);
-        
+
         if (onSuccess) onSuccess();
       } else {
         throw new Error("No user in response");
       }
     } catch (error: any) {
       console.error("Registration error:", error);
+
+      let errorTitle = "❌ Registration Failed";
+      let errorDescription = error.message || "An error occurred during registration. Please try again.";
+
+      if (error.message.includes("already exists")) {
+        errorTitle = "⚠️ Username Taken";
+        errorDescription = `The username "${registerUsername}" is already taken. Please choose a different username.`;
+      } else if (error.message.includes("reCAPTCHA")) {
+        errorTitle = "🤖 Verification Failed";
+        errorDescription = "reCAPTCHA verification failed. Please try again.";
+      } else if (error.message.includes("password")) {
+        errorTitle = "🔑 Password Requirements";
+        errorDescription = "Your password doesn't meet the security requirements. Please make it stronger.";
+      }
+
       toast({
-        title: t("auth.errors.registrationFailedTitle"),
-        description: error.message || t("auth.errors.registrationFailedDescription"),
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
@@ -502,8 +488,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       id="auth-form-container"
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ 
-        duration: 0.8, 
+      transition={{
+        duration: 0.8,
         ease: [0.34, 1.56, 0.64, 1],
         staggerChildren: 0.1
       }}
@@ -513,316 +499,453 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black/50"
+          className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60 backdrop-blur-sm"
         >
-          <Card className="w-full max-w-md mx-4">
+          <Card className="w-full max-w-md mx-4 shadow-2xl border-green-500/50">
             <CardContent className="pt-12 pb-12 text-center space-y-4">
               <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-                className="text-5xl"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+                className="text-6xl mb-4"
               >
-                ✅
+                🎉
               </motion.div>
-              <h2 className="text-2xl font-bold text-green-600">{t("auth.success.overlayTitle")}</h2>
-              <p className="text-muted-foreground">
-                {t("auth.success.overlayDescription")}
+              <h2 className="text-3xl font-bold text-green-600">Account Created!</h2>
+              <p className="text-lg text-muted-foreground font-medium">
+                Welcome to Campus Ratings. Redirecting you to login...
               </p>
             </CardContent>
           </Card>
         </motion.div>
       )}
 
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl text-center">{t("auth.welcomeTitle")}</CardTitle>
-          <CardDescription className="text-center">
-            {t("auth.welcomeDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t("auth.loginTab")}</TabsTrigger>
-              <TabsTrigger value="register">{t("auth.registerTab")}</TabsTrigger>
-            </TabsList>
+      <motion.div
+        ref={authCardRef}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+        className="w-full max-w-md mx-auto"
+      >
+        <Card className="w-full shadow-xl hover:shadow-2xl transition-shadow duration-300 border-border/50">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <CardHeader className="space-y-1 pb-4">
+              <motion.div
+                className="flex items-center justify-center mb-4"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3, type: "spring", stiffness: 100 }}
+              >
+                <motion.div
+                  className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <GraduationCap className="h-6 w-6 text-white" />
+                </motion.div>
+              </motion.div>
+              <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">{t("auth.welcomeTitle")}</CardTitle>
+              <CardDescription className="text-center text-sm">{t("auth.welcomeDescription")}</CardDescription>
+            </CardHeader>
+          </motion.div>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">{t("auth.loginTab")}</TabsTrigger>
+                <TabsTrigger value="register">{t("auth.registerTab")}</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-username">{t("auth.username")}</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-username"
-                      placeholder={t("auth.placeholders.username")}
-                      value={loginUsername}
-                      onChange={(e) => setLoginUsername(e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-username">{t("auth.username")}</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-username"
+                        placeholder={t("auth.placeholders.username")}
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        className="pl-10"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">{t("auth.password")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder={t("auth.placeholders.password")}
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">{t("auth.password")}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder={t("auth.placeholders.password")}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>{t("auth.loginAs")}</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant={loginAs === "student" ? "default" : "outline"}
-                      onClick={() => setLoginAs("student")}
-                      disabled={isLoading}
-                    >
-                      {t("roles.student")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={loginAs === "teacher" ? "default" : "outline"}
-                      onClick={() => setLoginAs("teacher")}
-                      disabled={isLoading}
-                    >
-                      {t("roles.teacher")}
-                    </Button>
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? t("auth.loggingIn") : t("auth.login")}
-                </Button>
-
-                {recaptchaEnabled && (
-                  <motion.div 
-                    className="recaptcha-wrapper" 
-                    key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
-                    initial={{ opacity: 0.8, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    <ReCAPTCHA
-                      ref={loginRecaptchaRef}
-                      key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
-                      sitekey={recaptchaSiteKey}
-                      onChange={handleLoginRecaptchaChange}
-                      theme={isDarkMode ? "dark" : "light"}
-                    />
-                  </motion.div>
-                )}
-
-                <div className="flex gap-2 justify-center text-sm">
-                  <Link href="/forgot-username" className="text-primary hover:underline">
-                    {t("auth.forgotUsername", { defaultValue: "Forgot username?" })}
-                  </Link>
-                  <span className="text-muted-foreground">•</span>
-                  <Link href="/forgot-password" className="text-primary hover:underline">
-                    {t("auth.forgotPassword", { defaultValue: "Forgot password?" })}
-                  </Link>
-                </div>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-username">{t("auth.username")}</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-username"
-                      placeholder={t("auth.placeholders.chooseUsername")}
-                      value={registerUsername}
-                      onChange={(e) => setRegisterUsername(e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">{t("auth.password")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder={t("auth.placeholders.choosePassword")}
-                      value={registerPassword}
-                      onChange={handlePasswordChange}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                      minLength={8}
-                    />
-                  </div>
-                  
-                  {/* Password Strength Meter */}
-                  {registerPassword && (
+                  {/* Hide role selection for admin users */}
+                  {loginUsername.toLowerCase() !== "admin" && (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
-                        <span className={`font-semibold ${
-                          passwordStrength < 40 ? "text-red-500" : 
-                          passwordStrength < 70 ? "text-yellow-500" : 
-                          "text-green-500"
-                        }`}>
-                          {getPasswordStrengthText()}
-                        </span>
-                      </div>
-                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full ${getPasswordStrengthColor()}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${passwordStrength}%` }}
-                          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-                        />
+                      <Label>{t("auth.loginAs")}</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant={loginAs === "student" ? "default" : "outline"}
+                          onClick={() => setLoginAs("student")}
+                          disabled={isLoading}
+                        >
+                          {t("roles.student")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={loginAs === "teacher" ? "default" : "outline"}
+                          onClick={() => setLoginAs("teacher")}
+                          disabled={isLoading}
+                        >
+                          {t("roles.teacher")}
+                        </Button>
                       </div>
                     </div>
                   )}
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-password-confirm">{t("auth.confirmPassword")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-password-confirm"
-                      type="password"
-                      placeholder={t("auth.placeholders.confirmPassword")}
-                      value={registerPasswordConfirm}
-                      onChange={(e) => setRegisterPasswordConfirm(e.target.value)}
-                      className={`pl-10 ${
-                        registerPasswordConfirm && registerPassword !== registerPasswordConfirm
+                  {/* Show admin badge when admin username is entered */}
+                  {loginUsername.toLowerCase() === "admin" && (
+                    <div className="flex items-center justify-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <UserCircle className="h-5 w-5 text-red-500" />
+                      <span className="text-sm font-medium text-red-500">Admin Login</span>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full font-semibold"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>{t("auth.loggingIn")}</span>
+                      </>
+                    ) : (
+                      t("auth.login")
+                    )}
+                  </Button>
+
+                  {recaptchaEnabled && (
+                    isSessionVerified ? (
+                      <motion.div
+                        className="flex items-center justify-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+                        initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 20 }}
+                        >
+                          <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <motion.path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              initial={{ pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 1 }}
+                              transition={{ duration: 0.5, ease: "circOut", delay: 0.2 }}
+                            />
+                          </svg>
+                        </motion.div>
+                        <motion.span
+                          className="text-sm font-medium text-green-500"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2, duration: 0.3 }}
+                        >
+                          {t("auth.verifiedHuman", { defaultValue: "Verified Human" })}
+                        </motion.span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        className="recaptcha-wrapper"
+                        key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
+                        initial={{ opacity: 0.8, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        <ReCAPTCHA
+                          ref={loginRecaptchaRef}
+                          key={isDarkMode ? "dark-recaptcha-login" : "light-recaptcha-login"}
+                          sitekey={recaptchaSiteKey}
+                          onChange={handleLoginRecaptchaChange}
+                          theme={isDarkMode ? "dark" : "light"}
+                        />
+                      </motion.div>
+                    )
+                  )}
+
+                  <div className="flex gap-2 justify-center text-sm">
+                    <Link href="/forgot-username" className="text-primary hover:underline">
+                      {t("auth.forgotUsername", { defaultValue: "Forgot username?" })}
+                    </Link>
+                    <span className="text-muted-foreground">•</span>
+                    <Link href="/forgot-password" className="text-primary hover:underline">
+                      {t("auth.forgotPassword", { defaultValue: "Forgot password?" })}
+                    </Link>
+                  </div>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="register">
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-username">{t("auth.username", { defaultValue: "Username" })}</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="register-username"
+                        type="email"
+                        placeholder="Enter your username (email)"
+                        value={registerUsername}
+                        onChange={(e) => setRegisterUsername(e.target.value)}
+                        className="pl-10"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email field removed per request - Username serves as email */}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password">{t("auth.password")}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="register-password"
+                        type="password"
+                        placeholder={t("auth.placeholders.choosePassword")}
+                        value={registerPassword}
+                        onChange={handlePasswordChange}
+                        className="pl-10"
+                        required
+                        disabled={isLoading}
+                        minLength={8}
+                      />
+                    </div>
+
+                    {/* Password Strength Meter */}
+                    {registerPassword && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
+                          <span className={`font-semibold ${passwordStrength < 40 ? "text-red-500" :
+                            passwordStrength < 70 ? "text-yellow-500" :
+                              "text-green-500"
+                            }`}>
+                            {getPasswordStrengthText()}
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                          <motion.div
+                            className={`h-full ${getPasswordStrengthColor()}`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${passwordStrength}%` }}
+                            transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password-confirm">{t("auth.confirmPassword")}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="register-password-confirm"
+                        type="password"
+                        placeholder={t("auth.placeholders.confirmPassword")}
+                        value={registerPasswordConfirm}
+                        onChange={(e) => setRegisterPasswordConfirm(e.target.value)}
+                        className={`pl-10 ${registerPasswordConfirm && registerPassword !== registerPasswordConfirm
                           ? "border-red-500"
                           : registerPasswordConfirm && registerPassword === registerPasswordConfirm
-                          ? "border-green-500"
-                          : ""
-                      }`}
-                      required
-                      disabled={isLoading}
-                      minLength={8}
-                    />
-                  </div>
-                  {registerPasswordConfirm && registerPassword !== registerPasswordConfirm && (
-                    <p className="text-sm text-red-500">{t("auth.validation.passwordsDontMatch")}</p>
-                  )}
-                  {registerPasswordConfirm && registerPassword === registerPasswordConfirm && (
-                    <p className="text-sm text-green-500">{t("auth.validation.passwordsMatch")}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-firstname">{t("auth.firstName")}</Label>
-                    <Input
-                      id="register-firstname"
-                      placeholder={t("auth.placeholders.firstName")}
-                      value={registerFirstName}
-                      onChange={(e) => setRegisterFirstName(e.target.value)}
-                      disabled={isLoading}
-                    />
+                            ? "border-green-500"
+                            : ""
+                          }`}
+                        required
+                        disabled={isLoading}
+                        minLength={8}
+                      />
+                    </div>
+                    {registerPasswordConfirm && registerPassword !== registerPasswordConfirm && (
+                      <p className="text-sm text-red-500">{t("auth.validation.passwordsDontMatch")}</p>
+                    )}
+                    {registerPasswordConfirm && registerPassword === registerPasswordConfirm && (
+                      <p className="text-sm text-green-500">{t("auth.validation.passwordsMatch")}</p>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="register-lastname">{t("auth.lastName")}</Label>
-                    <Input
-                      id="register-lastname"
-                      placeholder={t("auth.placeholders.lastName")}
-                      value={registerLastName}
-                      onChange={(e) => setRegisterLastName(e.target.value)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("auth.iAm")}</Label>
                   <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      type="button"
-                      variant={registerRole === "student" ? "default" : "outline"}
-                      onClick={() => setRegisterRole("student")}
-                      disabled={isLoading}
-                      className="w-full"
-                    >
-                      <UserCircle className="h-4 w-4 mr-2" />
-                      {t("roles.student")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={registerRole === "teacher" ? "default" : "outline"}
-                      onClick={() => setRegisterRole("teacher")}
-                      disabled={isLoading}
-                      className="w-full"
-                    >
-                      <GraduationCap className="h-4 w-4 mr-2" />
-                      {t("roles.teacher")}
-                    </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-firstname">{t("auth.firstName")}</Label>
+                      <Input
+                        id="register-firstname"
+                        placeholder={t("auth.placeholders.firstName")}
+                        value={registerFirstName}
+                        onChange={(e) => setRegisterFirstName(e.target.value)}
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-lastname">{t("auth.lastName")}</Label>
+                      <Input
+                        id="register-lastname"
+                        placeholder={t("auth.placeholders.lastName")}
+                        value={registerLastName}
+                        onChange={(e) => setRegisterLastName(e.target.value)}
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {recaptchaEnabled && (
-                  <motion.div 
-                    className="recaptcha-wrapper" 
-                    key={isDarkMode ? "dark" : "light"}
-                    initial={{ opacity: 0.8, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                  <div className="space-y-2">
+                    <Label>{t("auth.iAm")}</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        type="button"
+                        variant={registerRole === "student" ? "default" : "outline"}
+                        onClick={() => setRegisterRole("student")}
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        <UserCircle className="h-4 w-4 mr-2" />
+                        {t("roles.student")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={registerRole === "teacher" ? "default" : "outline"}
+                        onClick={() => setRegisterRole("teacher")}
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        <GraduationCap className="h-4 w-4 mr-2" />
+                        {t("roles.teacher")}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {validationErrors.length > 0 && (
+                    <Alert variant="destructive" className="border-red-500 bg-red-500/10">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Registration Failed</AlertTitle>
+                      <AlertDescription>
+                        <ul className="list-disc pl-4 space-y-1">
+                          {validationErrors.map((error, index) => (
+                            <li key={index} className="text-sm">{error}</li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full font-semibold"
+                    disabled={isLoading || !canSubmitRegister()}
                   >
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      key={isDarkMode ? "dark-recaptcha" : "light-recaptcha"}
-                      sitekey={recaptchaSiteKey}
-                      onChange={handleRecaptchaChange}
-                      theme={isDarkMode ? "dark" : "light"}
-                    />
-                  </motion.div>
-                )}
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>{t("auth.creatingAccount")}</span>
+                      </>
+                    ) : (
+                      t("auth.createAccount")
+                    )}
+                  </Button>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading || !canSubmitRegister()}
-                >
-                  {isLoading ? t("auth.creatingAccount") : t("auth.createAccount")}
-                </Button>
-                
-                {!canSubmitRegister() && (registerPassword || registerPasswordConfirm) && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    {registerPassword !== registerPasswordConfirm 
-                      ? t("auth.validation.passwordsMustMatch") 
-                      : passwordStrength < 40
-                      ? t("auth.validation.passwordMustBeAtLeastFair")
-                      : t("auth.validation.passwordRequirementsNotMet")}
-                  </p>
-                )}
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  {recaptchaEnabled && (
+                    isSessionVerified ? (
+                      <motion.div
+                        className="flex items-center justify-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+                        initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 20 }}
+                        >
+                          <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <motion.path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              initial={{ pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 1 }}
+                              transition={{ duration: 0.5, ease: "circOut", delay: 0.2 }}
+                            />
+                          </svg>
+                        </motion.div>
+                        <motion.span
+                          className="text-sm font-medium text-green-500"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2, duration: 0.3 }}
+                        >
+                          {t("auth.verifiedHuman", { defaultValue: "Verified Human" })}
+                        </motion.span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        className="recaptcha-wrapper"
+                        key={isDarkMode ? "dark" : "light"}
+                        initial={{ opacity: 0.8, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        <ReCAPTCHA
+                          ref={recaptchaRef}
+                          key={isDarkMode ? "dark-recaptcha" : "light-recaptcha"}
+                          sitekey={recaptchaSiteKey}
+                          onChange={handleRecaptchaChange}
+                          theme={isDarkMode ? "dark" : "light"}
+                        />
+                      </motion.div>
+                    )
+                  )}
+
+                  {!canSubmitRegister() && (registerPassword || registerPasswordConfirm) && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      {registerPassword !== registerPasswordConfirm
+                        ? t("auth.validation.passwordsMustMatch")
+                        : passwordStrength < 40
+                          ? t("auth.validation.passwordMustBeAtLeastFair")
+                          : t("auth.validation.passwordRequirementsNotMet")}
+                    </p>
+                  )}
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 }

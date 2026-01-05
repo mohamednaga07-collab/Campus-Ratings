@@ -8,3 +8,11 @@ vite.config.ts.*
 # VS Code may auto-generate this but it conflicts with tsconfig.json
 client/jsconfig.json
 jsconfig.json
+.env
+*.db
+*.db-shm
+*.db-wal
+logs/
+.replit
+replit.nix
+*.txt

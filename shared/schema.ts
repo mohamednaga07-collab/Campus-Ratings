@@ -13,7 +13,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for Replit Auth
+// Session storage table for Antigravity Auth
 export const sessions = pgTable(
   "sessions",
   {
@@ -104,6 +104,19 @@ export const doctorRatingsRelations = relations(doctorRatings, ({ one }) => ({
   }),
 }));
 
+// Activity logs table for tracking user actions
+export const activityLogs = pgTable("activity_logs", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  username: varchar("username", { length: 50 }).notNull(),
+  role: varchar("role", { length: 20 }).notNull(),
+  action: text("action").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'login', 'review', 'doctor', 'role', etc.
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Schemas and types
 // createInsertSchema can be difficult for TS to infer across versions; cast to any
 export const insertUserSchema: any = (createInsertSchema(users) as any).omit({ createdAt: true, updatedAt: true });
@@ -123,6 +136,7 @@ export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type DoctorRating = typeof doctorRatings.$inferSelect;
+export type ActivityLog = typeof activityLogs.$inferSelect;
 
 // Combined doctor with ratings type
 export type DoctorWithRatings = Doctor & {

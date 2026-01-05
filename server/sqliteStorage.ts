@@ -58,6 +58,19 @@ db.exec(`
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
     updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
   );
+  
+  CREATE TABLE IF NOT EXISTS activity_logs (
+    id INTEGER PRIMARY KEY,
+    userId TEXT,
+    username TEXT NOT NULL,
+    role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    type TEXT NOT NULL,
+    ipAddress TEXT,
+    userAgent TEXT,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
+  );
 `);
 
 // Seed sample doctors if table is empty
@@ -125,7 +138,7 @@ export const sqliteStorage = {
     }
   },
 
-  async getDoctorById(id: number) {
+  async getDoctor(id: number) {
     try {
       const stmt = db.prepare(
         "SELECT d.*, dr.* FROM doctors d LEFT JOIN doctor_ratings dr ON d.id = dr.doctorId WHERE d.id = ?"
@@ -157,8 +170,69 @@ export const sqliteStorage = {
           : null,
       };
     } catch (e) {
-      console.error("getDoctorById error:", e);
+      console.error("getDoctor error:", e);
       return null;
+    }
+  },
+
+  async getReviewsByDoctor(doctorId: number) {
+    try {
+      const stmt = db.prepare("SELECT * FROM reviews WHERE doctorId = ? ORDER BY createdAt DESC");
+      return stmt.all(doctorId) as any[];
+    } catch (e) {
+      console.error("getReviewsByDoctor error:", e);
+      return [];
+    }
+  },
+
+  async createDoctor(doctor: any) {
+    try {
+      const insertDoctor = db.prepare(
+        "INSERT INTO doctors (name, department, title, bio, profileImageUrl) VALUES (?, ?, ?, ?, ?)"
+      );
+      const result = insertDoctor.run(
+        doctor.name,
+        doctor.department,
+        doctor.title || null,
+        doctor.bio || null,
+        doctor.profileImageUrl || null
+      ) as any;
+      
+      // Initialize ratings
+      db.prepare(
+        "INSERT INTO doctor_ratings (doctorId, avgTeachingQuality, avgAvailability, avgCommunication, avgKnowledge, avgFairness, overallRating, totalReviews) VALUES (?, 0, 0, 0, 0, 0, 0, 0)"
+      ).run(result.lastInsertRowid);
+
+      return this.getDoctor(result.lastInsertRowid);
+    } catch (e) {
+      console.error("createDoctor error:", e);
+      throw e;
+    }
+  },
+
+  async updateDoctor(id: number, updates: any) {
+    try {
+      const fields = [];
+      const values = [];
+      
+      if (updates.name !== undefined) { fields.push("name = ?"); values.push(updates.name); }
+      if (updates.department !== undefined) { fields.push("department = ?"); values.push(updates.department); }
+      if (updates.title !== undefined) { fields.push("title = ?"); values.push(updates.title); }
+      if (updates.bio !== undefined) { fields.push("bio = ?"); values.push(updates.bio); }
+      if (updates.profileImageUrl !== undefined) { fields.push("profileImageUrl = ?"); values.push(updates.profileImageUrl); }
+      
+      if (fields.length === 0) return this.getDoctor(id);
+      
+      fields.push("updatedAt = CURRENT_TIMESTAMP");
+      values.push(id);
+      
+      const stmt = db.prepare(`UPDATE doctors SET ${fields.join(", ")} WHERE id = ?`);
+      stmt.run(...values);
+      
+      return this.getDoctor(id);
+    } catch (e) {
+      console.error("updateDoctor error:", e);
+      throw e;
     }
   },
 
@@ -299,4 +373,201 @@ export const sqliteStorage = {
       throw e;
     }
   },
+
+  // Admin methods
+  async getAllUsers() {
+    try {
+      const stmt = db.prepare("SELECT * FROM users ORDER BY createdAt DESC");
+      return stmt.all() as any[];
+    } catch (e) {
+      console.error("getAllUsers error:", e);
+      return [];
+    }
+  },
+
+  async updateUserRole(id: string, role: string) {
+    try {
+      const stmt = db.prepare("UPDATE users SET role = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?");
+      stmt.run(role, id);
+    } catch (e) {
+      console.error("updateUserRole error:", e);
+      throw e;
+    }
+  },
+
+  async deleteUser(id: string) {
+    try {
+      const stmt = db.prepare("DELETE FROM users WHERE id = ?");
+      stmt.run(id);
+    } catch (e) {
+      console.error("deleteUser error:", e);
+      throw e;
+    }
+  },
+
+  async getAllReviews() {
+    try {
+      const stmt = db.prepare("SELECT * FROM reviews ORDER BY createdAt DESC");
+      return stmt.all() as any[];
+    } catch (e) {
+      console.error("getAllReviews error:", e);
+      return [];
+    }
+  },
+
+  async deleteReview(id: number) {
+    try {
+      // Get review info before deleting
+      const review = db.prepare("SELECT doctorId FROM reviews WHERE id = ?").get(id) as any;
+      if (!review) return;
+      
+      // Delete the review
+      db.prepare("DELETE FROM reviews WHERE id = ?").run(id);
+      
+      // Recalculate ratings for that doctor
+      const reviews = db.prepare("SELECT * FROM reviews WHERE doctorId = ?").all(review.doctorId) as any[];
+      
+      if (reviews.length > 0) {
+        const avgTeachingQuality = reviews.reduce((sum, r) => sum + r.teachingQuality, 0) / reviews.length;
+        const avgAvailability = reviews.reduce((sum, r) => sum + r.availability, 0) / reviews.length;
+        const avgCommunication = reviews.reduce((sum, r) => sum + r.communication, 0) / reviews.length;
+        const avgKnowledge = reviews.reduce((sum, r) => sum + r.knowledge, 0) / reviews.length;
+        const avgFairness = reviews.reduce((sum, r) => sum + r.fairness, 0) / reviews.length;
+        const overallRating = (avgTeachingQuality + avgAvailability + avgCommunication + avgKnowledge + avgFairness) / 5;
+        
+        db.prepare(`
+          UPDATE doctor_ratings 
+          SET avgTeachingQuality = ?, avgAvailability = ?, avgCommunication = ?, 
+              avgKnowledge = ?, avgFairness = ?, overallRating = ?, 
+              totalReviews = ?, updatedAt = CURRENT_TIMESTAMP 
+          WHERE doctorId = ?
+        `).run(
+          avgTeachingQuality,
+          avgAvailability,
+          avgCommunication,
+          avgKnowledge,
+          avgFairness,
+          overallRating,
+          reviews.length,
+          review.doctorId
+        );
+      } else {
+        // No reviews left, reset to 0
+        db.prepare(`
+          UPDATE doctor_ratings 
+          SET avgTeachingQuality = 0, avgAvailability = 0, avgCommunication = 0, 
+              avgKnowledge = 0, avgFairness = 0, overallRating = 0, 
+              totalReviews = 0, updatedAt = CURRENT_TIMESTAMP 
+          WHERE doctorId = ?
+        `).run(review.doctorId);
+      }
+    } catch (e) {
+      console.error("deleteReview error:", e);
+      throw e;
+    }
+  },
+
+  async deleteDoctor(id: number) {
+    try {
+      // Delete reviews first (cascade)
+      db.prepare("DELETE FROM reviews WHERE doctorId = ?").run(id);
+      // Delete ratings
+      db.prepare("DELETE FROM doctor_ratings WHERE doctorId = ?").run(id);
+      // Delete doctor
+      db.prepare("DELETE FROM doctors WHERE id = ?").run(id);
+    } catch (e) {
+      console.error("deleteDoctor error:", e);
+      throw e;
+    }
+  },
+
+  async logActivity(data: {
+    userId?: string;
+    username: string;
+    role: string;
+    action: string;
+    type: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }) {
+    try {
+      db.prepare(`
+        INSERT INTO activity_logs (userId, username, role, action, type, ipAddress, userAgent)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        data.userId || null,
+        data.username,
+        data.role,
+        data.action,
+        data.type,
+        data.ipAddress || null,
+        data.userAgent || null
+      );
+    } catch (e) {
+      console.error("logActivity error:", e);
+    }
+  },
+
+  async getActivityLogs(limit: number = 50) {
+    try {
+      const stmt = db.prepare(`
+        SELECT * FROM activity_logs 
+        ORDER BY timestamp DESC 
+        LIMIT ?
+      `);
+      return stmt.all(limit);
+    } catch (e) {
+      console.error("getActivityLogs error:", e);
+      return [];
+    }
+  },
+
+  async getAllDoctors() {
+    try {
+      const stmt = db.prepare("SELECT d.*, dr.* FROM doctors d LEFT JOIN doctor_ratings dr ON d.id = dr.doctorId ORDER BY d.createdAt DESC");
+      const rows = stmt.all() as any[];
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        department: row.department,
+        title: row.title,
+        bio: row.bio,
+        profileImageUrl: row.profileImageUrl,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        ratings: row.doctorId
+          ? {
+              id: row.doctorId,
+              doctorId: row.doctorId,
+              avgTeachingQuality: row.avgTeachingQuality || 0,
+              avgAvailability: row.avgAvailability || 0,
+              avgCommunication: row.avgCommunication || 0,
+              avgKnowledge: row.avgKnowledge || 0,
+              avgFairness: row.avgFairness || 0,
+              overallRating: row.overallRating || 0,
+              totalReviews: row.totalReviews || 0,
+              updatedAt: row.updatedAt,
+            }
+          : null,
+      }));
+    } catch (e) {
+      console.error("getAllDoctors error:", e);
+      return [];
+    }
+  },
+
+  async getStats() {
+    try {
+      const doctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
+      const reviewCount = db.prepare("SELECT COUNT(*) as count FROM reviews").get() as any;
+      return {
+        totalDoctors: doctorCount?.count || 0,
+        totalReviews: reviewCount?.count || 0,
+      };
+    } catch (e) {
+      console.error("getStats error:", e);
+      return { totalDoctors: 0, totalReviews: 0 };
+    }
+  },
 };
+

@@ -43,6 +43,7 @@ export function getSession() {
       cookie: {
         httpOnly: true,
         secure: false, // allow http in dev
+        sameSite: "strict", // Prevent CSRF attacks - strict prevents all cross-site cookie access
         maxAge: sessionTtl,
       },
     });
@@ -63,6 +64,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: true,
+      sameSite: "strict", // Prevent CSRF attacks - strict prevents all cross-site cookie access
       maxAge: sessionTtl,
     },
   });
@@ -133,7 +135,7 @@ export async function setupAuth(app: Express) {
   const registeredStrategies = new Set<string>();
 
   const ensureStrategy = (domain: string) => {
-    const strategyName = `replitauth:${domain}`;
+    const strategyName = `antigravityauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
       const strategy = new Strategy(
         {
@@ -154,7 +156,7 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(`antigravityauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
@@ -162,7 +164,7 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/callback", (req, res, next) => {
     ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    passport.authenticate(`antigravityauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);

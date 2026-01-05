@@ -3,6 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,15 +31,107 @@ declare module "http" {
   }
 }
 
+// Security headers middleware using Helmet
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.jsdelivr.net",
+          "https://www.googletagmanager.com",
+          "https://www.google.com/recaptcha/",
+          "https://www.gstatic.com/recaptcha/",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        connectSrc: [
+          "'self'",
+          "https://www.google.com/recaptcha/",
+          "https://www.gstatic.com/",
+        ],
+        frameSrc: ["https://www.google.com/recaptcha/"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    // Prevent MIME-type sniffing
+    noSniff: true,
+    // Prevent clickjacking attacks
+    frameguard: { action: "deny" },
+    // Enable HSTS
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    // Referrer policy
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  })
+);
+
+// Custom security headers and cache control
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Extra security header for older browsers
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // Disable caching for sensitive content
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
+
+  // Permissions Policy
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(), camera=(), payment=()"
+  );
+
+  next();
+});
+
+// Request size limits - Prevent DoS attacks
 app.use(
   express.json({
+    limit: "10kb", // Limit JSON payload to 10KB
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(
+  express.urlencoded({
+    limit: "10kb", // Limit URL-encoded payload to 10KB
+    extended: false,
+  }),
+);
+
+// Rate limiting - Prevent brute force and DoS attacks
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Max 5 attempts per window
+  message: "Too many login attempts, please try again later",
+  standardHeaders: true, // Return rate limit info in RateLimit-* headers
+  skip: (req) => process.env.NODE_ENV === "development", // Skip in development
+  // Don't use custom keyGenerator - use defaults which handle IPv6
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Max 3 registrations per hour per IP
+  message: "Too many accounts created, please try again later",
+  standardHeaders: true,
+  skip: (req) => process.env.NODE_ENV === "development",
+  // Don't use custom keyGenerator - use defaults which handle IPv6
+});
+
+// Export limiters for use in routes
+export { loginLimiter, registerLimiter };
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -81,12 +175,29 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const isDevelopment = process.env.NODE_ENV === "development";
+    
+    // Log full error with stack trace internally (for debugging)
+    console.error("❌ Server Error:", {
+      status,
+      message: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Never expose internal error details to clients in production
+    let message = err.message || "Internal Server Error";
+    
+    // In production, return generic error message
+    if (!isDevelopment) {
+      if (status >= 500) {
+        message = "An unexpected error occurred. Please try again later.";
+      } else if (status >= 400) {
+        message = err.message || "Bad Request";
+      }
+    }
 
     res.status(status).json({ message });
-    // Do not throw here; it would crash the server process.
-    // Logging is enough for debugging.
-    console.error(err);
   });
 
   // importantly only setup vite in development and after

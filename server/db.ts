@@ -9,23 +9,16 @@ let pool: pg.Pool | undefined;
 let db: any;
 let storage: any;
 
-// In dev mode without DATABASE_URL, use SQLite storage
-if (!process.env.DATABASE_URL && process.env.NODE_ENV === "development") {
-  console.log("✓ Using SQLite storage for development");
+// Use SQLite storage if DATABASE_URL is missing, even in production (with warning)
+if (!process.env.DATABASE_URL) {
+  console.log("⚠️  Warning: DATABASE_URL not set. Falling back to SQLite storage.");
   storage = sqliteStorage;
 } else {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-  }
-  
   console.log("✓ Using PostgreSQL database");
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   db = drizzle(pool, { schema });
-  storage = {
-    upsertUser: async (user: any) => {
-      // implement from storage.ts
-    },
-  };
+  // The actual implementation should be in storage.ts, this is just the exported interface
+  storage = null; 
 }
 
 export { pool, db, storage };

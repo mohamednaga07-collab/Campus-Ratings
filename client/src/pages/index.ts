@@ -5,6 +5,7 @@ export { default as DoctorListing } from "./DoctorListing";
 export { default as DoctorProfile } from "./DoctorProfile";
 export { default as Compare } from "./Compare";
 export { default as TeacherDashboard } from "./TeacherDashboard";
+export { default as AdminDashboard } from "./AdminDashboard";
 export { default as ForgotPassword } from "./ForgotPassword";
 export { default as ForgotUsername } from "./ForgotUsername";
 export { default as ResetPassword } from "./ResetPassword";

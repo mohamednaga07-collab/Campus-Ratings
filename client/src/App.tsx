@@ -13,6 +13,7 @@ import DoctorListing from "@/pages/DoctorListing";
 import DoctorProfile from "@/pages/DoctorProfile";
 import Compare from "@/pages/Compare";
 import TeacherDashboard from "@/pages/TeacherDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ForgotUsername from "@/pages/ForgotUsername";
 import ResetPassword from "@/pages/ResetPassword";
@@ -22,25 +23,19 @@ import { useTranslation } from "react-i18next";
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 20,
-    scale: 0.98,
   },
   animate: {
     opacity: 1,
-    y: 0,
-    scale: 1,
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.2,
+      ease: "easeOut",
     },
   },
   exit: {
     opacity: 0,
-    y: -20,
-    scale: 0.98,
     transition: {
-      duration: 0.3,
-      ease: [0.25, 0.1, 0.25, 1],
+      duration: 0.15,
+      ease: "easeIn",
     },
   },
 };
@@ -49,7 +44,7 @@ function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0 });
   }, [location]);
   
   return (
@@ -59,7 +54,6 @@ function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ willChange: 'transform, opacity' }}
     >
       {children}
     </motion.div>
@@ -127,7 +121,9 @@ function Router() {
             <Route path="/">
               {() => (
                 <AnimatedPageWrapper>
-                  {user?.role === "teacher" ? (
+                  {user?.role === "admin" ? (
+                    <AdminDashboard />
+                  ) : user?.role === "teacher" ? (
                     <TeacherDashboard />
                   ) : (
                     <Home />
@@ -160,6 +156,17 @@ function Router() {
               {() => (
                 <AnimatedPageWrapper>
                   <TeacherDashboard />
+                </AnimatedPageWrapper>
+              )}
+            </Route>
+            <Route path="/admin">
+              {() => (
+                <AnimatedPageWrapper>
+                  {user?.role === "admin" ? (
+                    <AdminDashboard />
+                  ) : (
+                    <NotFound />
+                  )}
                 </AnimatedPageWrapper>
               )}
             </Route>
