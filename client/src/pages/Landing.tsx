@@ -263,7 +263,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="auth-section" className="py-20 px-4 bg-slate-950 text-white">
+        <section id="auth-section" className="py-20 px-4 bg-slate-50 dark:bg-slate-950 text-foreground transition-colors duration-300">
           <div className="container mx-auto max-w-6xl grid lg:grid-cols-2 gap-10 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -272,28 +272,28 @@ export default function Landing() {
               viewport={{ once: true }}
               className="space-y-4"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:bg-white/10 dark:border-white/15 dark:text-white text-sm font-medium">
                 <Shield className="h-4 w-4" />
                 <span>{t("landing.hero.highlight")}</span>
               </div>
               <h2 className="text-3xl font-bold leading-tight">
                 {t("auth.login")}/{t("auth.register")}
-                <span className="block text-blue-200 text-xl font-semibold mt-2">{t("landing.hero.title")}</span>
+                <span className="block text-primary dark:text-blue-200 text-xl font-semibold mt-2">{t("landing.hero.title")}</span>
               </h2>
-              <p className="text-white/80 max-w-xl">
+              <p className="text-muted-foreground dark:text-white/80 max-w-xl">
                 {t("landing.hero.description")}
               </p>
-              <ul className="space-y-3 text-white/80">
+              <ul className="space-y-3 text-muted-foreground dark:text-white/80">
                 <li className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-emerald-300 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-emerald-500 dark:text-emerald-300 mt-0.5" />
                   <span>Stay anonymous to peers while your profile stays verified.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-emerald-300 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-emerald-500 dark:text-emerald-300 mt-0.5" />
                   <span>Sync saved campuses, educators, and follow-ups across devices.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-sky-200 mt-0.5" />
+                  <MapPin className="h-5 w-5 text-sky-500 dark:text-sky-200 mt-0.5" />
                   <span>Surface nearby or online options tailored to your preferences.</span>
                 </li>
               </ul>
@@ -305,7 +305,7 @@ export default function Landing() {
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="bg-slate-900/80 text-white shadow-2xl border border-white/10 backdrop-blur-xl">
+              <Card className="bg-card shadow-2xl border-border/50 backdrop-blur-xl transition-all duration-300">
                 <CardContent className="p-6">
                   <AuthForm />
                 </CardContent>
