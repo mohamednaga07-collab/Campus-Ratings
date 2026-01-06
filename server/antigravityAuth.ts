@@ -8,6 +8,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { pool } from "./db";
 
 const getOidcConfig = memoize(
   async () => {
@@ -33,8 +34,9 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const MemoryStore = memorystore(session);
   
-  // Use memory store for dev mode without DATABASE_URL
-  if (!process.env.DATABASE_URL && process.env.NODE_ENV === "development") {
+  // Use memory store if no database is configured (dev or prod without DB)
+  if (!process.env.DATABASE_URL || !pool) {
+    console.log("⚠️  Using MemoryStore for sessions (no DATABASE_URL provided)");
     return session({
       secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
       store: new MemoryStore({ checkPeriod: sessionTtl }),
@@ -42,8 +44,8 @@ export function getSession() {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: false, // allow http in dev
-        sameSite: "strict", // Prevent CSRF attacks - strict prevents all cross-site cookie access
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax", // 'lax' is safer for general navigation than 'strict' which can block auth redirects
         maxAge: sessionTtl,
       },
     });
@@ -51,11 +53,13 @@ export function getSession() {
 
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+    pool: pool, // Use the shared pool with correct SSL settings
+    createTableIfMissing: true,
+    ttl: sessionTtl, // in seconds for connect-pg-simple, effectively
+    tableName: "session", // "session" is the default standard name
+    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 min
   });
+
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -63,8 +67,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict", // Prevent CSRF attacks - strict prevents all cross-site cookie access
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
