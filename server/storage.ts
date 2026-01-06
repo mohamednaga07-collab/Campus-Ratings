@@ -15,6 +15,7 @@ import {
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
 import { MemoryStorage } from "./memoryStorage";
+import { sqliteStorage } from "./sqliteStorage";
 
 export interface IStorage {
   // User operations (mandatory for Antigravity Auth)
@@ -217,8 +218,6 @@ export class DatabaseStorage implements IStorage {
     };
   }
 }
-
-import { sqliteStorage } from "./sqliteStorage";
 
 export const storage = process.env.DATABASE_URL
   ? new DatabaseStorage()
