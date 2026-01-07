@@ -391,8 +391,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         }
       }
 
-      if (!role || !["student", "teacher", "admin"].includes(role)) {
-        return res.status(400).json({ message: "Valid role is required (student, teacher, or admin)" });
+      // Only allow student and teacher roles during registration
+      // Admin role can only be assigned by existing admins or through admin creation endpoint
+      if (!role || !["student", "teacher"].includes(role)) {
+        console.warn(`⚠️  Attempt to register with invalid role: ${role}`);
+        return res.status(400).json({ message: "Valid role is required (student or teacher). Admin accounts are created by administrators only." });
       }
 
       // Check if username already exists
@@ -878,10 +881,47 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
       
       await storage.updateUserRole(userId, role);
+      console.log(`[Admin] Role updated for user ${userId} to ${role}`);
       res.json({ message: "Role updated successfully" });
     } catch (error) {
       console.error("Error updating user role:", error);
       res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
+  // Create new admin (admin-only endpoint)
+  app.post("/api/admin/create-admin", isAdmin, validateCsrfHeader, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+      
+      // Get the user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if already admin
+      if (user.role === "admin") {
+        return res.status(400).json({ message: "User is already an admin" });
+      }
+      
+      // Update role to admin
+      await storage.updateUserRole(userId, "admin");
+      
+      console.log(`✅ [Admin] New admin created: ${user.username} (ID: ${userId})`);
+      console.log(`   Created by: ${(req.session as any).userId}`);
+      
+      res.json({ 
+        message: `✅ Successfully promoted ${user.username} to admin`, 
+        user: { ...user, role: "admin" } 
+      });
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      res.status(500).json({ message: "Failed to create admin" });
     }
   });
 
