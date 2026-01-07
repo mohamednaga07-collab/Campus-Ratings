@@ -5,17 +5,13 @@ const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
 const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replace(/\s/g, "");
 const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
 
-// Mailgun configuration (preferred for production)
-const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
-const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN;
-const USE_MAILGUN = !!(MAILGUN_API_KEY && MAILGUN_DOMAIN);
+// Resend configuration (preferred for production - simple API)
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const USE_RESEND = !!RESEND_API_KEY;
 
 console.log("[Email Setup] Initializing with:");
 console.log(`  EMAIL_USER: ${EMAIL_USER}`);
-console.log(`  Using Mailgun: ${USE_MAILGUN}`);
-if (USE_MAILGUN) {
-  console.log(`  Mailgun Domain: ${MAILGUN_DOMAIN}`);
-}
+console.log(`  Using Resend: ${USE_RESEND}`);
 
 // Create Gmail transporter as fallback
 // Try port 587 with STARTTLS first (better compatibility with hosting providers)
@@ -37,16 +33,14 @@ const gmailTransporter = nodemailer.createTransport({
 gmailTransporter.verify((error, success) => {
   if (error) {
     console.error("⚠️  Gmail SMTP not available:", error.message);
-    if (!USE_MAILGUN) {
-      console.log("💡 To enable email sending, either:");
-      console.log("   Option 1: Set up Mailgun (recommended for hosting providers)");
-      console.log("     - Sign up at https://www.mailgun.com/");
-      console.log("     - Get API key and domain");
-      console.log("     - Set MAILGUN_API_KEY and MAILGUN_DOMAIN environment variables");
-      console.log("   Option 2: Use Gmail with App Password");
-      console.log("     - Enable 2FA on Gmail");
-      console.log("     - Generate app password at https://myaccount.google.com/apppasswords");
-      console.log("     - Set EMAIL_USER and EMAIL_PASSWORD environment variables");
+    if (!USE_RESEND) {
+      console.log("💡 Email setup required!");
+      console.log("   Quick setup with Resend (1 minute):");
+      console.log("   1. Go to: https://resend.com/signup");
+      console.log("   2. Sign in with GitHub (instant)");
+      console.log("   3. Create API key");
+      console.log("   4. Set RESEND_API_KEY in Render environment variables");
+      console.log("   5. Done! Emails will work immediately.");
     }
   } else {
     console.log("✅ Gmail SMTP available as fallback");
@@ -65,38 +59,34 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     console.log(`  To: ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
 
-    // Try Mailgun first if configured
-    if (USE_MAILGUN) {
-      console.log(`  Using Mailgun API`);
+    // Try Resend first if configured (simple HTTP API)
+    if (USE_RESEND) {
+      console.log(`  Using Resend API`);
       try {
-        const auth = Buffer.from(`api:${MAILGUN_API_KEY}`).toString('base64');
-        const formData = new URLSearchParams();
-        formData.append('from', EMAIL_FROM);
-        formData.append('to', options.to);
-        formData.append('subject', options.subject);
-        formData.append('html', options.html);
-
-        const response = await fetch(
-          `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Basic ${auth}`,
-            },
-            body: formData,
-          }
-        );
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: EMAIL_FROM,
+            to: [options.to],
+            subject: options.subject,
+            html: options.html,
+          }),
+        });
 
         const responseData = await response.json();
         
         if (!response.ok) {
-          throw new Error(`Mailgun API error: ${response.status} ${JSON.stringify(responseData)}`);
+          throw new Error(`Resend API error: ${response.status} ${JSON.stringify(responseData)}`);
         }
         
-        console.log(`[Email Send] ✅ Email sent via Mailgun: ${responseData.id}`);
+        console.log(`[Email Send] ✅ Email sent via Resend: ${responseData.id}`);
         return true;
-      } catch (mailgunError: any) {
-        console.error(`[Email Send] ❌ Mailgun failed:`, mailgunError.message);
+      } catch (resendError: any) {
+        console.error(`[Email Send] ❌ Resend failed:`, resendError.message);
         console.log(`[Email Send] Falling back to Gmail...`);
         // Fall through to Gmail
       }
