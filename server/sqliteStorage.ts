@@ -73,6 +73,24 @@ db.exec(`
   );
 `);
 
+// Ensure users table has password reset columns (online migration)
+try {
+  const cols = db.prepare("PRAGMA table_info(users)").all() as any[];
+  const hasResetToken = cols.some((c) => c.name === "resetToken");
+  const hasResetTokenExpiry = cols.some((c) => c.name === "resetTokenExpiry");
+
+  if (!hasResetToken) {
+    db.exec("ALTER TABLE users ADD COLUMN resetToken TEXT");
+    console.log("✓ Added users.resetToken column");
+  }
+  if (!hasResetTokenExpiry) {
+    db.exec("ALTER TABLE users ADD COLUMN resetTokenExpiry TEXT");
+    console.log("✓ Added users.resetTokenExpiry column");
+  }
+} catch (e) {
+  console.error("Failed to ensure reset token columns:", e);
+}
+
 // Seed sample doctors if table is empty
 const doctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
 if (doctorCount.count === 0) {
