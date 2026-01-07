@@ -655,13 +655,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
 
       res.status(200).json({ message: "If an account exists, a reset link has been sent." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in forgot password:", error);
-      res.status(500).json({ message: "Failed to process forgot password request" });
+      res.status(500).json({ message: `Failed to process forgot password request: ${error.message}` });
     }
   });
 
-  // Reset Password Route
   app.post("/api/auth/reset-password", async (req: any, res) => {
     try {
       const { token, newPassword } = req.body;
@@ -683,9 +682,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       await storage.clearResetToken(user.id);
 
       res.status(200).json({ message: "Password has been reset successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error resetting password:", error);
-      res.status(500).json({ message: "Failed to reset password" });
+      res.status(500).json({ message: `Failed to reset password: ${error.message}` });
     }
   });
 
@@ -717,9 +716,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
 
       res.status(200).json({ message: "If an account exists, your username has been sent to the email on file." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in forgot username:", error);
-      res.status(500).json({ message: "Failed to process forgot username request" });
+      res.status(500).json({ message: `Failed to process forgot username request: ${error.message}` });
     }
   });
 
