@@ -233,8 +233,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Check if email is verified
-      if (user.emailVerified === false) {
+      // Check if email is verified (skip for admin accounts - they're created by system)
+      const userRole = (user as any).role as string | undefined;
+      if (user.emailVerified === false && userRole !== "admin") {
         console.log("❌ Email not verified for user:", username);
         return res.status(403).json({ 
           message: "Please verify your email address before logging in. Check your inbox for the verification link." 
@@ -243,7 +244,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // If the client specifies a role (student/teacher/admin), require the account to match.
       if (role && (role === "student" || role === "teacher" || role === "admin")) {
-        const userRole = (user as any).role as string | undefined;
         if (userRole !== role) {
           console.log("❌ Role mismatch for user:", username, "expected:", role, "actual:", userRole);
           return res
