@@ -55,6 +55,7 @@ export function ProfilePictureUpload({
     }
 
     setUploading(true);
+    console.log('🖼️ Starting profile picture upload...');
 
     try {
       // Convert to base64
@@ -63,31 +64,41 @@ export function ProfilePictureUpload({
       reader.onload = async () => {
         try {
           const imageData = reader.result as string;
+          console.log('🖼️ Image converted to base64, length:', imageData.length);
+
+          // Get CSRF token
+          const csrfToken = await getCsrfToken();
+          console.log('🖼️ CSRF token obtained:', csrfToken ? 'yes' : 'no');
 
           // Upload to server
+          console.log('🖼️ Sending upload request...');
           const response = await fetch("/api/auth/upload-profile-picture", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-CSRF-Token": await getCsrfToken(),
+              "X-CSRF-Token": csrfToken,
             },
             credentials: "include",
             body: JSON.stringify({ imageData }),
           });
 
+          console.log('🖼️ Response status:', response.status, response.statusText);
+
           if (!response.ok) {
             const error = await response.json();
+            console.error('🖼️ Upload error:', error);
             throw new Error(error.message || "Upload failed");
           }
 
           const result = await response.json();
+          console.log('🖼️ Upload successful:', result);
 
           // Force image refresh
           setImageKey(prev => prev + 1);
 
           toast({
             title: "Success!",
-            description: "Profile picture updated",
+            description: "Profile picture updated. Reloading...",
           });
 
           // Callback for parent to refresh
@@ -96,22 +107,24 @@ export function ProfilePictureUpload({
           }
 
           // Force page reload to ensure everything updates
+          console.log('🖼️ Reloading page in 500ms...');
           setTimeout(() => {
             window.location.reload();
           }, 500);
 
         } catch (error: any) {
+          console.error('🖼️ Upload error:', error);
           toast({
             title: "Upload failed",
             description: error.message,
             variant: "destructive",
           });
-        } finally {
           setUploading(false);
         }
       };
 
       reader.onerror = () => {
+        console.error('🖼️ FileReader error');
         toast({
           title: "Error",
           description: "Failed to read file",
@@ -120,8 +133,10 @@ export function ProfilePictureUpload({
         setUploading(false);
       };
 
+      console.log('🖼️ Reading file as data URL...');
       reader.readAsDataURL(file);
     } catch (error: any) {
+      console.error('🖼️ Upload error:', error);
       toast({
         title: "Error",
         description: error.message || "Upload failed",

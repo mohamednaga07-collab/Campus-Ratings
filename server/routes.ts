@@ -1096,47 +1096,66 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Upload profile picture (converts to base64 data URL)
   app.post("/api/auth/upload-profile-picture", isAuthenticated, async (req, res) => {
     try {
+      console.log('📸 [Upload] Received profile picture upload request');
+      
       const userId = getUserId(req);
       if (!userId) {
+        console.log('📸 [Upload] No user ID in session');
         return res.status(401).json({ message: "Not authenticated" });
       }
 
+      console.log('📸 [Upload] User ID:', userId);
+
       const user = await storage.getUser(userId);
       if (!user) {
+        console.log('📸 [Upload] User not found in database');
         return res.status(404).json({ message: "User not found" });
       }
+
+      console.log('📸 [Upload] User found:', user.username);
 
       // Get image data from request body (base64)
       const { imageData } = req.body;
       if (!imageData) {
+        console.log('📸 [Upload] No image data in request body');
         return res.status(400).json({ message: "No image data provided" });
       }
 
+      console.log('📸 [Upload] Image data length:', imageData.length);
+
       // Validate it's a reasonable data URL
       if (!imageData.startsWith("data:image/")) {
+        console.log('📸 [Upload] Invalid image format');
         return res.status(400).json({ message: "Invalid image format" });
       }
 
       // Limit size to 5MB
       if (imageData.length > 5 * 1024 * 1024) {
+        console.log('📸 [Upload] Image too large:', imageData.length);
         return res.status(413).json({ message: "Image too large (max 5MB)" });
       }
+
+      console.log('📸 [Upload] Updating user in database...');
 
       // Update user with new profile picture
       const updatedUser = await storage.updateUser(userId, {
         profileImageUrl: imageData,
       });
 
-      console.log(`✅ Profile picture updated for user: ${user.username}`);
+      console.log(`📸 [Upload] ✅ Profile picture updated for user: ${user.username}`);
+      console.log(`📸 [Upload] Updated user has profileImageUrl:`, updatedUser.profileImageUrl ? 'YES' : 'NO');
 
       // Don't send password to client
       const { password: _, ...userWithoutPassword } = updatedUser as any;
+      
+      console.log(`📸 [Upload] Sending response with user data`);
+      
       res.json({ 
         user: userWithoutPassword,
         message: "Profile picture updated successfully" 
       });
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
+      console.error("📸 [Upload] ❌ Error uploading profile picture:", error);
       res.status(500).json({ message: "Failed to upload profile picture" });
     }
   });
