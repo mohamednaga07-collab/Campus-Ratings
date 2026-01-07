@@ -151,6 +151,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       errors.push(t("auth.validation.usernameRequired", { defaultValue: "Username is required" }));
     } else if (registerUsername.length < 3) {
       errors.push(t("auth.validation.usernameTooShort", { defaultValue: "Username must be at least 3 characters" }));
+    } else if (registerUsername.toLowerCase() === "admin") {
+      errors.push("Username 'admin' is reserved and cannot be used. Please choose a different username.");
     }
 
     if (!registerPassword) errors.push(t("auth.validation.passwordRequired", { defaultValue: "Password is required" }));

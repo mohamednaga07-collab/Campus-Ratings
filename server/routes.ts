@@ -398,6 +398,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ message: "Valid role is required (student or teacher). Admin accounts are created by administrators only." });
       }
 
+      // Prevent users from choosing "admin" as username (case-insensitive)
+      if (username.toLowerCase() === "admin") {
+        console.warn(`⚠️  Attempt to register with reserved username: ${username}`);
+        return res.status(400).json({ message: "This username is reserved and cannot be used. Please choose a different username." });
+      }
+
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
