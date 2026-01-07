@@ -629,12 +629,15 @@ export default function AdminDashboard() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setEditingUser(user)}
+                                        onClick={() => {
+                                          setEditingUser(user);
+                                          scrollToTabs();
+                                        }}
                                       >
                                         <Edit className="h-4 w-4" />
                                       </Button>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="sm:max-w-[425px]">
                                       <DialogHeader>
                                         <DialogTitle>Edit User Role</DialogTitle>
                                         <DialogDescription>Change the role for {user.username}</DialogDescription>
@@ -649,7 +652,7 @@ export default function AdminDashboard() {
                                             <SelectTrigger>
                                               <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent position="popper" side="bottom" align="start">
                                               <SelectItem value="student">Student</SelectItem>
                                               <SelectItem value="teacher">Teacher</SelectItem>
                                               <SelectItem value="admin">Admin</SelectItem>
