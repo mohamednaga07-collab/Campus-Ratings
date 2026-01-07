@@ -7,16 +7,19 @@ const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || "ytwz squh kukw ldpc";
 const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
 
 // Create transporter
+// Use explicit host/port for faster connection (skips service lookup)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASSWORD,
   },
   // Add timeouts to prevent hanging
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,   // 10 seconds
-  socketTimeout: 10000,     // 10 seconds
+  connectionTimeout: 10000, 
+  greetingTimeout: 10000,   
+  socketTimeout: 10000,     
 });
 
 // Test connection
