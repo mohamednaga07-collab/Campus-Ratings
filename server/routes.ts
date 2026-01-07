@@ -11,6 +11,7 @@ import { sendEmail, generateForgotPasswordEmailHtml, generateForgotUsernameEmail
 declare module "express-session" {
   interface SessionData {
     userId?: string;
+    csrfInit?: boolean;
   }
 }
 
@@ -120,6 +121,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // CSRF Token endpoint - Generate token for forms
   app.get("/api/auth/csrf-token", (req: any, res) => {
     try {
+      // Force session initialization to ensure cookie is set
+      if (req.session) {
+        req.session.csrfInit = true;
+      }
+
       // Get or create session ID - use a secure identifier
       const sessionId = req.sessionID || req.session?.id || crypto.randomBytes(16).toString("hex");
       const token = generateCsrfToken(sessionId);
