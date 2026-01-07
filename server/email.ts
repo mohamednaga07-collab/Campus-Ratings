@@ -7,11 +7,16 @@ const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
 
 // Resend configuration (preferred for production - simple API)
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+// Use a verified domain if provided, else fall back to Resend onboarding domain
+const RESEND_FROM = process.env.RESEND_FROM || 'Campus Ratings <onboarding@resend.dev>';
 const USE_RESEND = !!RESEND_API_KEY;
 
 console.log("[Email Setup] Initializing with:");
 console.log(`  EMAIL_USER: ${EMAIL_USER}`);
 console.log(`  Using Resend: ${USE_RESEND}`);
+if (USE_RESEND) {
+  console.log(`  Resend From: ${RESEND_FROM}`);
+}
 
 // Create Gmail transporter as fallback
 // Try port 587 with STARTTLS first (better compatibility with hosting providers)
@@ -70,10 +75,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: EMAIL_FROM,
+            from: RESEND_FROM,
             to: [options.to],
             subject: options.subject,
             html: options.html,
+            reply_to: EMAIL_USER,
           }),
         });
 
