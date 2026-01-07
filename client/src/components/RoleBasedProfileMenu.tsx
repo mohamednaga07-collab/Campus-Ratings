@@ -1,30 +1,23 @@
 import { motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { Upload, Settings, BarChart3, Users, Trophy, FileText, Clock, MessageCircle, Zap, Crown, BookOpen, LogOut } from "lucide-react";
+import { Settings, BarChart3, Users, Trophy, FileText, Clock, MessageCircle, Zap, Crown, BookOpen, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { User } from "@shared/schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { ProfilePictureUpload } from "./ProfilePictureUpload";
 
 interface RoleBasedProfileMenuProps {
   user: User;
   onLogout: () => void;
-  onProfilePictureChange?: (file: File) => Promise<void>;
-  isLoadingProfilePicture?: boolean;
   trigger: React.ReactNode;
   align?: "start" | "center" | "end";
 }
@@ -38,113 +31,15 @@ const roleColors = {
 export function RoleBasedProfileMenu({
   user,
   onLogout,
-  onProfilePictureChange,
-  isLoadingProfilePicture = false,
   trigger,
   align = "end",
 }: RoleBasedProfileMenuProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const reactQueryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const userRole = (user.role as keyof typeof roleColors) || "student";
   const roleColor = roleColors[userRole];
-  const userInitials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "U";
-
-  const handleProfilePictureClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    console.log(`📸 Starting upload for file: ${file.name} (${file.type})`);
-    
-    // Read file as base64
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const imageData = event.target?.result as string;
-      console.log(`📸 FileReader completed, image data length: ${imageData.length}`);
-      
-      try {
-        console.log(`📸 Sending upload request to server...`);
-        const response = await apiRequest("POST", "/api/auth/upload-profile-picture", {
-          imageData,
-        });
-        const result = await response.json();
-        console.log(`📸 Upload response:`, result);
-        
-        if (result.user) {
-          console.log(`📸 Updating query cache with new user data`);
-          // Force immediate update and refetch
-          reactQueryClient.setQueryData(["/api/auth/user"], result.user);
-          await reactQueryClient.refetchQueries({ 
-            queryKey: ["/api/auth/user"],
-            exact: true 
-          });
-          
-          toast({
-            title: "Success!",
-            description: "Profile picture updated successfully",
-          });
-          
-          console.log(`📸 Profile picture update complete, cache refreshed`);
-        } else {
-          throw new Error("No user data in response");
-        }
-      } catch (error: any) {
-        console.error(`❌ Upload error:`, error);
-        toast({
-          title: "Upload failed",
-          description: error.message || "Failed to update profile picture",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUploading(false);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    };
-    reader.onerror = () => {
-      console.error(`❌ FileReader error`);
-      toast({
-        title: "File read error",
-        description: "Failed to read the file",
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    };
-    console.log(`📸 Starting FileReader.readAsDataURL...`);
-    reader.readAsDataURL(file);
-  };
 
   // Role-specific menu items with handlers
   const getMenuItems = () => {
@@ -224,19 +119,10 @@ export function RoleBasedProfileMenu({
   };
 
   return (
-    <>
-      <Input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-        disabled={isUploading}
-      />
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          {trigger}
-        </DropdownMenuTrigger>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        {trigger}
+      </DropdownMenuTrigger>
         <DropdownMenuContent align={align} className="w-80 p-0 overflow-hidden bg-gradient-to-b from-background to-background/95">
           {/* Header with Role Gradient */}
           <motion.div
@@ -251,30 +137,8 @@ export function RoleBasedProfileMenu({
 
             <div className="relative z-10 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {/* Avatar with Upload */}
-                <motion.div
-                  className="relative group cursor-pointer"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleProfilePictureClick}
-                >
-                  <Avatar className="h-16 w-16 border-4 border-white/30 group-hover:border-white transition-colors">
-                    <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? "User"} />
-                    <AvatarFallback className={`text-white font-bold text-lg bg-gradient-to-br ${roleColor.bg}`}>
-                      {userInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    whileHover={{ opacity: 1 }}
-                  >
-                    {isUploading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Upload className="w-5 h-5 text-white" />
-                    )}
-                  </motion.div>
-                </motion.div>
+                {/* Avatar with Upload - Using new ProfilePictureUpload component */}
+                <ProfilePictureUpload user={user} size="lg" />
 
                 {/* User Info */}
                 <div className="flex-1">
@@ -467,6 +331,5 @@ export function RoleBasedProfileMenu({
           </motion.div>
         </DropdownMenuContent>
       </DropdownMenu>
-    </>
   );
 }

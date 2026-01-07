@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { RoleBasedProfileMenu } from "./RoleBasedProfileMenu";
+import { ProfilePictureUpload } from "./ProfilePictureUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { GraduationCap, BarChart3, Home, Star, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,10 +26,6 @@ export function Header() {
   const handleLogout = () => {
     logout();
   };
-
-  const userInitials = user
-    ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "U"
-    : "U";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/98 backdrop-blur-md supports-[backdrop-filter]:bg-background/90 shadow-sm">
@@ -115,10 +111,11 @@ export function Header() {
                     <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? t("common.user")} />
                     <AvatarFallback>{userInitials}</AvatarFallback>
                   </Avatar>
-                </Button>
-              }
-            />
-          ) : (
+                </BProfilePictureUpload 
+                    user={user} 
+                    size="sm" 
+                    showEditButton={false}
+                  /
             <Button onClick={() => {
               // Check if already on landing page
               if (location === '/') {
