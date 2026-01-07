@@ -1,49 +1,55 @@
 import nodemailer from "nodemailer";
 
-// Email configuration - customize these with your email service credentials
+// Email configuration
 const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
-// Removing spaces from the password sequence is recommended for some transports
 const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replace(/\s/g, "");
-// Use the Gmail address as the sender to prevent Spam blocking/spoofing detection
 const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
+
+// Mailgun configuration (preferred for production)
+const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
+const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN;
+const USE_MAILGUN = !!(MAILGUN_API_KEY && MAILGUN_DOMAIN);
 
 console.log("[Email Setup] Initializing with:");
 console.log(`  EMAIL_USER: ${EMAIL_USER}`);
-console.log(`  EMAIL_PASSWORD length: ${EMAIL_PASSWORD.length}`);
-console.log(`  EMAIL_FROM: ${EMAIL_FROM}`);
+console.log(`  Using Mailgun: ${USE_MAILGUN}`);
+if (USE_MAILGUN) {
+  console.log(`  Mailgun Domain: ${MAILGUN_DOMAIN}`);
+}
 
-// Create transporter
+// Create Gmail transporter as fallback
 // Try port 587 with STARTTLS first (better compatibility with hosting providers)
-// If that fails, can fallback to port 465
-const transporter = nodemailer.createTransport({
+const gmailTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // Use STARTTLS instead of SSL
+  secure: false,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASSWORD,
   },
-  // Add timeouts to prevent hanging
   connectionTimeout: 10000, 
   greetingTimeout: 10000,   
   socketTimeout: 10000,
-  // For STARTTLS, require TLS upgrade
   requireTLS: true,
 });
 
-// Test connection
-transporter.verify((error, success) => {
+// Test Gmail connection
+gmailTransporter.verify((error, success) => {
   if (error) {
-    console.error("⚠️  Email service not configured:", error.message);
-    console.log("💡 To enable email sending:");
-    console.log("   1. Create a Gmail account or use existing one");
-    console.log("   2. Enable 2-Factor Authentication");
-    console.log("   3. Generate an App Password at: https://myaccount.google.com/apppasswords");
-    console.log("   4. Set environment variables:");
-    console.log("      EMAIL_USER=your-email@gmail.com");
-    console.log("      EMAIL_PASSWORD=your-app-password");
+    console.error("⚠️  Gmail SMTP not available:", error.message);
+    if (!USE_MAILGUN) {
+      console.log("💡 To enable email sending, either:");
+      console.log("   Option 1: Set up Mailgun (recommended for hosting providers)");
+      console.log("     - Sign up at https://www.mailgun.com/");
+      console.log("     - Get API key and domain");
+      console.log("     - Set MAILGUN_API_KEY and MAILGUN_DOMAIN environment variables");
+      console.log("   Option 2: Use Gmail with App Password");
+      console.log("     - Enable 2FA on Gmail");
+      console.log("     - Generate app password at https://myaccount.google.com/apppasswords");
+      console.log("     - Set EMAIL_USER and EMAIL_PASSWORD environment variables");
+    }
   } else {
-    console.log("✅ Email service connected successfully");
+    console.log("✅ Gmail SMTP available as fallback");
   }
 });
 
@@ -55,38 +61,62 @@ interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // Check if credentials are configured
-    if (EMAIL_USER === "your-email@gmail.com" || EMAIL_PASSWORD === "your-app-password") {
-      console.log(`📧 Email not configured. Would send to ${options.to}:`);
-      console.log(`   Subject: ${options.subject}`);
-      
-      // In production, we should probably let the user know email isn't working
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("Email service is not configured on the server (using default credentials)");
-      }
-      
-      return true; // Return success in dev mode
-    }
-
     console.log(`[Email Send] Starting email send...`);
     console.log(`  To: ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
-    console.log(`  Using credentials: ${EMAIL_USER}`);
-    
-    const info = await transporter.sendMail({
+
+    // Try Mailgun first if configured
+    if (USE_MAILGUN) {
+      console.log(`  Using Mailgun API`);
+      try {
+        const auth = Buffer.from(`api:${MAILGUN_API_KEY}`).toString('base64');
+        const formData = new URLSearchParams();
+        formData.append('from', EMAIL_FROM);
+        formData.append('to', options.to);
+        formData.append('subject', options.subject);
+        formData.append('html', options.html);
+
+        const response = await fetch(
+          `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Basic ${auth}`,
+            },
+            body: formData,
+          }
+        );
+
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`Mailgun API error: ${response.status} ${JSON.stringify(responseData)}`);
+        }
+        
+        console.log(`[Email Send] ✅ Email sent via Mailgun: ${responseData.id}`);
+        return true;
+      } catch (mailgunError: any) {
+        console.error(`[Email Send] ❌ Mailgun failed:`, mailgunError.message);
+        console.log(`[Email Send] Falling back to Gmail...`);
+        // Fall through to Gmail
+      }
+    }
+
+    // Fallback to Gmail
+    console.log(`  Using Gmail SMTP`);
+    const info = await gmailTransporter.sendMail({
       from: EMAIL_FROM,
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
 
-    console.log(`[Email Send] ✅ Email sent successfully to ${options.to}: ${info.messageId}`);
+    console.log(`[Email Send] ✅ Email sent via Gmail: ${info.messageId}`);
     return true;
   } catch (error) {
     console.error(`[Email Send] ❌ Failed to send email to ${options.to}:`);
     console.error(`  Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
     console.error(`  Error message: ${error instanceof Error ? error.message : error}`);
-    console.error(`  Full error:`, error);
     // Throw the error so the route handler knows it failed
     throw error;
   }
