@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -169,8 +170,7 @@ export default function AdminDashboard() {
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
-      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await apiRequest("DELETE", `/api/admin/users/${userId}`);
       return res.json();
     },
     onSuccess: () => {
@@ -185,12 +185,7 @@ export default function AdminDashboard() {
   // Update user role mutation
   const updateUserRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await apiRequest("PATCH", `/api/admin/users/${userId}/role`, { role });
       return res.json();
     },
     onSuccess: () => {
@@ -206,12 +201,7 @@ export default function AdminDashboard() {
   // Create doctor mutation
   const createDoctor = useMutation({
     mutationFn: async (doctor: typeof newDoctor) => {
-      const res = await fetch("/api/admin/doctors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(doctor),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await apiRequest("POST", "/api/admin/doctors", doctor);
       return res.json();
     },
     onSuccess: () => {
@@ -227,8 +217,7 @@ export default function AdminDashboard() {
   // Delete doctor mutation
   const deleteDoctor = useMutation({
     mutationFn: async (doctorId: number) => {
-      const res = await fetch(`/api/admin/doctors/${doctorId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await apiRequest("DELETE", `/api/admin/doctors/${doctorId}`);
       return res.json();
     },
     onSuccess: () => {
@@ -243,8 +232,7 @@ export default function AdminDashboard() {
   // Delete review mutation
   const deleteReview = useMutation({
     mutationFn: async (reviewId: number) => {
-      const res = await fetch(`/api/admin/reviews/${reviewId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await apiRequest("DELETE", `/api/admin/reviews/${reviewId}`);
       return res.json();
     },
     onSuccess: () => {
