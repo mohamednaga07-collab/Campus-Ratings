@@ -2,7 +2,8 @@ import nodemailer from "nodemailer";
 
 // Email configuration - customize these with your email service credentials
 const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
-const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || "ytwz squh kukw ldpc";
+// Removing spaces from the password sequence is recommended for some transports
+const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replace(/\s/g, "");
 // Use the Gmail address as the sender to prevent Spam blocking/spoofing detection
 const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
 
