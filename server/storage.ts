@@ -179,12 +179,12 @@ export class DatabaseStorage implements IStorage {
 
     // Update doctor ratings
     await this.updateDoctorRatings(insertReview.doctorId);
-async getAllReviews(): Promise<Review[]> {
-    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+
+    return review;
   }
 
-  
-    return review;
+  async getAllReviews(): Promise<Review[]> {
+    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
   }
 
   private async updateDoctorRatings(doctorId: number): Promise<void> {
