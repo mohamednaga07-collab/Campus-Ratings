@@ -13,11 +13,12 @@ console.log(`  EMAIL_PASSWORD length: ${EMAIL_PASSWORD.length}`);
 console.log(`  EMAIL_FROM: ${EMAIL_FROM}`);
 
 // Create transporter
-// Use explicit host/port for faster connection (skips service lookup)
+// Try port 587 with STARTTLS first (better compatibility with hosting providers)
+// If that fails, can fallback to port 465
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Use SSL
+  port: 587,
+  secure: false, // Use STARTTLS instead of SSL
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASSWORD,
@@ -25,7 +26,9 @@ const transporter = nodemailer.createTransport({
   // Add timeouts to prevent hanging
   connectionTimeout: 10000, 
   greetingTimeout: 10000,   
-  socketTimeout: 10000,     
+  socketTimeout: 10000,
+  // For STARTTLS, require TLS upgrade
+  requireTLS: true,
 });
 
 // Test connection
