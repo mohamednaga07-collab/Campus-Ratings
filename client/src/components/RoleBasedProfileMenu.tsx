@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { User } from "@shared/schema";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RoleBasedProfileMenuProps {
   user: User;
@@ -45,6 +46,7 @@ export function RoleBasedProfileMenu({
   const { t } = useTranslation();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const reactQueryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -101,15 +103,19 @@ export function RoleBasedProfileMenu({
         
         if (result.user) {
           console.log(`📸 Updating query cache with new user data`);
-          // Update query cache with new user data
-          queryClient.setQueryData(["/api/auth/user"], result.user);
-          // Also invalidate to force refresh
-          await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+          // Force immediate update and refetch
+          reactQueryClient.setQueryData(["/api/auth/user"], result.user);
+          await reactQueryClient.refetchQueries({ 
+            queryKey: ["/api/auth/user"],
+            exact: true 
+          });
           
           toast({
             title: "Success!",
             description: "Profile picture updated successfully",
           });
+          
+          console.log(`📸 Profile picture update complete, cache refreshed`);
         } else {
           throw new Error("No user data in response");
         }
