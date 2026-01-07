@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import ReCAPTCHA from "react-google-recaptcha";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ForgotUsername() {
   const { t } = useTranslation();
@@ -94,20 +95,11 @@ export default function ForgotUsername() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/forgot-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          recaptchaToken,
-          skipRecaptcha: isSessionVerified && !recaptchaToken
-        }),
+      await apiRequest("POST", "/api/auth/forgot-username", {
+        email,
+        recaptchaToken,
+        skipRecaptcha: isSessionVerified && !recaptchaToken
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to process request");
-      }
 
       setSubmitted(true);
       setEmail("");

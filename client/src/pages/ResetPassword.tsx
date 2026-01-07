@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import ReCAPTCHA from "react-google-recaptcha";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ResetPassword() {
   const { t } = useTranslation();
@@ -134,16 +135,11 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword, recaptchaToken }),
+      await apiRequest("POST", "/api/auth/reset-password", {
+        token,
+        newPassword,
+        recaptchaToken
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to reset password");
-      }
 
       setSuccess(true);
     } catch (err: any) {
