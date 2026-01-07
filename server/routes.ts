@@ -233,6 +233,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Check if email is verified
+      if (user.emailVerified === false) {
+        console.log("❌ Email not verified for user:", username);
+        return res.status(403).json({ 
+          message: "Please verify your email address before logging in. Check your inbox for the verification link." 
+        });
+      }
+
       // If the client specifies a role (student/teacher/admin), require the account to match.
       if (role && (role === "student" || role === "teacher" || role === "admin")) {
         const userRole = (user as any).role as string | undefined;
