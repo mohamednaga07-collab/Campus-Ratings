@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { apiRequest } from "@/lib/queryClient";
@@ -88,6 +88,8 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [newDoctor, setNewDoctor] = useState({ name: "", department: "", title: "", bio: "" });
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editRole, setEditRole] = useState<string>("student");
+  const roleEditorRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [showSettings, setShowSettings] = useState(false);
@@ -98,6 +100,15 @@ export default function AdminDashboard() {
   const scrollToTabs = () => {
     tabsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // When opening editor, sync selected role and scroll it into view
+  useEffect(() => {
+    if (editingUser) {
+      setEditRole(editingUser.role);
+      // Scroll the inline editor into view after it renders
+      setTimeout(() => roleEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+    }
+  }, [editingUser]);
 
   // Fetch admin stats
   const { data: stats } = useQuery<Stats>({
@@ -590,6 +601,46 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {editingUser && (
+                    <div ref={roleEditorRef} className="mb-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Edit User Role</CardTitle>
+                          <CardDescription>
+                            Change the role for {editingUser.username}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-center gap-3">
+                            <Label htmlFor="edit-role">Role</Label>
+                            <select
+                              id="edit-role"
+                              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                              value={editRole}
+                              onChange={(e) => setEditRole(e.target.value)}
+                            >
+                              <option value="student">Student</option>
+                              <option value="teacher">Teacher</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                        </CardContent>
+                        <CardContent className="flex justify-end gap-2 pt-0">
+                          <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+                          <Button
+                            onClick={() => {
+                              if (editingUser) {
+                                updateUserRole.mutate({ userId: editingUser.id, role: editRole });
+                                setEditingUser(null);
+                              }
+                            }}
+                          >
+                            Save Changes
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                   <ScrollArea className="h-[500px]">
                     <Table>
                       <TableHeader>
@@ -624,52 +675,13 @@ export default function AdminDashboard() {
                               <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setEditingUser(user)}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[425px]">
-                                      <DialogHeader>
-                                        <DialogTitle>Edit User Role</DialogTitle>
-                                        <DialogDescription>Change the role for {user.username}</DialogDescription>
-                                      </DialogHeader>
-                                      <div className="space-y-4 py-4">
-                                        <div className="space-y-2">
-                                          <Label htmlFor="role">{t("admin.users.edit.role")}</Label>
-                                          <Select
-                                            defaultValue={user.role}
-                                            onValueChange={(role) => setEditingUser({ ...user, role })}
-                                          >
-                                            <SelectTrigger id="role" className="w-full">
-                                              <SelectValue placeholder="Select a role" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="student">Student</SelectItem>
-                                              <SelectItem value="teacher">Teacher</SelectItem>
-                                              <SelectItem value="admin">Admin</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </div>
-                                      <DialogFooter>
-                                        <Button
-                                          onClick={() => {
-                                            if (editingUser) {
-                                              updateUserRole.mutate({ userId: user.id, role: editingUser.role });
-                                            }
-                                          }}
-                                        >
-                                          {t("admin.users.edit.save")}
-                                        </Button>
-                                      </DialogFooter>
-                                    </DialogContent>
-                                  </Dialog>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingUser(user)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
                                   <Button
                                     variant="destructive"
                                     size="sm"
