@@ -630,11 +630,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/auth/forgot-password", validateCsrfHeader, async (req: any, res) => {
     try {
       const { email } = req.body;
+      console.log(`[forgot-password] Received request for email: ${email}`);
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
 
       const user = await storage.getUserByEmail(email);
+      console.log(`[forgot-password] Found user: ${user ? (user.username || user.email || user.id) : "NOT FOUND"}`);
       if (!user) {
         // For security, don't reveal if email exists
         return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
@@ -653,13 +655,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Send email with reset link
       const resetLink = `${process.env.APP_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
       const emailHtml = generateForgotPasswordEmailHtml(user.username || "User", resetLink);
+      const emailText = `Hi ${user.username || "User"},\n\nWe received a request to reset your password.\n\nReset your password: ${resetLink}\n\nThis link will expire in 24 hours. If you didn’t request this, you can ignore this email.`;
       
       try {
         await sendEmail({
           to: email,
           subject: "Reset Your Campus Ratings Password",
           html: emailHtml,
+          text: emailText,
         });
+        console.log(`[forgot-password] Email sent (accepted by provider) to ${email}`);
       } catch (emailError: any) {
         console.error("Email sending failed:", emailError);
         return res.status(500).json({ message: `Email sending failed: ${emailError.message}` });

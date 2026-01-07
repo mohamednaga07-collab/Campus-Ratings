@@ -56,6 +56,7 @@ interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
@@ -79,6 +80,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
             to: [options.to],
             subject: options.subject,
             html: options.html,
+            text: options.text,
             reply_to: EMAIL_USER,
           }),
         });
@@ -105,6 +107,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       to: options.to,
       subject: options.subject,
       html: options.html,
+      text: options.text,
     });
 
     console.log(`[Email Send] ✅ Email sent via Gmail: ${info.messageId}`);
