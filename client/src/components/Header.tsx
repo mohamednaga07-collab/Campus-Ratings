@@ -107,15 +107,15 @@ export function Header() {
                   className="relative h-9 w-9 rounded-full p-0"
                   data-testid="button-user-menu"
                 >
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? t("common.user")} />
-                    <AvatarFallback>{userInitials}</AvatarFallback>
-                  </Avatar>
-                </BProfilePictureUpload 
+                  <ProfilePictureUpload 
                     user={user} 
                     size="sm" 
                     showEditButton={false}
-                  /
+                  />
+                </Button>
+              }
+            />
+          ) : (
             <Button onClick={() => {
               // Check if already on landing page
               if (location === '/') {
