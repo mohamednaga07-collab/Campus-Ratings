@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       toast({ title: t("admin.toasts.userRoleUpdated") });
       refetchUsers();
-      setEditingUser(null);
+      // Keep the editor open briefly so inline success can be seen
     },
     onError: () => {
       toast({ title: t("admin.toasts.userRoleUpdateFailed"), variant: "destructive" });
@@ -611,6 +611,19 @@ export default function AdminDashboard() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
+                          {/* Inline Alerts */}
+                          {((updateUserRole as any).isError) && (
+                            <Alert variant="destructive" className="mb-3">
+                              <AlertTitle>Failed</AlertTitle>
+                              <AlertDescription>Could not update the role. Please try again.</AlertDescription>
+                            </Alert>
+                          )}
+                          {((updateUserRole as any).isSuccess) && (
+                            <Alert className="mb-3">
+                              <AlertTitle>Saved</AlertTitle>
+                              <AlertDescription>User role updated successfully.</AlertDescription>
+                            </Alert>
+                          )}
                           <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-center gap-3">
                             <Label htmlFor="edit-role">Role</Label>
                             <select
@@ -628,14 +641,18 @@ export default function AdminDashboard() {
                         <CardContent className="flex justify-end gap-2 pt-0">
                           <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
                           <Button
+                            disabled={(updateUserRole as any).isLoading || (updateUserRole as any).isPending}
                             onClick={() => {
                               if (editingUser) {
                                 updateUserRole.mutate({ userId: editingUser.id, role: editRole });
-                                setEditingUser(null);
+                                // Auto-close after a short delay on success
+                                setTimeout(() => {
+                                  if ((updateUserRole as any).isSuccess) setEditingUser(null);
+                                }, 1200);
                               }
                             }}
                           >
-                            Save Changes
+                            {((updateUserRole as any).isLoading || (updateUserRole as any).isPending) ? "Saving..." : "Save Changes"}
                           </Button>
                         </CardContent>
                       </Card>
