@@ -30,6 +30,7 @@ export interface IStorage {
   createUser(user: UpsertUser): Promise<User>;
   updateUserRole(id: string, role: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
 
   // Doctor operations
   getAllDoctors(): Promise<DoctorWithRatings[]>;
@@ -41,6 +42,7 @@ export interface IStorage {
   // Review operations
   getReviewsByDoctor(doctorId: number): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
+  getAllReviews(): Promise<Review[]>;
 
   // Stats
   getStats(): Promise<{ totalDoctors: number; totalReviews: number }>;
@@ -121,6 +123,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
   // Doctor operations
   async getAllDoctors(): Promise<DoctorWithRatings[]> {
     const allDoctors = await db.select().from(doctors).orderBy(desc(doctors.createdAt));
@@ -173,7 +179,11 @@ export class DatabaseStorage implements IStorage {
 
     // Update doctor ratings
     await this.updateDoctorRatings(insertReview.doctorId);
+async getAllReviews(): Promise<Review[]> {
+    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+  }
 
+  
     return review;
   }
 
