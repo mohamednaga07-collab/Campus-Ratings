@@ -27,9 +27,9 @@ interface RoleBasedProfileMenuProps {
 }
 
 const roleColors = {
-  admin: { bg: "from-red-500 to-red-600", accent: "text-red-500", badge: "destructive" },
-  teacher: { bg: "from-blue-500 to-blue-600", accent: "text-blue-500", badge: "secondary" },
-  student: { bg: "from-green-500 to-green-600", accent: "text-green-500", badge: "default" },
+  admin: { bg: "from-red-500 to-red-600", accent: "text-red-500", badge: "destructive" as const },
+  teacher: { bg: "from-blue-500 to-blue-600", accent: "text-blue-500", badge: "secondary" as const },
+  student: { bg: "from-green-500 to-green-600", accent: "text-green-500", badge: "default" as const },
 };
 
 export function RoleBasedProfileMenu({
