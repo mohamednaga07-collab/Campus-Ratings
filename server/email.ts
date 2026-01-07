@@ -7,6 +7,11 @@ const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replac
 // Use the Gmail address as the sender to prevent Spam blocking/spoofing detection
 const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
 
+console.log("[Email Setup] Initializing with:");
+console.log(`  EMAIL_USER: ${EMAIL_USER}`);
+console.log(`  EMAIL_PASSWORD length: ${EMAIL_PASSWORD.length}`);
+console.log(`  EMAIL_FROM: ${EMAIL_FROM}`);
+
 // Create transporter
 // Use explicit host/port for faster connection (skips service lookup)
 const transporter = nodemailer.createTransport({
@@ -60,8 +65,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       return true; // Return success in dev mode
     }
 
-    console.log(`📨 Attempting to send email to: ${options.to}`);
-    console.log(`   Subject: ${options.subject}`);
+    console.log(`[Email Send] Starting email send...`);
+    console.log(`  To: ${options.to}`);
+    console.log(`  Subject: ${options.subject}`);
+    console.log(`  Using credentials: ${EMAIL_USER}`);
     
     const info = await transporter.sendMail({
       from: EMAIL_FROM,
@@ -70,10 +77,13 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
     });
 
-    console.log(`✅ Email sent successfully to ${options.to}: ${info.messageId}`);
+    console.log(`[Email Send] ✅ Email sent successfully to ${options.to}: ${info.messageId}`);
     return true;
   } catch (error) {
-    console.error(`❌ Failed to send email to ${options.to}:`, error instanceof Error ? error.message : error);
+    console.error(`[Email Send] ❌ Failed to send email to ${options.to}:`);
+    console.error(`  Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+    console.error(`  Error message: ${error instanceof Error ? error.message : error}`);
+    console.error(`  Full error:`, error);
     // Throw the error so the route handler knows it failed
     throw error;
   }
