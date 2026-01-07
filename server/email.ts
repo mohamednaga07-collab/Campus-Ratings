@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 
 // Email configuration - customize these with your email service credentials
-const EMAIL_USER = process.env.EMAIL_USER || "your-email@gmail.com";
-const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || "your-app-password";
+const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || "ytwz squh kukw ldpc";
 const EMAIL_FROM = process.env.EMAIL_FROM || "Campus Ratings <noreply@campusratings.com>";
 
 // Create transporter
