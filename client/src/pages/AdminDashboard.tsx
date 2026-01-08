@@ -628,6 +628,7 @@ export default function AdminDashboard() {
                             <Label htmlFor="edit-role">Role</Label>
                             <select
                               id="edit-role"
+                              title="Select user role"
                               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                               value={editRole}
                               onChange={(e) => setEditRole(e.target.value)}

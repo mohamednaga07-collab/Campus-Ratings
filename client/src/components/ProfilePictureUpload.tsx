@@ -25,6 +25,7 @@ export function ProfilePictureUpload({
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Force re-render
   const [showFullSize, setShowFullSize] = useState(false); // Show full-size image modal
+  const [cacheBuster, setCacheBuster] = useState(0); // Cache-bust image URL
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -99,8 +100,9 @@ export function ProfilePictureUpload({
           const result = await response.json();
           console.log('🖼️ Upload successful:', result);
 
-          // Force image refresh
+          // Force image refresh with cache buster
           setImageKey(prev => prev + 1);
+          setCacheBuster(prev => prev + 1);
 
           toast({
             title: "Success!",
@@ -177,7 +179,7 @@ export function ProfilePictureUpload({
       >
         <AvatarImage 
           key={imageKey} // Force re-render when key changes
-          src={user.profileImageUrl ?? undefined} 
+          src={user.profileImageUrl ? `${user.profileImageUrl}?cb=${cacheBuster}` : undefined} 
           alt={user.firstName ?? "User"} 
         />
         <AvatarFallback className="font-semibold">
@@ -214,7 +216,7 @@ export function ProfilePictureUpload({
           <div className="flex items-center justify-center h-full w-full p-4">
             {user.profileImageUrl ? (
               <img 
-                src={user.profileImageUrl}
+                src={`${user.profileImageUrl}?cb=${cacheBuster}`}
                 alt={`${user.firstName ?? "User"}'s profile picture`}
                 className="max-w-full max-h-[80vh] rounded-lg object-contain"
               />

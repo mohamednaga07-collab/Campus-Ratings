@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Profile Picture Upload</title>
     <style>
         body { font-family: Arial; padding: 20px; }
@@ -15,7 +17,8 @@
     <h1>Profile Picture Upload Test</h1>
     <p>This page tests the upload endpoint directly</p>
     
-    <input type="file" id="fileInput" accept="image/*">
+    <label for="fileInput">Select Image:</label>
+    <input type="file" id="fileInput" accept="image/*" title="Select an image file to upload">
     <button onclick="testUpload()">Test Upload</button>
     
     <div id="logs"></div>
