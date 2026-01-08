@@ -1,8 +1,13 @@
 import { useState, useRef } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, X, ZoomIn } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@shared/schema";
+import {
+  Dialog,
+  DialogContent,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 interface ProfilePictureUploadProps {
   user: User;
@@ -19,6 +24,7 @@ export function ProfilePictureUpload({
 }: ProfilePictureUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState(0); // Force re-render
+  const [showFullSize, setShowFullSize] = useState(false); // Show full-size image modal
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -160,7 +166,18 @@ export function ProfilePictureUpload({
       
       <Avatar 
         className={`${sizeClasses[size]} cursor-pointer transition-all hover:opacity-80`}
-        onClick={() => showEditButton && fileInputRef.current?.click()}
+        onClick={() => {
+          // If has profile image and edit button shown, open fullscreen or edit
+          if (user.profileImageUrl) {
+            if (showEditButton) {
+              // Show fullscreen viewer when clicked
+              setShowFullSize(true);
+            }
+          } else if (showEditButton) {
+            // If no image and edit button shown, trigger upload
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <AvatarImage 
           key={imageKey} // Force re-render when key changes
@@ -181,6 +198,7 @@ export function ProfilePictureUpload({
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
           className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+          title="Click to upload a new profile picture"
         >
           {uploading ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -189,6 +207,42 @@ export function ProfilePictureUpload({
           )}
         </button>
       )}
+
+      {/* Full-size image viewer modal */}
+      <Dialog open={showFullSize} onOpenChange={setShowFullSize}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-0 bg-black/95 backdrop-blur-sm">
+          <DialogClose className="absolute right-4 top-4 z-50 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors">
+            <X className="h-6 w-6" />
+          </DialogClose>
+          
+          <div className="flex items-center justify-center h-full w-full p-4">
+            {user.profileImageUrl ? (
+              <img 
+                src={user.profileImageUrl}
+                alt={`${user.firstName ?? "User"}'s profile picture`}
+                className="max-w-full max-h-[80vh] rounded-lg object-contain"
+              />
+            ) : (
+              <div className="text-white text-center">
+                <ZoomIn className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <p>No profile picture</p>
+              </div>
+            )}
+          </div>
+
+          {/* Image info footer */}
+          {user.profileImageUrl && (
+            <div className="absolute bottom-4 left-4 right-4 text-white text-sm bg-black/50 p-3 rounded-lg backdrop-blur-sm">
+              <p className="font-semibold">{user.firstName} {user.lastName}</p>
+              <p className="text-gray-300">Profile Picture</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {user.profileImageUrl.length > 0 && 
+                  `Size: ${(user.profileImageUrl.length / 1024 / 1024).toFixed(2)}MB`}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
