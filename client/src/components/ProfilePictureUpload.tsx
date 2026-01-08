@@ -25,7 +25,6 @@ export function ProfilePictureUpload({
   showEditButton = true 
 }: ProfilePictureUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const [imageKey, setImageKey] = useState(0); // Force re-render
   const [showFullSize, setShowFullSize] = useState(false); // Show full-size image modal
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -102,14 +101,8 @@ export function ProfilePictureUpload({
           const result = await response.json();
           console.log('🖼️ Upload successful:', result);
 
-          // Invalidate user query to update profile picture everywhere
+          // Invalidate and refetch user query to update profile picture everywhere
           await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-          
-          // Small delay to ensure the new image is fully loaded before triggering animation
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Force image refresh with animation
-          setImageKey(prev => prev + 1);
           
           toast({
             title: "Success!",
@@ -184,14 +177,14 @@ export function ProfilePictureUpload({
           }
         }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={imageKey} // Unique key triggers animation on change
+            key={user.profileImageUrl || 'no-image'} // Use actual image URL as key - only animates when URL changes
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.02 }}
             transition={{ 
-              duration: 0.35,
+              duration: 0.3,
               ease: [0.25, 0.46, 0.45, 0.94], // Smooth easeOutQuad for 120fps
             }}
             className="absolute inset-0 z-10 w-full h-full"
