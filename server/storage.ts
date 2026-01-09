@@ -50,9 +50,9 @@ export interface IStorage {
 
   // Stats
   getStats(): Promise<{ totalDoctors: number; totalReviews: number }>;
-  
-  // Activity logging (optional - may not be implemented in all storage types)
-  logActivity?(data: {
+
+  // Activity logging
+  logActivity(data: {
     userId: string;
     username: string;
     role: string;
@@ -61,8 +61,14 @@ export interface IStorage {
     ipAddress?: string;
     userAgent?: string;
   }): Promise<void>;
-  
-  getActivityLogs?(limit?: number): Promise<any[]>;
+
+  getActivityLogs(limit?: number): Promise<any[]>;
+
+  // Review deletion
+  deleteReview(id: number): Promise<void>;
+
+  // User update
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -186,6 +192,7 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
+
   // Review operations
   async getReviewsByDoctor(doctorId: number): Promise<Review[]> {
     return db.select().from(reviews).where(eq(reviews.doctorId, doctorId)).orderBy(desc(reviews.createdAt));
@@ -193,15 +200,108 @@ export class DatabaseStorage implements IStorage {
 
   async createReview(insertReview: InsertReview): Promise<Review> {
     const [review] = await db.insert(reviews).values(insertReview).returning();
-
     // Update doctor ratings
     await this.updateDoctorRatings(insertReview.doctorId);
-
     return review;
   }
 
   async getAllReviews(): Promise<Review[]> {
     return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    // Get review info before deleting
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, id));
+    if (!review) return;
+    await db.delete(reviews).where(eq(reviews.id, id));
+    // Recalculate ratings for that doctor
+    const doctorReviews = await db.select().from(reviews).where(eq(reviews.doctorId, review.doctorId));
+    if (doctorReviews.length > 0) {
+      const avgTeachingQuality = doctorReviews.reduce((sum: number, r: any) => sum + r.teachingQuality, 0) / doctorReviews.length;
+      const avgAvailability = doctorReviews.reduce((sum: number, r: any) => sum + r.availability, 0) / doctorReviews.length;
+      const avgCommunication = doctorReviews.reduce((sum: number, r: any) => sum + r.communication, 0) / doctorReviews.length;
+      const avgKnowledge = doctorReviews.reduce((sum: number, r: any) => sum + r.knowledge, 0) / doctorReviews.length;
+      const avgFairness = doctorReviews.reduce((sum: number, r: any) => sum + r.fairness, 0) / doctorReviews.length;
+      const overallRating = (avgTeachingQuality + avgAvailability + avgCommunication + avgKnowledge + avgFairness) / 5;
+      await db.insert(doctorRatings).values({
+        doctorId: review.doctorId,
+        avgTeachingQuality,
+        avgAvailability,
+        avgCommunication,
+        avgKnowledge,
+        avgFairness,
+        overallRating,
+        totalReviews: doctorReviews.length,
+        updatedAt: new Date(),
+      }).onConflictDoUpdate({
+        target: doctorRatings.doctorId,
+        set: {
+          avgTeachingQuality,
+          avgAvailability,
+          avgCommunication,
+          avgKnowledge,
+          avgFairness,
+          overallRating,
+          totalReviews: doctorReviews.length,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // No reviews left, reset to 0
+      await db.insert(doctorRatings).values({
+        doctorId: review.doctorId,
+        avgTeachingQuality: 0,
+        avgAvailability: 0,
+        avgCommunication: 0,
+        avgKnowledge: 0,
+        avgFairness: 0,
+        overallRating: 0,
+        totalReviews: 0,
+        updatedAt: new Date(),
+      }).onConflictDoUpdate({
+        target: doctorRatings.doctorId,
+        set: {
+          avgTeachingQuality: 0,
+          avgAvailability: 0,
+          avgCommunication: 0,
+          avgKnowledge: 0,
+          avgFairness: 0,
+          overallRating: 0,
+          totalReviews: 0,
+          updatedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  async logActivity(data: {
+    userId: string;
+    username: string;
+    role: string;
+    action: string;
+    type: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<void> {
+    await db.insert('activity_logs').values({
+      userId: data.userId,
+      username: data.username,
+      role: data.role,
+      action: data.action,
+      type: data.type,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      timestamp: new Date(),
+    });
+  }
+
+  async getActivityLogs(limit: number = 50): Promise<any[]> {
+    return db.select().from('activity_logs').orderBy(desc('timestamp')).limit(limit);
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const [user] = await db.update(users).set({ ...updates, updatedAt: new Date() }).where(eq(users.id, id)).returning();
+    return user;
   }
 
   private async updateDoctorRatings(doctorId: number): Promise<void> {
@@ -256,6 +356,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = process.env.DATABASE_URL
+export const storage: IStorage = process.env.DATABASE_URL
   ? new DatabaseStorage()
   : sqliteStorage;

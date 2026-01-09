@@ -286,22 +286,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         });
       }
 
-      // Log user login activity (if supported by storage)
-      if (storage.logActivity) {
-        try {
-          await storage.logActivity({
-            userId: user.id,
-            username: user.username || username,
-            role: (user as any).role || "student",
-            action: `User logged in`,
-            type: "login",
-            ipAddress: req.ip || req.headers['x-forwarded-for'] as string || "unknown",
-            userAgent: req.headers['user-agent'],
-          });
-        } catch (err) {
-          console.error("Failed to log activity:", err);
-          // Don't fail the login if activity logging fails
-        }
+      // Log user login activity
+      try {
+        await storage.logActivity({
+          userId: user.id,
+          username: user.username || username,
+          role: (user as any).role || "student",
+          action: `User logged in`,
+          type: "login",
+          ipAddress: req.ip || req.headers['x-forwarded-for'] as string || "unknown",
+          userAgent: req.headers['user-agent'],
+        });
+      } catch (err) {
+        console.error("Failed to log activity:", err);
+        // Don't fail the login if activity logging fails
       }
 
       // Don't send password to client
@@ -1079,11 +1077,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.get("/api/admin/activity", isAdmin, async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      
-      // Return empty array if storage doesn't support activity logs
-      if (!storage.getActivityLogs) {
-        return res.json([]);
-      }
       
       const logs = await storage.getActivityLogs(limit);
       res.json(logs);

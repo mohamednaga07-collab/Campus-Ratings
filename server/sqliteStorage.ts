@@ -1,5 +1,7 @@
+
 import Database from "better-sqlite3";
 import path from "path";
+import type { User } from "../shared/schema";
 
 const dbPath = path.join(process.cwd(), "dev.db");
 const db = new Database(dbPath);
@@ -102,8 +104,8 @@ try {
 }
 
 // Seed sample doctors if table is empty
-const doctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
-if (doctorCount.count === 0) {
+let doctorCountSeed = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
+if (doctorCountSeed.count === 0) {
   const doctors = [
     { name: "Dr. Smith", department: "Computer Science", title: "Professor" },
     { name: "Dr. Johnson", department: "Mathematics", title: "Associate Professor" },
@@ -131,6 +133,7 @@ if (doctorCount.count === 0) {
   console.log("✓ Seeded sample doctors");
 }
 
+
 // Helper function to normalize user data from SQLite (convert 0/1 to boolean for emailVerified)
 function normalizeUser(user: any): any {
   if (!user) return null;
@@ -140,77 +143,62 @@ function normalizeUser(user: any): any {
   };
 }
 
-export const sqliteStorage = {
-  async getDoctors() {
-    try {
-      const stmt = db.prepare("SELECT d.*, dr.* FROM doctors d LEFT JOIN doctor_ratings dr ON d.id = dr.doctorId");
-      const rows = stmt.all() as any[];
-      return rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        department: row.department,
-        title: row.title,
-        bio: row.bio,
-        profileImageUrl: row.profileImageUrl,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        ratings: row.doctorId
-          ? {
-              id: row.doctorId,
-              doctorId: row.doctorId,
-              avgTeachingQuality: row.avgTeachingQuality || 0,
-              avgAvailability: row.avgAvailability || 0,
-              avgCommunication: row.avgCommunication || 0,
-              avgKnowledge: row.avgKnowledge || 0,
-              avgFairness: row.avgFairness || 0,
-              overallRating: row.overallRating || 0,
-              totalReviews: row.totalReviews || 0,
-              updatedAt: row.updatedAt,
-            }
-          : null,
-      }));
-    } catch (e) {
-      console.error("getDoctors error:", e);
-      return [];
-    }
-  },
+// Export sqliteStorage object at the very end of the file
 
-  async getDoctor(id: number) {
-    try {
-      const stmt = db.prepare(
-        "SELECT d.*, dr.* FROM doctors d LEFT JOIN doctor_ratings dr ON d.id = dr.doctorId WHERE d.id = ?"
-      );
-      const row = stmt.get(id) as any;
-      if (!row) return null;
-      return {
-        id: row.id,
-        name: row.name,
-        department: row.department,
-        title: row.title,
-        bio: row.bio,
-        profileImageUrl: row.profileImageUrl,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        ratings: row.doctorId
-          ? {
-              id: row.doctorId,
-              doctorId: row.doctorId,
-              avgTeachingQuality: row.avgTeachingQuality || 0,
-              avgAvailability: row.avgAvailability || 0,
-              avgCommunication: row.avgCommunication || 0,
-              avgKnowledge: row.avgKnowledge || 0,
-              avgFairness: row.avgFairness || 0,
-              overallRating: row.overallRating || 0,
-              totalReviews: row.totalReviews || 0,
-              updatedAt: row.updatedAt,
-            }
-          : null,
-      };
-    } catch (e) {
-      console.error("getDoctor error:", e);
-      return null;
+// Migration and seeding logic moved above export
+try {
+  const cols = db.prepare("PRAGMA table_info(users)").all() as any[];
+  const hasResetToken = cols.some((c) => c.name === "resetToken");
+  const hasResetTokenExpiry = cols.some((c) => c.name === "resetTokenExpiry");
+  const hasEmailVerified = cols.some((c) => c.name === "emailVerified");
+  const hasVerificationToken = cols.some((c) => c.name === "verificationToken");
+  if (!hasResetToken) {
+    db.exec("ALTER TABLE users ADD COLUMN resetToken TEXT");
+    console.log("✓ Added users.resetToken column");
+  }
+  if (!hasResetTokenExpiry) {
+    db.exec("ALTER TABLE users ADD COLUMN resetTokenExpiry TEXT");
+    console.log("✓ Added users.resetTokenExpiry column");
+  }
+  if (!hasEmailVerified) {
+    db.exec("ALTER TABLE users ADD COLUMN emailVerified INTEGER DEFAULT 0");
+    console.log("✓ Added users.emailVerified column");
+  }
+  if (!hasVerificationToken) {
+    db.exec("ALTER TABLE users ADD COLUMN verificationToken TEXT");
+    console.log("✓ Added users.verificationToken column");
+  }
+} catch (e) {
+  console.error("Failed to ensure reset token columns:", e);
+}
+
+const doctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
+if (doctorCount.count === 0) {
+  const doctors = [
+    { name: "Dr. Smith", department: "Computer Science", title: "Professor" },
+    { name: "Dr. Johnson", department: "Mathematics", title: "Associate Professor" },
+    { name: "Dr. Williams", department: "Physics", title: "Professor" },
+    { name: "Dr. Brown", department: "Chemistry", title: "Lecturer" },
+    { name: "Dr. Jones", department: "Biology", title: "Professor" },
+  ];
+  const insertDoctor = db.prepare(
+    "INSERT INTO doctors (name, department, title) VALUES (?, ?, ?)"
+  );
+  const insertRating = db.prepare(
+    "INSERT INTO doctor_ratings (doctorId, avgTeachingQuality, avgAvailability, avgCommunication, avgKnowledge, avgFairness, overallRating, totalReviews) VALUES (?, 0, 0, 0, 0, 0, 0, 0)"
+  );
+  const transaction = db.transaction((doctors: any[]) => {
+    for (const doc of doctors) {
+      const result = insertDoctor.run(doc.name, doc.department, doc.title) as any;
+      insertRating.run(result.lastInsertRowid);
     }
-  },
+  });
+  transaction(doctors);
+  console.log("✓ Seeded sample doctors");
+}
+
+export const sqliteStorage = {
+// All methods are now inside the single export below. No duplicates or trailing code.
 
   async getReviewsByDoctor(doctorId: number) {
     try {
@@ -222,7 +210,7 @@ export const sqliteStorage = {
     }
   },
 
-  async createDoctor(doctor: any) {
+  async createDoctor(doctor: any): Promise<any> {
     try {
       const insertDoctor = db.prepare(
         "INSERT INTO doctors (name, department, title, bio, profileImageUrl) VALUES (?, ?, ?, ?, ?)"
@@ -247,7 +235,42 @@ export const sqliteStorage = {
     }
   },
 
-  async updateDoctor(id: number, updates: any) {
+  async updateDoctor(id: number, updates: any): Promise<any> {
+      // Add missing getDoctor method
+      async getDoctor(id: number): Promise<any | null> {
+        try {
+          const stmt = db.prepare("SELECT d.*, dr.* FROM doctors d LEFT JOIN doctor_ratings dr ON d.id = dr.doctorId WHERE d.id = ?");
+          const row = stmt.get(id) as any;
+          if (!row) return null;
+          return {
+            id: row.id,
+            name: row.name,
+            department: row.department,
+            title: row.title,
+            bio: row.bio,
+            profileImageUrl: row.profileImageUrl,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            ratings: row.doctorId
+              ? {
+                  id: row.doctorId,
+                  doctorId: row.doctorId,
+                  avgTeachingQuality: row.avgTeachingQuality || 0,
+                  avgAvailability: row.avgAvailability || 0,
+                  avgCommunication: row.avgCommunication || 0,
+                  avgKnowledge: row.avgKnowledge || 0,
+                  avgFairness: row.avgFairness || 0,
+                  overallRating: row.overallRating || 0,
+                  totalReviews: row.totalReviews || 0,
+                  updatedAt: row.updatedAt,
+                }
+              : null,
+          };
+        } catch (e) {
+          console.error("getDoctor error:", e);
+          return null;
+        }
+      },
     try {
       const fields = [];
       const values = [];
@@ -412,7 +435,7 @@ export const sqliteStorage = {
     }
   },
 
-  async updateUser(id: string, updates: Partial<User>) {
+  async updateUser(id: string, updates: Partial<User>): Promise<any> {
     try {
       const user = db.prepare("SELECT * FROM users WHERE id = ?").get(id) as any;
       if (!user) {
@@ -609,7 +632,7 @@ export const sqliteStorage = {
   },
 
   async logActivity(data: {
-    userId?: string;
+    userId: string;
     username: string;
     role: string;
     action: string;
@@ -622,7 +645,7 @@ export const sqliteStorage = {
         INSERT INTO activity_logs (userId, username, role, action, type, ipAddress, userAgent)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(
-        data.userId || null,
+        data.userId,
         data.username,
         data.role,
         data.action,
@@ -697,4 +720,6 @@ export const sqliteStorage = {
     }
   },
 };
+
+// sqliteStorage implementation for Campus Ratings
 
