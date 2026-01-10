@@ -881,7 +881,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       // Send email with reset link
-      const resetLink = `${process.env.APP_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+      // Use HTTPS for production links to prevent "Suspicious Link" warnings
+      const baseUrl = process.env.APP_URL || "http://localhost:5173";
+      const secureUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      // Force HTTPS if not localhost (Render provides https)
+      const finalUrl = secureUrl.includes('localhost') ? secureUrl : secureUrl.replace('http:', 'https:');
+      
+      const resetLink = `${finalUrl}/reset-password?token=${resetToken}`;
       const emailHtml = generateForgotPasswordEmailHtml(user.username || "User", resetLink);
       const emailText = `Hi ${user.username || "User"},\n\nWe received a request to reset your password.\n\nReset your password: ${resetLink}\n\nThis link will expire in 24 hours. If you didn’t request this, you can ignore this email.`;
       

@@ -8,7 +8,7 @@ const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate Support <${EMAIL_USER}>`;
 // Resend configuration (preferred for production - simple API)
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // Use a verified domain if provided, else fall back to Resend onboarding domain
-const RESEND_FROM = process.env.RESEND_FROM || 'Campus Ratings <onboarding@resend.dev>';
+const RESEND_FROM = process.env.RESEND_FROM || 'ProfRate <onboarding@resend.dev>';
 const USE_RESEND = !!RESEND_API_KEY;
 
 console.log("[Email Setup] Initializing with:");
