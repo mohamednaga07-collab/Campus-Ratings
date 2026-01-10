@@ -30,16 +30,16 @@ body {
   overflow-x: hidden;
 }
 
-/* Smooth transitions for all elements - optimized for 120fps */
+/* Smooth transitions for all elements - optimized for smoothness */
 * {
-  @apply transition-colors duration-200;
+  @apply transition-colors duration-500 ease-in-out;
 }
 
 button,
 input,
 textarea,
 select {
-  @apply transition-all duration-200 ease-out;
+  @apply transition-all duration-300 ease-out;
 }
 
 /* RTL Support for Arabic */
@@ -138,12 +138,12 @@ html[dir="rtl"] body {
   /* Snappy color transitions for high performance */
   * {
     transition:
-      background-color 0.1s ease-in-out,
-      border-color 0.1s ease-in-out,
-      color 0.1s ease-in-out,
-      fill 0.1s ease-in-out,
-      stroke 0.1s ease-in-out,
-      box-shadow 0.15s ease-in-out;
+      background-color 0.5s ease-in-out,
+      border-color 0.5s ease-in-out,
+      color 0.5s ease-in-out,
+      fill 0.5s ease-in-out,
+      stroke 0.5s ease-in-out,
+      box-shadow 0.3s ease-in-out;
   }
 
   /* Card and container optimization */

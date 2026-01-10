@@ -617,6 +617,18 @@
         "department": "Department",
         "title": "Title",
         "specialty": "Specialty"
+      },
+      "edit": {
+        "title": "Edit User Role",
+        "subtitle": "Change the role for {{username}}",
+        "role": "Role",
+        "save": "Save changes",
+        "contact": "Contact & Status",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "joined": "Joined",
+        "actions": "Actions",
+        "roleAssignment": "Role Assignment"
       }
     },
     "components": {
@@ -624,18 +636,6 @@
         "noPicture": "No profile picture",
         "clickToUpload": "Click to upload a new profile picture",
         "title": "Profile picture upload"
-      },
-      "edit": {
-        "title": "Edit User Role",
-        "subtitle": "Change the role for {{username}}",
-        "role": "Role",
-        "save": "Save",
-        "contact": "Contact & Status",
-        "verified": "Verified",
-        "unverified": "Unverified",
-        "joined": "Joined",
-        "actions": "Actions",
-        "roleAssignment": "Role Assignment"
       },
       "delete": {
         "button": "Delete User",

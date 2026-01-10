@@ -638,6 +638,18 @@
         "department": "القسم",
         "title": "اللقب",
         "specialty": "التخصص"
+      },
+      "edit": {
+        "title": "تعديل دور المستخدم",
+        "subtitle": "تغيير الدور لـ {{username}}",
+        "role": "الدور",
+        "save": "حفظ التغييرات",
+        "contact": "معلومات الاتصال والحالة",
+        "verified": "موثق",
+        "unverified": "غير موثق",
+        "joined": "انضم منذ",
+        "actions": "الإجراءات",
+        "roleAssignment": "تعيين الدور"
       }
     },
     "components": {
@@ -645,18 +657,6 @@
         "noPicture": "لا توجد صورة شخصية",
         "clickToUpload": "اضغط لرفع صورة جديدة",
         "title": "رفع صورة شخصية"
-      },
-      "edit": {
-        "title": "تعديل دور المستخدم",
-        "subtitle": "تغيير الدور لـ {{username}}",
-        "role": "الدور",
-        "save": "حفظ",
-        "contact": "معلومات الاتصال والحالة",
-        "verified": "موثق",
-        "unverified": "غير موثق",
-        "joined": "انضم منذ",
-        "actions": "الإجراءات",
-        "roleAssignment": "تعيين الدور"
       },
       "delete": {
         "button": "حذف المستخدم",
