@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 // Email configuration
 const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
 const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replace(/\s/g, "");
-const EMAIL_FROM = process.env.EMAIL_FROM || `Campus Ratings <${EMAIL_USER}>`;
+const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate Support <${EMAIL_USER}>`;
 
 // Resend configuration (preferred for production - simple API)
 const RESEND_API_KEY = process.env.RESEND_API_KEY;

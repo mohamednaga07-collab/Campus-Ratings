@@ -183,9 +183,11 @@ export default function Home() {
                   setCurrentIndex(realIndex);
                   setLastInteraction(Date.now());
                 }}
-                className={`h-1.5 rounded-full transition-all ${
-                  isActive ? "bg-white w-5" : "bg-white/30 w-1.5"
+                className={`h-2 rounded-full transition-all ${
+                  isActive ? "bg-white w-6" : "bg-white/40 w-2"
                 }`}
+                whileHover={{ scale: 1.3, backgroundColor: "rgba(255,255,255,0.8)" }}
+                whileTap={{ scale: 0.9 }}
               />
             );
           })}
