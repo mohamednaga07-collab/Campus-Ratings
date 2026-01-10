@@ -50,14 +50,14 @@ export default function Landing() {
 
   // Robust carousel rotation - high-speed & reliable
   useEffect(() => {
-    const interval = setInterval(() => {
+    const autoplayTimer = setInterval(() => {
       const timeSinceLastInteraction = Date.now() - lastInteraction;
     // Use 2000ms (2s) pause after interaction as requested
       if (!isDragging && (timeSinceLastInteraction > 2000 || lastInteraction === 0)) {
         handleNext();
       }
     }, 5000); 
-    return () => clearInterval(interval);
+    return () => clearInterval(autoplayTimer);
   }, [isDragging, lastInteraction, handleNext]);
 
   // Instant reset logic for infinite loop
