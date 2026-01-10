@@ -68,9 +68,10 @@ export default function ResetPassword() {
     if (!/[a-z]/.test(password)) {
       return t("auth.passwordNeedLower", { defaultValue: "Password must contain lowercase letters" });
     }
-    if (!/[A-Z]/.test(password)) {
-      return t("auth.passwordNeedUpper", { defaultValue: "Password must contain uppercase letters" });
-    }
+    // Relaxed uppercase requirement
+    // if (!/[A-Z]/.test(password)) {
+    //   return t("auth.passwordNeedUpper", { defaultValue: "Password must contain uppercase letters" });
+    // }
     if (!/[0-9]/.test(password)) {
       return t("auth.passwordNeedNumber", { defaultValue: "Password must contain numbers" });
     }
@@ -318,7 +319,8 @@ export default function ResetPassword() {
                         <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                           <li>{t("auth.passReq8Char", { defaultValue: "At least 8 characters" })}</li>
                           <li>{t("auth.passReqLower", { defaultValue: "Lowercase letters" })}</li>
-                          <li>{t("auth.passReqUpper", { defaultValue: "Uppercase letters" })}</li>
+                          {/* Removed Uppercase Requirement */}
+                          {/* <li>{t("auth.passReqUpper", { defaultValue: "Uppercase letters" })}</li> */}
                           <li>{t("auth.passReqNumber", { defaultValue: "Numbers" })}</li>
                         </ul>
                       </div>

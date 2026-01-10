@@ -176,26 +176,38 @@ export function generateForgotPasswordEmailHtml(username: string, resetLink: str
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
-        .content { padding: 20px; }
-        .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-        .footer { font-size: 12px; color: #999; text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; }
+        .header { background: #f8fafc; padding: 20px; text-align: center; border-bottom: 2px solid #667eea; }
+        .logo { max-height: 50px; margin-bottom: 10px; }
+        .content { padding: 30px 20px; background: #ffffff; }
+        .button { display: inline-block; background: #667eea; color: #ffffff !important; padding: 14px 30px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: bold; border: 1px solid #5a6fd6; }
+        .footer { font-size: 12px; color: #999; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .link-text { font-size: 12px; color: #999; word-break: break-all; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h2>Reset Your Password</h2>
+          <img src="https://campus-ratings.onrender.com/favicon.png" alt="ProfRate Logo" class="logo">
+          <h2 style="color: #333; margin: 0;">ProfRate Security</h2>
         </div>
         <div class="content">
           <p>Hi ${username},</p>
-          <p>We received a request to reset your password. Click the button below to create a new password.</p>
-          <a href="${resetLink}" class="button">Reset Password</a>
+          <p>We received a request to reset your password. Click the secure button below to create a new password.</p>
+          <center>
+            <a href="${resetLink}" class="button" target="_blank">Reset My Password</a>
+          </center>
           <p>This link will expire in 24 hours.</p>
-          <p>If you didn't request a password reset, please ignore this email.</p>
+          <p style="margin-top: 30px; font-size: 13px; color: #666;">If you didn't request a password reset, you can safely ignore this email.</p>
+          
+          <div style="margin-top: 40px; border-top: 1px solid #f0f0f0; padding-top: 20px;">
+            <p class="link-text">Button not working? Copy and paste this link into your browser:<br>
+            <a href="${resetLink}" style="color: #667eea;">${resetLink}</a>
+            </p>
+          </div>
         </div>
         <div class="footer">
-          <p>© 2026 Campus Ratings. All rights reserved.</p>
+          <p>© 2026 ProfRate (Campus Ratings). All rights reserved.</p>
+          <p>Secure System Message</p>
         </div>
       </div>
     </body>

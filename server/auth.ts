@@ -132,12 +132,12 @@ export function validatePasswordStrength(password: string): {
     if (password.length >= 16) score += 5;
   }
 
-  // Uppercase check
+  // Uppercase check (optional but recommended)
   if (/[A-Z]/.test(password)) {
     score += 15;
-  } else {
-    feedback.push("Add uppercase letters (A-Z)");
   }
+  // Removed mandatory uppercase check
+
 
   // Lowercase check
   if (/[a-z]/.test(password)) {
