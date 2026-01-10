@@ -22,10 +22,26 @@ const getOidcConfig = memoize(
       }
       throw new Error("REPL_ID environment variable is required");
     }
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      replId
-    );
+    try {
+      // Add timeout to prevent blocking server startup if Replit OIDC is unreachable
+      const discoveryPromise = client.discovery(
+        new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+        replId
+      );
+      
+      const config = await Promise.race([
+        discoveryPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('OIDC discovery timeout')), 5000)
+        )
+      ]);
+      
+      return config;
+    } catch (error) {
+      console.error("❌ Failed to fetch OIDC configuration:", error);
+      console.log("⚠️  Continuing without OpenID Connect authentication");
+      return null;
+    }
   },
   { maxAge: 3600 * 1000 }
 );
