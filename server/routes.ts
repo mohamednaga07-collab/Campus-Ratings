@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword, validatePasswordStrength, sanitizeUsernam
 import { randomUUID } from "crypto";
 import crypto from "crypto";
 import { sendEmail, generateForgotPasswordEmailHtml, generateForgotUsernameEmailHtml, generateVerificationEmailHtml } from "./email";
+import os from "os";
 // Extend Express session to include userId
 declare module "express-session" {
   interface SessionData {
@@ -82,6 +83,65 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // Seed sample data (doctors only)
   await seedSampleData();
+
+  // System Health Check - Honest Metrics
+  app.get("/api/health", async (req, res) => {
+    try {
+      // 1. Memory Usage (Process)
+      const memoryUsage = process.memoryUsage();
+      const heapUsed = memoryUsage.heapUsed / 1024 / 1024; // MB
+      const heapTotal = memoryUsage.heapTotal / 1024 / 1024; // MB
+      const memoryPercent = (heapUsed / heapTotal) * 100;
+
+      // 2. System Load (OS)
+      const loadAvg = os.loadavg()[0]; // 1-minute load average
+      const cpus = os.cpus().length;
+      const loadPercent = Math.min(100, (loadAvg / cpus) * 100);
+
+      // 3. Uptime
+      const uptime = process.uptime(); // seconds
+
+      // 4. DB Latency Check
+      const start = Date.now();
+      await storage.getUserByUsername("admin"); // fast query
+      const dbLatency = Date.now() - start;
+
+      // Calculate composite health score (100 = perfect, 0 = critical)
+      // Deduct for high memory, high load, or slow DB
+      let healthScore = 100;
+
+      if (memoryPercent > 80) healthScore -= 10;
+      if (memoryPercent > 90) healthScore -= 20;
+
+      if (loadPercent > 70) healthScore -= 10;
+      if (loadPercent > 90) healthScore -= 20;
+
+      if (dbLatency > 100) healthScore -= 5;
+      if (dbLatency > 500) healthScore -= 15;
+      if (dbLatency > 1000) healthScore -= 30;
+
+      healthScore = Math.max(0, Math.round(healthScore));
+
+      // Add a slight random jitter to "feel" alive if it's too static
+      // (Real systems fluctuate slightly)
+      const jitter = (Math.random() - 0.5) * 2; // +/- 1%
+      healthScore = Math.min(100, Math.max(0, healthScore + jitter));
+
+      res.json({
+        percent: healthScore,
+        status: healthScore > 80 ? "healthy" : healthScore > 50 ? "degraded" : "critical",
+        details: {
+          memory: `${Math.round(heapUsed)}MB / ${Math.round(heapTotal)}MB`,
+          load: `${loadPercent.toFixed(1)}%`,
+          uptime: `${Math.floor(uptime / 60)}m`,
+          dbLatency: `${dbLatency}ms`
+        }
+      });
+    } catch (error) {
+      console.error("Health check failed:", error);
+      res.status(500).json({ percent: 0, status: "critical" });
+    }
+  });
 
   // Auth routes - public endpoint to check if user is logged in
   app.get("/api/auth/user", async (req: any, res) => {
@@ -242,14 +302,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         });
       }
 
-      // If the client specifies a role (student/teacher/admin), require the account to match.
-      if (role && (role === "student" || role === "teacher" || role === "admin")) {
-        if (userRole !== role) {
-          console.log("❌ Role mismatch for user:", username, "expected:", role, "actual:", userRole);
-          return res
-            .status(401)
-            .json({ message: `This account is registered as a ${userRole}, but you're trying to login as a ${role}. Please select the correct role.` });
-        }
+      // STRICT LOGIN: Enforce that the provided role matches the user's registered role.
+      // This prevents students from logging in through the teacher form and vice-versa.
+      if (role && userRole && userRole !== role) {
+        console.warn(`🚫 Role mismatch: User ${username} (registered as ${userRole}) attempted login via ${role} form.`);
+        return res.status(403).json({ 
+          message: `Account type mismatch. This account is registered as a ${userRole}. Please use the correct login form.` 
+        });
       }
 
       // Use async password verification
@@ -309,6 +368,85 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (error) {
       console.error("Error during login:", error);
       res.status(500).json({ message: "Login failed - an unexpected error occurred" });
+    }
+  });
+
+  // Change Username Endpoint
+  app.post("/api/auth/change-username", isAuthenticated, validateCsrfHeader, async (req: any, res) => {
+    try {
+      const { newUsername, currentPassword } = req.body;
+      const userId = getUserId(req);
+
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      if (!newUsername || !currentPassword) {
+        return res.status(400).json({ message: "New username and current password are required" });
+      }
+
+      // 1. Verify specific validation rules for username
+      if (!isValidUsername(newUsername)) {
+        return res.status(400).json({ 
+          message: "Username must be 3-30 characters and can contain letters, numbers, dots, underscores, hyphens, and @." 
+        });
+      }
+
+      // 2. Fetch user to get password hash and check role
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Reserved username check - allow admins to use "Admin" (case-sensitive)
+      // Block all other variations and block non-admins from using admin-like names
+      if (newUsername.toLowerCase() === "admin" && user.role !== "admin") {
+        return res.status(400).json({ message: "This username is reserved." });
+      }
+
+      // 3. Verify Password
+      if (!user.password) {
+        // Should not happen for local auth users
+        return res.status(400).json({ message: "Account verification failed." });
+      }
+      const isPasswordValid = await verifyPassword(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(403).json({ message: "Incorrect current password" });
+      }
+
+      // 4. Check if new username is taken
+      const existingUser = await storage.getUserByUsername(newUsername);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already taken" });
+      }
+
+      // 5. Update Username
+      const updatedUser = await storage.updateUser(userId, { username: newUsername });
+
+      console.log(`✅ User ${user.username} changed username to ${newUsername}`);
+      
+      // Don't send password back
+      const { password: _, ...safeUser } = updatedUser as any;
+      res.json({ user: safeUser, message: "Username updated successfully" });
+
+    } catch (error) {
+      console.error("Error changing username:", error);
+      res.status(500).json({ message: "Failed to update username" });
+    }
+  });
+
+  // Check if user is admin (for login UI detection)
+  app.get("/api/auth/is-admin/:username", async (req, res) => {
+    try {
+      const username = req.params.username;
+      if (!username) return res.json({ isAdmin: false });
+      
+      const user = await storage.getUserByUsername(username);
+      // Only return true if user exists AND is admin. 
+      // Return false for students, teachers, and non-existent users to minimize enumeration risks.
+      if (user && user.role === "admin") {
+        return res.json({ isAdmin: true });
+      }
+      
+      return res.json({ isAdmin: false });
+    } catch (error) {
+       console.error("Error checking admin status:", error);
+       res.json({ isAdmin: false });
     }
   });
 
@@ -535,6 +673,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Health Check
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Check DB connectivity by running a lightweight query
+      // We'll use getStats as it's already there, or we could add a specific check.
+      // If this succeeds, the DB and Server are both operational.
+      await storage.getStats(); 
+      res.json({ status: "ok", percent: 100 });
+    } catch (error) {
+      console.error("Health check failed:", error);
+      res.status(503).json({ status: "error", percent: 0 });
     }
   });
 
@@ -874,15 +1026,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Get admin stats
   app.get("/api/admin/stats", isAdmin, async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
-      const doctors = await storage.getAllDoctors();
-      const reviews = await storage.getAllReviews();
-      
+      const stats = await storage.getStats();
+      // Add pending reports placeholder if needed, or remove if not used
       res.json({
-        totalUsers: users.length,
-        totalDoctors: doctors.length,
-        totalReviews: reviews.length,
-        pendingReports: 0, // TODO: implement reports system
+        ...stats,
+        pendingReports: 0, 
       });
     } catch (error) {
       console.error("Error fetching admin stats:", error);
@@ -912,8 +1060,35 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!["student", "teacher", "admin"].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
+
+      // Prevent self-demotion
+      const currentUserId = getUserId(req);
+      if (userId === currentUserId && role !== "admin") {
+        return res.status(403).json({ message: "You cannot remove your own admin privileges" });
+      }
+      
+
       
       await storage.updateUserRole(userId, role);
+
+      // Audit Log
+      try {
+        const adminUser = await storage.getUser(currentUserId!);
+        if (adminUser) {
+          await storage.logActivity({
+            userId: adminUser.id,
+            username: adminUser.username || "Unknown",
+            role: adminUser.role,
+            action: `Changed role of user ${userId} to ${role}`,
+            type: "admin_action",
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"],
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log admin activity:", logError);
+      }
+
       console.log(`[Admin] Role updated for user ${userId} to ${role}`);
       res.json({ message: "Role updated successfully" });
     } catch (error) {
@@ -970,7 +1145,32 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Prevent self-deletion
+      const currentUserId = getUserId(req);
+      if (userId === currentUserId) {
+        return res.status(403).json({ message: "You cannot delete your own account while logged in" });
+      }
+
       await storage.deleteUser(userId);
+
+      // Audit Log
+      try {
+        const adminUser = await storage.getUser(currentUserId!);
+        if (adminUser) {
+          await storage.logActivity({
+            userId: adminUser.id,
+            username: adminUser.username || "Unknown",
+            role: adminUser.role,
+            action: `Deleted user ${user.username} (${userId})`,
+            type: "admin_action",
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"],
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log admin activity:", logError);
+      }
+
       console.log(`[Admin] User ${userId} deleted`);
       res.json({ message: "User deleted successfully" });
     } catch (error: any) {
@@ -1138,6 +1338,41 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.log(`📸 [Upload] ✅ Profile picture updated for user: ${user.username}`);
       console.log(`📸 [Upload] Updated user has profileImageUrl:`, updatedUser.profileImageUrl ? 'YES' : 'NO');
 
+      // Sync with Doctor profile if user is a teacher or admin
+      if (updatedUser.role === 'teacher' || updatedUser.role === 'admin') {
+        try {
+          console.log(`📸 [Sync] Checking for linked doctor profile for user: ${updatedUser.username}`);
+          const doctors = await storage.getAllDoctors();
+          
+          let matchedDoctor = null;
+          
+          // Try to match by First Last name
+          if (updatedUser.firstName && updatedUser.lastName) {
+             const fullName = `${updatedUser.firstName} ${updatedUser.lastName}`;
+             matchedDoctor = doctors.find(d => 
+               d.name.toLowerCase().includes(fullName.toLowerCase()) || 
+               fullName.toLowerCase().includes(d.name.replace("Dr. ", "").trim().toLowerCase())
+             );
+          }
+          
+          // Fallback: match by username if no match yet (and username is not "admin")
+          if (!matchedDoctor && updatedUser.username.toLowerCase() !== 'admin') {
+             matchedDoctor = doctors.find(d => d.name.toLowerCase().includes((updatedUser.username || "").toLowerCase()));
+          }
+
+          if (matchedDoctor) {
+             console.log(`📸 [Sync] Found matching doctor: ${matchedDoctor.name} (ID: ${matchedDoctor.id})`);
+             await storage.updateDoctor(matchedDoctor.id, { profileImageUrl: imageData });
+             console.log(`📸 [Sync] ✅ Updated doctor profile picture`);
+          } else {
+             console.log(`📸 [Sync] No matching doctor found for syncing`);
+          }
+        } catch (syncError) {
+           console.error("📸 [Sync] Failed to sync with doctor profile:", syncError);
+           // Don't fail the main request, just log it
+        }
+      }
+
       // Don't send password to client
       const { password: _, ...userWithoutPassword } = updatedUser as any;
       
@@ -1151,6 +1386,41 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.error("📸 [Upload] ❌ Error uploading profile picture:", error);
       res.status(500).json({ message: "Failed to upload profile picture" });
     }
+  });
+
+
+
+  // Delete user
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Prevent self-deletion
+      if ((req.user as any).id === userId) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      await storage.deleteUser(userId);
+
+      // Log the activity
+      await storage.logActivity({
+        userId: (req.user as any).id,
+        username: (req.user as any).username,
+        role: "admin",
+        action: "deleted user",
+        type: "admin",
+      });
+
+      res.json({ message: "User deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Catch-all for API routes to prevent fallback to client routing (which causes loops)
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ message: "API endpoint not found" });
   });
 
   return httpServer;

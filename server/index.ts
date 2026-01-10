@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -138,7 +139,13 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        // Safe stringify to prevent logging massive chunks of data (like base64 images)
+        const jsonStr = JSON.stringify(capturedJsonResponse);
+        if (jsonStr.length > 200) {
+          logLine += ` :: ${jsonStr.slice(0, 200)}... (truncated ${jsonStr.length} chars)`;
+        } else {
+          logLine += ` :: ${jsonStr}`;
+        }
       }
 
       log(logLine);

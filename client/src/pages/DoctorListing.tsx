@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 import { Search, Plus, BarChart3, Users, X, Sparkles, LayoutGrid, Shield } from "lucide-react";
 import type { DoctorWithRatings, InsertDoctor } from "@shared/schema";
 import { useForm } from "react-hook-form";
@@ -328,31 +329,36 @@ export default function DoctorListing() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <Card className="border border-amber-200/80 dark:border-amber-800/60 bg-gradient-to-br from-amber-500/12 via-amber-400/8 to-amber-600/10 shadow-sm h-full">
-            <CardContent className="p-5 flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-white/80 dark:bg-amber-900/50 flex items-center justify-center shadow-sm">
-                  <LayoutGrid className="h-5 w-5 text-amber-700 dark:text-amber-200" />
+          {user?.role === "student" && (
+            <Card className="border border-amber-200/80 dark:border-amber-800/60 bg-gradient-to-br from-amber-500/12 via-amber-400/8 to-amber-600/10 shadow-sm h-full">
+              <CardContent className="p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-white/80 dark:bg-amber-900/50 flex items-center justify-center shadow-sm">
+                    <LayoutGrid className="h-5 w-5 text-amber-700 dark:text-amber-200" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">{t("listing.actions.rateLabel", { defaultValue: "Rate" })}</p>
+                    <h3 className="text-lg font-semibold text-foreground">{t("listing.actions.rateTitle", { defaultValue: "Structured multi-factor rating" })}</h3>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{t("listing.actions.rateLabel", { defaultValue: "Rate" })}</p>
-                  <h3 className="text-lg font-semibold text-foreground">{t("listing.actions.rateTitle", { defaultValue: "Structured multi-factor rating" })}</h3>
+                <p className="text-sm text-muted-foreground">{t("listing.actions.rateDesc", { defaultValue: "Keep ratings consistent with five guided factors." })}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-300" />
+                    <span>{t("listing.actions.rateHint", { defaultValue: "Anonymous, under 60 seconds." })}</span>
+                  </div>
+                  <Button asChild size="sm" className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md hover:shadow-lg border border-amber-600/20 font-semibold">
+                    <a href="#professor-list">{t("listing.actions.rateCta", { defaultValue: "Start rating" })}</a>
+                  </Button>
                 </div>
-              </div>
-              <p className="text-sm text-muted-foreground">{t("listing.actions.rateDesc", { defaultValue: "Keep ratings consistent with five guided factors." })}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-                  <span>{t("listing.actions.rateHint", { defaultValue: "Anonymous, under 60 seconds." })}</span>
-                </div>
-                <Button asChild size="sm" className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md hover:shadow-lg border border-amber-600/20 font-semibold">
-                  <a href="#professor-list">{t("listing.actions.rateCta", { defaultValue: "Start rating" })}</a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          <Card className="border border-sky-200/70 dark:border-sky-800/60 bg-gradient-to-br from-sky-500/12 to-indigo-600/8 shadow-sm h-full">
+          <Card className={cn(
+            "border border-sky-200/70 dark:border-sky-800/60 bg-gradient-to-br from-sky-500/12 to-indigo-600/8 shadow-sm h-full",
+            user?.role !== "student" && "md:col-span-2"
+          )}>
             <CardContent className="p-5 flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-white/70 dark:bg-sky-900/50 flex items-center justify-center shadow-sm">

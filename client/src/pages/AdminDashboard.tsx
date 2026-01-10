@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import HealthStatus from "@/components/ui/HealthStatus";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,16 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,13 +44,21 @@ import {
   TrendingUp,
   Activity,
   Clock,
+  Mail,
+  Calendar,
   UserPlus,
   Settings,
   Database,
   Zap,
   Star,
+
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import HealthStatus, { AnimatedHealthText } from "@/components/ui/HealthStatus";
+import { fetchSystemHealth } from "@/lib/healthUtils";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { StatCard } from "@/components/ui/StatCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface User {
   id: string;
@@ -51,6 +68,8 @@ interface User {
   firstName?: string;
   lastName?: string;
   createdAt: string;
+  profileImageUrl?: string;
+  emailVerified?: boolean;
 }
 
 interface Doctor {
@@ -80,20 +99,30 @@ interface Stats {
   totalUsers: number;
   totalDoctors: number;
   totalReviews: number;
+  activeUsers: number;
+  usersGrowth: number;
+  doctorsGrowth: number;
+  reviewsGrowth: number;
   pendingReports: number;
 }
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState("overview");
+  const [selectedTab, setSelectedTab] = useState("users");
+  const [showSettings, setShowSettings] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  
+  // Delete confirmation state
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [newDoctor, setNewDoctor] = useState({ name: "", department: "", title: "", bio: "" });
-  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editRole, setEditRole] = useState<string>("student");
   const roleEditorRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
-  const [showSettings, setShowSettings] = useState(false);
+
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
   const tabsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -110,6 +139,9 @@ export default function AdminDashboard() {
       setTimeout(() => roleEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
     }
   }, [editingUser]);
+
+  // Determine if any modal is open for background blur effect
+  const isAnyModalOpen = showSettings || isEditUserOpen || deleteConfirmOpen;
 
   // Fetch admin stats
   const { data: stats } = useQuery<Stats>({
@@ -134,6 +166,13 @@ export default function AdminDashboard() {
   // Fetch activity logs
   const { data: activityLogs } = useQuery<any[]>({
     queryKey: ["/api/admin/activity"],
+  });
+
+  // Fetch system health
+  const { data: healthPercent } = useQuery<number>({
+    queryKey: ["system-health"],
+    queryFn: fetchSystemHealth,
+    refetchInterval: 30000, // Check every 30s
   });
 
   // Export data function
@@ -189,7 +228,8 @@ export default function AdminDashboard() {
       toast({ title: t("admin.toasts.userDeleted") });
       refetchUsers();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Delete user failed:", error);
       toast({ title: t("admin.toasts.userDeleteFailed"), variant: "destructive" });
     },
   });
@@ -256,11 +296,16 @@ export default function AdminDashboard() {
     },
   });
 
-  return (
-    <div className="min-h-screen bg-background transition-colors duration-100">
-      <Header />
+  // Track to top when finding user
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+
+  return (
+    <div className="min-h-screen bg-background relative selection:bg-primary/20">
+      {/* Background with transition for modal state */}
+      <div className={`transition-all duration-500 ease-out ${isAnyModalOpen ? 'blur-md scale-[0.99] opacity-50 pointer-events-none select-none grayscale-[0.2]' : ''}`}>
+        <Header />
+        
+        <main className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header Section with Gradient */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -322,88 +367,58 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.1 }}
           >
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-100 bg-blue-50/50 dark:bg-blue-950/50">
-              <CardContent className="pt-6 h-[140px] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <Badge variant="secondary" className="gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +12%
-                  </Badge>
-                </div>
-                <div className="flex flex-col flex-1 justify-end">
-                  <p className="text-sm text-muted-foreground mb-1">{t("admin.stats.totalUsers")}</p>
-                  <div className="flex flex-col items-start">
-                    <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400 leading-tight">{stats?.totalUsers || 0}</h3>
-                    <p className="text-xs text-muted-foreground leading-tight">{t("admin.stats.activeMembers")}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={t("admin.stats.totalUsers")}
+              value={stats?.totalUsers || 0}
+              icon={Users}
+              color="blue"
+              trend={stats?.usersGrowth}
+            />
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.1, delay: 0.1 }}
           >
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-100 bg-green-50/50 dark:bg-green-950/50">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 rounded-full bg-green-500/10 dark:bg-green-500/20 flex items-center justify-center">
-                    <GraduationCap className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <Badge variant="secondary" className="gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +8%
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mb-1">{t("admin.stats.totalDoctors")}</p>
-                <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">{stats?.totalDoctors || 0}</h3>
-                <p className="text-xs text-muted-foreground mt-2">{t("admin.stats.registeredProfiles")}</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={t("admin.stats.totalDoctors")}
+              value={stats?.totalDoctors || 0}
+              icon={GraduationCap}
+              color="green" // Using green as per previous design
+              trend={stats?.doctorsGrowth} // Assuming doctorsGrowth exists on Stats
+            />
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.1, delay: 0.2 }}
           >
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-100 bg-purple-50/50 dark:bg-purple-950/50">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 rounded-full bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center">
-                    <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <Badge variant="secondary" className="gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +24%
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mb-1">{t("admin.stats.totalReviews")}</p>
-                <h3 className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats?.totalReviews || 0}</h3>
-                <p className="text-xs text-muted-foreground mt-2">{t("admin.stats.submittedRatings")}</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              title={t("admin.stats.totalReviews")}
+              value={stats?.totalReviews || 0}
+              icon={MessageSquare}
+              color="purple"
+              trend={stats?.reviewsGrowth}
+            />
           </motion.div>
 
+          {/* System Health Card (Main Dashboard) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.1, delay: 0.3 }}
           >
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-100 bg-orange-50/50 dark:bg-orange-950/50">
-              <CardContent className="pt-6">
-                {/* Live HealthStatus component with smooth animation */}
-                <HealthStatus />
-              </CardContent>
+             {/* Using a wrapped HealthStatus for the main dashboard to match StatCard height/style */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm relative overflow-hidden group h-full bg-orange-50/50 dark:bg-orange-950/50">
+               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+               <CardContent className="p-4 h-full relative z-10 w-full">
+                 <HealthStatus />
+               </CardContent>
             </Card>
           </motion.div>
         </div>
-
         {/* Quick Actions Panel */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -596,64 +611,116 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {editingUser && (
-                    <div ref={roleEditorRef} className="mb-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Edit User Role</CardTitle>
-                          <CardDescription>
-                            Change the role for {editingUser.username}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {/* Inline Alerts */}
-                          {((updateUserRole as any).isError) && (
-                            <Alert variant="destructive" className="mb-3">
-                              <AlertTitle>Failed</AlertTitle>
-                              <AlertDescription>Could not update the role. Please try again.</AlertDescription>
-                            </Alert>
-                          )}
-                          {((updateUserRole as any).isSuccess) && (
-                            <Alert className="mb-3">
-                              <AlertTitle>Saved</AlertTitle>
-                              <AlertDescription>User role updated successfully.</AlertDescription>
-                            </Alert>
-                          )}
-                          <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-center gap-3">
-                            <Label htmlFor="edit-role">Role</Label>
-                            <select
-                              id="edit-role"
-                              title="Select user role"
-                              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                              value={editRole}
-                              onChange={(e) => setEditRole(e.target.value)}
-                            >
-                              <option value="student">Student</option>
-                              <option value="teacher">Teacher</option>
-                              <option value="admin">Admin</option>
-                            </select>
+                  {/* User Details & Edit Dialog */}
+                  <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-accent/20">
+                      <DialogTitle className="sr-only">{t("admin.users.edit.title")}</DialogTitle>
+                      <DialogDescription className="sr-only">{t("admin.users.edit.subtitle", { username: editingUser?.username })}</DialogDescription>
+                      <div className="h-24 bg-gradient-to-r from-blue-500 to-purple-500 relative w-full">
+                      </div>
+                      <div className="px-6 pb-6 relative">
+                        {/* Avatar overlapping the banner */}
+                        <div className="absolute -top-12 left-6">
+                          <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                            <AvatarImage src={editingUser?.profileImageUrl} alt={editingUser?.username} />
+                            <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+                              {editingUser?.username?.substring(0, 2).toUpperCase() || "??"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+
+                        <div className="ml-28 -mt-4 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-bold">{editingUser?.firstName ? `${editingUser.firstName} ${editingUser.lastName}` : editingUser?.username}</h2>
+                            <Badge variant={editingUser?.role === "admin" ? "destructive" : editingUser?.role === "teacher" ? "default" : "secondary"}>
+                              {editingUser?.role && t(`roles.${editingUser.role}`)}
+                            </Badge>
                           </div>
-                        </CardContent>
-                        <CardContent className="flex justify-end gap-2 pt-0">
-                          <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+                          <p className="text-muted-foreground flex items-center gap-1">
+                            @{editingUser?.username}
+                          </p>
+                        </div>
+
+                        <div className="mt-8 grid gap-4">
+                          <div className="grid gap-1.5">
+                            <Label className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Contact & Status</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/50">
+                                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                  <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="overflow-hidden flex-1">
+                                  <p className="text-sm font-medium truncate" title={editingUser?.email}>{editingUser?.email}</p>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {editingUser?.emailVerified ?
+                                      <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 w-fit"><CheckCircle className="h-3 w-3" /> Verified</span>
+                                      :
+                                      <span className="text-[10px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded-full w-fit">Unverified</span>
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/50">
+                                <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                  <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium">Joined {editingUser?.createdAt && new Date(editingUser.createdAt).toLocaleDateString()}</p>
+                                  <p className="text-xs text-muted-foreground">{editingUser?.createdAt && new Date(editingUser.createdAt).toLocaleTimeString()}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-1.5 mt-2">
+                            <Label className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Actions</Label>
+                            <Card className="border shadow-none">
+                              <CardContent className="p-4 flex items-center justify-between gap-4">
+                                <div className="flex-1">
+                                  <Label htmlFor="edit-role" className="mb-1 block">Role Assignment</Label>
+                                  <p className="text-xs text-muted-foreground">{t("admin.users.editRoleDesc", "Manage user access permissions")}</p>
+                                </div>
+                                <div className="w-[140px]">
+                                  <Select
+                                    value={editRole}
+                                    onValueChange={setEditRole}
+                                  >
+                                    <SelectTrigger id="edit-role">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="student">{t("roles.student")}</SelectItem>
+                                      <SelectItem value="teacher">{t("roles.teacher")}</SelectItem>
+                                      <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+
+                        <DialogFooter className="mt-8 gap-2">
+                          <Button variant="outline" onClick={() => setIsEditUserOpen(false)}>Cancel</Button>
                           <Button
                             disabled={(updateUserRole as any).isLoading || (updateUserRole as any).isPending}
                             onClick={() => {
                               if (editingUser) {
-                                updateUserRole.mutate({ userId: editingUser.id, role: editRole });
-                                // Auto-close after a short delay on success
-                                setTimeout(() => {
-                                  if ((updateUserRole as any).isSuccess) setEditingUser(null);
-                                }, 1200);
+                                updateUserRole.mutate(
+                                  { userId: editingUser.id, role: editRole },
+                                  { onSuccess: () => setIsEditUserOpen(false) }
+                                );
                               }
                             }}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
                           >
                             {((updateUserRole as any).isLoading || (updateUserRole as any).isPending) ? "Saving..." : "Save Changes"}
                           </Button>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
+                        </DialogFooter>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <ScrollArea className="h-[500px]">
                     <Table>
                       <TableHeader>
@@ -687,11 +754,11 @@ export default function AdminDashboard() {
                               </TableCell>
                               <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                               <TableCell>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 justify-end">
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setEditingUser(user)}
+                                    onClick={() => { setEditingUser(user); setIsEditUserOpen(true); }}
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -699,9 +766,8 @@ export default function AdminDashboard() {
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => {
-                                      if (confirm(t("admin.users.delete.confirm", { username: user.username }))) {
-                                        deleteUser.mutate(user.id);
-                                      }
+                                      setUserToDelete(user);
+                                      setDeleteConfirmOpen(true);
                                     }}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -778,28 +844,30 @@ export default function AdminDashboard() {
                   <CardDescription>{t("admin.doctors.subtitle")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("admin.doctors.table.name")}</TableHead>
-                        <TableHead>{t("admin.doctors.table.department")}</TableHead>
-                        <TableHead>{t("admin.doctors.table.title")}</TableHead>
-                        <TableHead>{t("admin.doctors.table.created")}</TableHead>
-                        <TableHead>{t("admin.doctors.table.actions")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {doctors?.map((doctor) => (
-                        <TableRow key={doctor.id}>
-                          <TableCell className="font-medium">{doctor.name}</TableCell>
-                          <TableCell>{doctor.department}</TableCell>
-                          <TableCell>{doctor.title || "—"}</TableCell>
-                          <TableCell>{new Date(doctor.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                  <ScrollArea className="h-[500px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px]">{t("admin.doctors.table.image")}</TableHead>
+                          <TableHead>{t("admin.doctors.table.name")}</TableHead>
+                          <TableHead>{t("admin.doctors.table.department")}</TableHead>
+                          <TableHead>{t("admin.doctors.table.title")}</TableHead>
+                          <TableHead className="text-right">{t("admin.doctors.table.actions")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {doctors?.map((doctor) => (
+                          <TableRow key={doctor.id}>
+                            <TableCell>
+                              <Avatar>
+                                <AvatarImage src={doctor.profileImageUrl} alt={doctor.name} />
+                                <AvatarFallback>{doctor.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                            </TableCell>
+                            <TableCell className="font-medium">{doctor.name}</TableCell>
+                            <TableCell>{doctor.department}</TableCell>
+                            <TableCell>{doctor.title || "—"}</TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 variant="destructive"
                                 size="sm"
@@ -811,145 +879,173 @@ export default function AdminDashboard() {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Reviews Tab */}
-            <TabsContent value="reviews">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("admin.reviews.title")}</CardTitle>
-                  <CardDescription>{t("admin.reviews.subtitle")}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("admin.reviews.table.doctor")}</TableHead>
-                        <TableHead>{t("admin.reviews.table.ratings")}</TableHead>
-                        <TableHead>{t("admin.reviews.table.comment")}</TableHead>
-                        <TableHead>{t("admin.reviews.table.date")}</TableHead>
-                        <TableHead>{t("admin.reviews.table.actions")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reviews?.map((review) => (
-                        <TableRow key={review.id}>
-                          <TableCell className="font-medium">{review.doctorName}</TableCell>
-                          <TableCell>
-                            <div className="space-y-1 text-xs">
-                              <div>{t("admin.reviews.table.teaching")}: {review.teachingQuality}/5</div>
-                              <div>{t("admin.reviews.table.knowledge")}: {review.knowledge}/5</div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-xs truncate">{review.comment || "—"}</TableCell>
-                          <TableCell>{new Date(review.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm(t("admin.reviews.delete.confirm"))) {
-                                  deleteReview.mutate(review.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
       </main>
+      </div> {/* End of blurred wrapper */}
 
-      {/* Settings Dialog */}
+      {/* Settings Dialog - Widened and Reorganized */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-md h-[90vh] shadow-2xl border-2 border-primary/20 top-[5vh] translate-y-0 flex flex-col p-0">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
+        <DialogContent className="max-w-3xl max-h-[85vh] shadow-2xl border-2 border-primary/20 flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-4 bg-muted/10 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Settings className="h-6 w-6 text-primary" />
               {t("admin.settings.title")}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base">
               {t("admin.settings.subtitle")}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 pr-2">
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="export-format">{t("admin.settings.exportFormat")}</Label>
-                <Select value={exportFormat} onValueChange={(value: 'json' | 'csv') => setExportFormat(value)}>
-                  <SelectTrigger id="export-format">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="json">{t("admin.settings.jsonFormat")}</SelectItem>
-                    <SelectItem value="csv">{t("admin.settings.csvFormat")}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{t("admin.settings.exportFormatDesc")}</p>
-              </div>
+          
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              {/* Platform Statistics Section - 4 Big Cards in 2x2 Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-1">
+                  <BarChart3 className="h-5 w-5 text-purple-500" />
+                  <Label className="text-lg font-semibold">{t("admin.settings.statsTitle")}</Label>
+                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Total Users - Blue Theme */}
+                    <StatCard
+                      title={t("admin.stats.totalUsers")}
+                      value={stats?.totalUsers || 0}
+                      icon={Users}
+                      color="blue"
+                      className="shadow-md h-32"
+                    />
 
-              <div className="space-y-2">
-                <Label>{t("admin.settings.statsTitle")}</Label>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="p-3 rounded-lg bg-muted">
-                    <p className="text-muted-foreground text-xs">{t("admin.stats.totalUsers")}</p>
-                    <p className="font-bold text-lg">{stats?.totalUsers || 0}</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted">
-                    <p className="text-muted-foreground text-xs">{t("admin.stats.totalDoctors")}</p>
-                    <p className="font-bold text-lg">{stats?.totalDoctors || 0}</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted">
-                    <p className="text-muted-foreground text-xs">{t("admin.stats.totalReviews")}</p>
-                    <p className="font-bold text-lg">{stats?.totalReviews || 0}</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted">
-                    <p className="text-muted-foreground text-xs">{t("admin.stats.systemHealth")}</p>
-                    <p className="font-bold text-lg text-green-600">98.5%</p>
-                  </div>
+                    {/* Total Doctors - Green Theme */}
+                    <StatCard
+                      title={t("admin.stats.totalDoctors")}
+                      value={stats?.totalDoctors || 0}
+                      icon={GraduationCap}
+                      color="green"
+                      className="shadow-md h-32"
+                    />
+
+                    {/* Total Reviews - Purple Theme */}
+                    <StatCard
+                      title={t("admin.stats.totalReviews")}
+                      value={stats?.totalReviews || 0}
+                      icon={MessageSquare}
+                      color="purple"
+                      className="shadow-md h-32"
+                    />
+
+                  {/* System Health - Orange Theme */}
+                  <Card className="border-0 shadow-md h-32 bg-orange-50/50 dark:bg-orange-950/50 backdrop-blur-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardContent className="p-4 h-full relative z-10 w-full">
+                      <HealthStatus />
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>{t("admin.quickActions.title")}</Label>
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); handleExportData(); }} className="justify-start gap-2">
-                    <Download className="h-4 w-4" />
-                    {t("admin.settings.exportAll")}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); setSelectedTab("users"); setTimeout(scrollToTabs, 100); }} className="justify-start gap-2">
-                    <Users className="h-4 w-4" />
-                    <span className="text-sm">{t("admin.quickActions.viewUsers")}</span>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); setSelectedTab("doctors"); setTimeout(scrollToTabs, 100); }} className="justify-start gap-2">
-                    <GraduationCap className="h-4 w-4" />
-                    <span className="text-sm">{t("admin.quickActions.viewDoctors")}</span>
-                  </Button>
-                </div>
+              {/* Lower Section: Exports and Quick Actions Side-by-Side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Export Format Section */}
+                <Card className="border-0 shadow-sm bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm h-full">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Download className="h-4 w-4 text-blue-500" />
+                      {t("admin.settings.exportFormat")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="export-format" className="sr-only">{t("admin.settings.exportFormat")}</Label>
+                      <Select value={exportFormat} onValueChange={(value: 'json' | 'csv') => setExportFormat(value)}>
+                        <SelectTrigger id="export-format" className="bg-background/50 border-slate-200 dark:border-slate-800 h-10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          <SelectItem value="json">{t("admin.settings.jsonFormat")}</SelectItem>
+                          <SelectItem value="csv">{t("admin.settings.csvFormat")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground leading-snug">{t("admin.settings.exportFormatDesc")}</p>
+                    </div>
+                    <Button onClick={() => { setShowSettings(false); handleExportData(); }} className="w-full gap-2" variant="outline">
+                      <Download className="h-4 w-4" />
+                      {t("admin.settings.exportAll")}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions Section */}
+                <Card className="border-0 shadow-sm bg-yellow-50/50 dark:bg-yellow-950/20 backdrop-blur-sm h-full">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                      {t("admin.quickActions.title")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 gap-2">
+                      <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); setSelectedTab("users"); setTimeout(scrollToTabs, 100); }} className="justify-start gap-2 bg-background/50 hover:bg-background/80 border-yellow-200 dark:border-yellow-900/50 h-10">
+                        <Users className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">{t("admin.quickActions.viewUsers")}</span>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); setSelectedTab("doctors"); setTimeout(scrollToTabs, 100); }} className="justify-start gap-2 bg-background/50 hover:bg-background/80 border-yellow-200 dark:border-yellow-900/50 h-10">
+                        <GraduationCap className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium">{t("admin.quickActions.viewDoctors")}</span>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => { setShowSettings(false); setSelectedTab("reviews"); setTimeout(scrollToTabs, 100); }} className="justify-start gap-2 bg-background/50 hover:bg-background/80 border-yellow-200 dark:border-yellow-900/50 h-10">
+                        <MessageSquare className="h-4 w-4 text-purple-500" />
+                        <span className="text-sm font-medium">{t("admin.quickActions.viewReviews")}</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="h-4" />
             </div>
           </div>
-          <DialogFooter className="p-6 pt-2 border-t">
-            <Button onClick={() => setShowSettings(false)}>{t("admin.settings.close")}</Button>
+          <DialogFooter className="p-4 border-t bg-muted/10">
+            <Button onClick={() => setShowSettings(false)} className="w-full sm:w-auto px-8">{t("admin.settings.close")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              <span className="font-semibold text-foreground"> {userToDelete?.username} </span>
+              and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (userToDelete) {
+                  console.log("🗑️ Confirm Delete clicked for:", userToDelete.id);
+                  deleteUser.mutate(userToDelete.id);
+                  setUserToDelete(null);
+                }
+              }}
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

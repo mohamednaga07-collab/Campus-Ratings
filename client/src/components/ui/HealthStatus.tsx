@@ -40,21 +40,51 @@ export default function HealthStatus() {
   }, [targetHealth]);
 
   return (
-    <div className="flex flex-col justify-between h-[140px] pt-0 pb-2">
-      <div className="flex items-center justify-between mb-4">
-        <div className="h-12 w-12 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
-          <Activity className="h-6 w-6 text-orange-600 dark:text-orange-400 animate-pulse" />
+    <div className="flex flex-col justify-between h-full">
+      <div className="flex items-center justify-between mb-1">
+        <div className="h-10 w-10 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
+          <Activity className="h-5 w-5 text-orange-600 dark:text-orange-400 animate-pulse" />
         </div>
       </div>
-      <div>
-        <h3
-          className={["text-3xl font-bold leading-tight transition-all duration-300",styles.healthValue,health > 97? styles.healthValueExcellent: health > 94? styles.healthValueGood: styles.healthValueWarning].join(" ")}
-          data-health-scale={1 + Math.abs(targetHealth - health) * 0.01}
-        >
-          {health.toFixed(2)}%
-        </h3>
-        <p className="text-xs text-muted-foreground mt-2">Uptime status: <span className="font-semibold text-green-600">{health > 97 ? "Excellent" : health > 94 ? "Good" : "Warning"}</span></p>
+      <div className="flex flex-col h-full justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-0.5">
+            System Health: <span className="font-semibold text-green-600">{health > 97 ? "Excellent" : health > 94 ? "Good" : "Warning"}</span>
+          </p>
+          <h3
+            className={["text-3xl font-bold tracking-tight transition-all duration-300", health > 97 ? styles.healthValueExcellent : health > 94 ? styles.healthValueGood : styles.healthValueWarning].join(" ")}
+          >
+            {health.toFixed(2)}%
+          </h3>
+        </div>
       </div>
     </div>
+  );
+}
+
+export function AnimatedHealthText({ value, className }: { value: number; className?: string }) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  // Smooth animation at 120fps
+  useEffect(() => {
+    let running = true;
+    const animate = () => {
+      setDisplayValue((prev) => {
+        const diff = value - prev;
+        if (Math.abs(diff) < 0.01) return value;
+        return prev + diff * 0.08;
+      });
+      if (running) {
+        setTimeout(animate, 1000 / 120);
+      }
+    };
+    animate();
+    return () => { running = false; };
+  }, [value]);
+
+  return (
+    <span className={className}>
+      {displayValue.toFixed(2)}%
+    </span>
   );
 }

@@ -657,15 +657,48 @@ export const sqliteStorage = {
 
   async getStats() {
     try {
+      const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as any;
       const doctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors").get() as any;
       const reviewCount = db.prepare("SELECT COUNT(*) as count FROM reviews").get() as any;
+      
+      // Active users (SQLite syntax for date)
+      const activeUserCount = db.prepare(`
+        SELECT COUNT(DISTINCT userId) as count 
+        FROM activity_logs 
+        WHERE type = 'login' 
+        AND timestamp > date('now', '-30 days')
+      `).get() as any;
+
+      // Previous counts for growth
+      const prevUserCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE createdAt < date('now', '-30 days')").get() as any;
+      const prevDoctorCount = db.prepare("SELECT COUNT(*) as count FROM doctors WHERE createdAt < date('now', '-30 days')").get() as any;
+      const prevReviewCount = db.prepare("SELECT COUNT(*) as count FROM reviews WHERE createdAt < date('now', '-30 days')").get() as any;
+
+      const calculateGrowth = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+      };
+
       return {
+        totalUsers: userCount?.count || 0,
         totalDoctors: doctorCount?.count || 0,
         totalReviews: reviewCount?.count || 0,
+        activeUsers: activeUserCount?.count || 0,
+        usersGrowth: calculateGrowth(userCount?.count || 0, prevUserCount?.count || 0),
+        doctorsGrowth: calculateGrowth(doctorCount?.count || 0, prevDoctorCount?.count || 0),
+        reviewsGrowth: calculateGrowth(reviewCount?.count || 0, prevReviewCount?.count || 0),
       };
     } catch (e) {
       console.error("getStats error:", e);
-      return { totalDoctors: 0, totalReviews: 0 };
+      return { 
+        totalUsers: 0, 
+        totalDoctors: 0, 
+        totalReviews: 0, 
+        activeUsers: 0,
+        usersGrowth: 0,
+        doctorsGrowth: 0,
+        reviewsGrowth: 0 
+      };
     }
   },
 };

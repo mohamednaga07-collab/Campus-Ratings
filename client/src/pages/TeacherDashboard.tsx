@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { StarRating } from "@/components/StarRating";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
-import { AlertCircle, TrendingUp, Award, Users, MessageSquare, BookOpen, Target, Sparkles } from "lucide-react";
+import { useLocation, Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { AlertCircle, TrendingUp, Award, Users, MessageSquare, BookOpen, Target, Sparkles, ArrowRight, BarChart3, Star } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,23 +46,62 @@ export default function TeacherDashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const { t } = useTranslation();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Hero images carousel
+  // Hero images carousel - 4K Premium Resolution
   const heroImages = [
-    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80", // Students learning
-    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80", // University lecture
-    "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&q=80", // Note taking
-    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&q=80", // Teacher presentation
+    "https://images.unsplash.com/photo-1460518451285-97b6aa326961?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1503676382389-4809596d5290?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1503428593586-e225b39bddfe?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1516383607781-913a19294fd1?w=3840&h=2160&fit=crop&q=95&auto=format",
+    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=3840&h=2160&fit=crop&q=95&auto=format",
   ];
 
-  // Auto-rotate hero images
+  // Extended images for seamless infinite loop [Last, ...Images, First]
+  const extendedImages = useMemo(() => [
+    heroImages[heroImages.length - 1],
+    ...heroImages,
+    heroImages[0]
+  ], [heroImages]);
+
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lastInteraction, setLastInteraction] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Robust carousel rotation - high-energy timing
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-    }, 4000); // 4 seconds per image
+      const timeSinceLastInteraction = Date.now() - lastInteraction;
+      // Only auto-advance if no recent manual interaction and NOT currently dragging
+      if (!isDragging && (timeSinceLastInteraction > 1000 || lastInteraction === 0)) {
+        handleNext();
+      }
+    }, 5000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [heroImages.length, lastInteraction, isDragging]);
+
+  const handleNext = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev + 1);
+  }, [isTransitioning]);
+
+  const handlePrev = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev - 1);
+  }, [isTransitioning]);
+
+  const handleTransitionEnd = () => {
+    setIsTransitioning(false);
+    if (currentIndex === 0) {
+      setCurrentIndex(extendedImages.length - 2);
+    } else if (currentIndex === extendedImages.length - 1) {
+      setCurrentIndex(1);
+    }
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -132,52 +172,131 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
       
-      {/* Hero Section with Animated Background Images */}
-      <div className="relative h-72 overflow-hidden bg-gradient-to-r from-primary/90 to-primary">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentImageIndex}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.25, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 1, ease: "easeInOut" }}
-            className="absolute inset-0 z-0"
-            style={{ mixBlendMode: 'soft-light' }}
-          >
-            <img
-              src={heroImages[currentImageIndex]}
-              alt="Education"
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
-        </AnimatePresence>
+      {/* Hero Section with Infinite Continuous Strip Carousel */}
+      <section className="relative h-[300px] lg:h-[450px] overflow-hidden bg-slate-900">
+        <motion.div
+          className="flex h-full will-change-transform"
+          style={{
+            width: `${extendedImages.length * 100}%`,
+            x: `-${currentIndex * (100 / extendedImages.length)}%`,
+          }}
+          animate={{
+            x: `-${currentIndex * (100 / extendedImages.length)}%`,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 18,    // Majestic Deep Liquid flow (restored)
+            damping: 22,     // Cinematic settling
+            mass: 2.5,       // Elite weighted physical feel
+            duration: isTransitioning ? undefined : 0
+          }}
+          onAnimationComplete={handleTransitionEnd}
+          drag="x"
+          dragConstraints={{ left: -150, right: 150 }} // Limit drag distance for discrete feel
+          dragElastic={0.7} 
+          dragMomentum={false}
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={(e, { offset, velocity }) => {
+            setIsDragging(false);
+            const swipe = offset.x; 
+            const swipeVelocity = velocity.x; 
+            
+            // Discrete Swipe Guard: Trigger exactly one slide change
+            if (swipe < -40 || swipeVelocity < -250) {
+              handleNext();
+              setLastInteraction(Date.now());
+            } else if (swipe > 40 || swipeVelocity > 250) {
+              handlePrev();
+              setLastInteraction(Date.now());
+            }
+          }}
+        >
+          {extendedImages.map((src, index) => {
+            const isActive = index === currentIndex;
+            const isVisible = Math.abs(index - currentIndex) <= 1;
+
+            return (
+              <div 
+                key={`${index}-${src}`}
+                className="relative h-full overflow-hidden"
+                style={{ 
+                  width: `${100 / extendedImages.length}%`,
+                  visibility: isVisible ? "visible" : "hidden"
+                }}
+              >
+                <div
+                  className="absolute inset-0 transition-all duration-1000 ease-out will-change-transform"
+                  style={{
+                    backgroundImage: `url(${src})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    backgroundColor: "#0f172a",
+                    opacity: isActive ? 1 : 0.4,
+                    filter: isActive ? "blur(0px)" : "blur(20px)",
+                    transform: isActive ? "scale(1)" : "scale(1.1)",
+                  }}
+                />
+              </div>
+            );
+          })}
+        </motion.div>
         
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 to-primary/85 z-10" />
-        
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center z-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-3"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary-foreground animate-pulse" />
-              <span className="text-primary-foreground/90 text-sm font-medium">
-                {t("teacherDashboard.subtitle")}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground">
-              {t("teacherDashboard.title")}
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/90 max-w-2xl">
-              {t("teacherDashboard.heroDescription", {
-                defaultValue: "Track your teaching performance, student feedback, and continuous improvement metrics in real-time."
-              })}
-            </p>
-          </motion.div>
+        {/* Navigation Indicator - Unified Look */}
+        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+          {heroImages.map((_, index) => {
+            const realIndex = index + 1;
+            const isActive = (currentIndex === realIndex) || 
+                            (currentIndex === 0 && realIndex === heroImages.length) ||
+                            (currentIndex === extendedImages.length - 1 && realIndex === 1);
+
+            return (
+              <motion.button
+                key={index}
+                onClick={() => {
+                  if (isTransitioning) return;
+                  setIsTransitioning(true);
+                  setCurrentIndex(realIndex);
+                  setLastInteraction(Date.now());
+                }}
+                className={`h-1.5 rounded-full transition-all ${
+                  isActive ? "bg-blue-400 w-6" : "bg-white/30 w-1.5"
+                }`}
+              />
+            );
+          })}
         </div>
-      </div>
+        
+        {/* Gradient Overlay - Lighter to show image */}
+        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+        
+        {/* Content Overlay */}
+        <div className="absolute inset-0 flex items-start z-20">
+          <div className="container mx-auto px-4 pt-6 md:pt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }} // Faster initial load
+              className="max-w-xl bg-black/60 backdrop-blur-md p-5 md:p-8 rounded-2xl border border-white/10 shadow-2xl"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 mb-4">
+                <Sparkles className="h-4 w-4 text-blue-300 animate-pulse" />
+                <span className="text-blue-100/90 text-sm font-medium">
+                  View the feedback and ratings you've received from students
+                </span>
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
+                Teacher Dashboard
+              </h1>
+              
+              <p className="text-lg text-blue-100/80 leading-relaxed">
+                Track your teaching performance, student feedback, and continuous improvement metrics in real-time.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       <main className="container mx-auto px-4 py-8 relative z-30">
         {user?.role === "teacher" && teacherFullName && matchedDoctors.length === 0 ? (

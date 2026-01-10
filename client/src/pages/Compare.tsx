@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RatingBar } from "@/components/RatingBar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, TrendingUp, Award, Users, Sparkles, CheckCircle, Target } from "lucide-react";
 import type { DoctorWithRatings } from "@shared/schema";
 import { useTranslation } from "react-i18next";
@@ -155,14 +156,22 @@ export default function Compare() {
               <Card key={d.id}>
                 <CardHeader className="space-y-1">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="leading-tight">Dr. {normalizeName(d.name)}</CardTitle>
-                      <div className="text-sm text-muted-foreground">
-                        {d.title ? `${d.title} • ` : ""}{d.department}
+                    <div className="flex gap-3 items-start">
+                      <Avatar className="h-16 w-16 border-2 border-background shadow-md">
+                        <AvatarImage src={d.profileImageUrl ?? undefined} alt={d.name} className="object-cover" />
+                        <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                          {normalizeName(d.name).substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="leading-tight text-xl pt-1">Dr. {normalizeName(d.name)}</CardTitle>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {d.title ? `${d.title} • ` : ""}{d.department}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isWinner && <Badge>{t("compare.winner")}</Badge>}
+                      {isWinner && <Badge className="bg-gradient-to-r from-emerald-500 to-green-600 shadow-sm border-0">{t("compare.winner")}</Badge>}
                       {isTie && <Badge variant="secondary">{t("compare.tie")}</Badge>}
                     </div>
                   </div>
@@ -224,7 +233,17 @@ export default function Compare() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableDoctors.map((doc) => (
-                      <SelectItem key={doc.id} value={String(doc.id)}>Dr. {doc.name.replace(/^Dr\.?\s+/i, "")}</SelectItem>
+                      <SelectItem key={doc.id} value={String(doc.id)}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={doc.profileImageUrl ?? undefined} />
+                            <AvatarFallback className="text-[10px]">
+                              {doc.name.replace(/^Dr\.?\s+/i, "").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>Dr. {doc.name.replace(/^Dr\.?\s+/i, "")}</span>
+                        </div>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -155,17 +155,7 @@ html[dir="rtl"] body {
   }
 
   /* Hardware acceleration for main containers */
-  main,
-  .container,
-  [role="main"],
-  .max-w-md,
-  .max-w-lg,
-  .max-w-4xl {
-    contain: layout style paint;
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-  }
+
 
   /* Tab animations */
   [role="tab"],
@@ -269,7 +259,7 @@ html[dir="rtl"] body {
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
   /* Transition settings inherited by * selector */
-  contain: layout style;
+
 }
 
 .dark {

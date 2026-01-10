@@ -40,6 +40,47 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const [loginAs, setLoginAs] = useState<"student" | "teacher">("student");
   const [loginRecaptchaToken, setLoginRecaptchaToken] = useState<string | null>(null);
   const loginRecaptchaRef = useRef<ReCAPTCHA>(null);
+  const [isDetectedAdmin, setIsDetectedAdmin] = useState(false);
+  const isInitialMount = useRef(true);
+
+  // Admin check - runs immediately on mount and with reduced debounce on changes
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!loginUsername || loginUsername.length < 3) {
+        setIsDetectedAdmin(false);
+        return;
+      }
+      
+      // Don't check API if it's exactly "Admin" (case-sensitive default admin account)
+      if (loginUsername === "Admin") return;
+
+      try {
+        console.log(`🔍 Checking if user '${loginUsername}' is admin...`);
+        const res = await fetch(`/api/auth/is-admin/${encodeURIComponent(loginUsername)}`);
+        if (res.ok) {
+           const data = await res.json();
+           console.log(`🔍 Admin check result for '${loginUsername}':`, data.isAdmin);
+           setIsDetectedAdmin(data.isAdmin);
+        }
+      } catch (e) {
+        console.error("❌ Admin check failed:", e);
+        setIsDetectedAdmin(false);
+      }
+    };
+
+    // On initial mount, check immediately if username is present (e.g., from autofill)
+    if (isInitialMount.current && loginUsername && loginUsername.length >= 3) {
+      isInitialMount.current = false;
+      checkAdmin();
+      return;
+    }
+    
+    isInitialMount.current = false;
+
+    // For subsequent changes, use a short debounce (150ms feels instant but avoids excessive API calls)
+    const timer = setTimeout(checkAdmin, 150);
+    return () => clearTimeout(timer);
+  }, [loginUsername]);
 
   // Register form state
   const [registerEmail, setRegisterEmail] = useState("");
@@ -53,6 +94,9 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   const [registerRole, setRegisterRole] = useState<"student" | "teacher">("student");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  // Admin detection: Database authorization FIRST, then exact "Admin" username match
+  const isAdminLogin = isDetectedAdmin || loginUsername === "Admin";
 
   // Check for existing reCAPTCHA verification in session
   const checkRecaptchaVerification = () => {
@@ -256,8 +300,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       return;
     }
 
-    // Admin bypass - no need to select role for admin users
-    const isAdminLogin = loginUsername.toLowerCase() === "admin";
+
 
     if (!isAdminLogin && recaptchaEnabled && !loginRecaptchaToken && !isSessionVerified) {
       console.log("⚠️ Showing reCAPTCHA required toast");
@@ -297,12 +340,22 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       if (response?.user) {
         console.log("✅ Login successful! User:", response.user);
 
-        // Show success message
+        // Show success message with role awareness
+        const actualRole = response.user.role;
+        const selectedRole = isAdminLogin ? "admin" : loginAs;
+        
         console.log("📢 Showing success toast");
-        toast({
-          title: "✅ Logged In Successfully!",
-          description: `Welcome back ${response.user.firstName || loginUsername}! Ready to explore?`,
-        });
+        if (actualRole !== selectedRole && actualRole !== "admin") {
+          toast({
+            title: "✅ Logged In Success!",
+            description: `Welcome back! Note: This account is registered as a ${actualRole}. Redirecting you to the ${actualRole} section.`,
+          });
+        } else {
+          toast({
+            title: "✅ Logged In Successfully!",
+            description: `Welcome back ${response.user.firstName || loginUsername}! Ready to explore?`,
+          });
+        }
 
         // Clear login form
         setLoginUsername("");
@@ -316,7 +369,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         let finalTarget = "/";
         if (response.user.role === "admin") {
           finalTarget = "/admin";
-        } else if (response.user.role === "teacher" || loginAs === "teacher") {
+        } else if (response.user.role === "teacher") {
           finalTarget = "/teacher-dashboard";
         }
 
@@ -326,7 +379,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         console.log("🔄 Redirecting to:", finalTarget);
         setTimeout(() => {
           window.location.assign(finalTarget);
-        }, 150);
+        }, 1500); // Increased delay slightly to allow reading the role warning toast if applicable
       } else {
         throw new Error("Login failed - no user data returned");
       }
@@ -390,9 +443,11 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       if (errorMessage.toLowerCase().includes("invalid password")) {
         title = "❌ Incorrect Password";
         description = "The password you entered is incorrect. Please try again.";
-      } else if (errorMessage.toLowerCase().includes("role mismatch") || errorMessage.toLowerCase().includes("invalid username or password")) {
+      } else if (errorMessage.toLowerCase().includes("role mismatch") || 
+                 errorMessage.toLowerCase().includes("account type mismatch") ||
+                 errorMessage.toLowerCase().includes("invalid username or password")) {
         title = "❌ Account Type Mismatch";
-        description = `This account is not registered as a ${loginAs}. Please select the correct role or create a new account.`;
+        description = errorMessage || `This account is not registered as a ${loginAs}. Please select the correct role or create a new account.`;
       } else if (errorMessage.toLowerCase().includes("account locked")) {
         title = "🔒 Account Locked";
         description = errorMessage;
@@ -619,7 +674,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   </div>
 
                   {/* Hide role selection for admin users */}
-                  {loginUsername.toLowerCase() !== "admin" && (
+                  {!isAdminLogin && (
                     <div className="space-y-2">
                       <Label>{t("auth.loginAs")}</Label>
                       <div className="grid grid-cols-2 gap-2">
@@ -644,7 +699,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
                   )}
 
                   {/* Show admin badge when admin username is entered */}
-                  {loginUsername.toLowerCase() === "admin" && (
+                  {isAdminLogin && (
                     <div className="flex items-center justify-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                       <UserCircle className="h-5 w-5 text-red-500" />
                       <span className="text-sm font-medium text-red-500">Admin Login</span>

@@ -49,14 +49,17 @@ const pageVariants = {
 
 function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { isAuthenticated, user } = useAuth();
   
-  React.useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, [location]);
+  React.useLayoutEffect(() => {
+    // Reset scroll to top IMMEDIATELY before browser paint
+    window.scrollTo(0, 0);
+  }, [location, isAuthenticated, user?.id]);
   
   return (
     <motion.div
-      key={location}
+      // Use a combined key so that transitions trigger when logging/out on the same URL
+      key={`${location}-${isAuthenticated}-${user?.id || 'guest'}`}
       variants={pageVariants}
       initial="initial"
       animate="animate"
@@ -76,21 +79,16 @@ function Router() {
 
   if (isLoading) {
     return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-background flex items-center justify-center"
-      >
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">{t("common.loading")}</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <Switch location={location}>
         {/* Public routes - always accessible */}
         <Route path="/reset-password">

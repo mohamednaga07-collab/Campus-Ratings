@@ -65,17 +65,19 @@ export function Header() {
                   {t("nav.home")}
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant={location === "/doctors" ? "secondary" : "ghost"}
-                className="hidden sm:inline-flex"
-                data-testid="link-doctors"
-              >
-                <Link href="/doctors">
-                  <Star className="h-4 w-4 mr-2" />
-                  {t("nav.rate")}
-                </Link>
-              </Button>
+              {user?.role === "student" && (
+                <Button
+                  asChild
+                  variant={location === "/doctors" ? "secondary" : "ghost"}
+                  className="hidden sm:inline-flex"
+                  data-testid="link-doctors"
+                >
+                  <Link href="/doctors">
+                    <Star className="h-4 w-4 mr-2" />
+                    {t("nav.rate")}
+                  </Link>
+                </Button>
+              )}
               <Button
                 asChild
                 variant={location === "/compare" ? "secondary" : "ghost"}

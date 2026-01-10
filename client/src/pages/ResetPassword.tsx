@@ -77,14 +77,16 @@ export default function ResetPassword() {
     return "";
   };
 
+  // Calculate password strength - matching AuthForm logic
   const calculatePasswordStrength = (password: string): number => {
-    let score = 0;
-    if (password.length >= 8) score += 30;
-    if (/[a-z]/.test(password)) score += 15;
-    if (/[A-Z]/.test(password)) score += 20;
-    if (/[0-9]/.test(password)) score += 15;
-    if (/[^A-Za-z0-9]/.test(password)) score += 20;
-    return Math.min(score, 100);
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (password.length >= 12) strength += 25;
+    if (/[a-z]/.test(password)) strength += 10;
+    if (/[A-Z]/.test(password)) strength += 10;
+    if (/[0-9]/.test(password)) strength += 15;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+    return Math.min(strength, 100);
   };
 
   const getPasswordStrengthColor = (): string => {
@@ -114,6 +116,11 @@ export default function ResetPassword() {
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
       setError(passwordError);
+      return;
+    }
+
+    if (passwordStrength < 40) {
+      setError("Password is too weak. Please make it at least 'Fair'.");
       return;
     }
 
@@ -175,178 +182,173 @@ export default function ResetPassword() {
               </CardContent>
             </Card>
           ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-xl mx-auto w-full"
-          >
-            <Card className="border border-primary/10 shadow-xl shadow-primary/10 backdrop-blur-sm bg-card/80">
-              <CardHeader className="space-y-3">
-                <div className="inline-flex items-center gap-2 w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  <span>{t("auth.resetPassword", { defaultValue: "Reset Password" })}</span>
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold">
-                    {t("auth.resetPassword", { defaultValue: "Reset Password" })}
-                  </CardTitle>
-                  <CardDescription className="mt-2 text-sm">
-                    {t("auth.resetPasswordDesc", {
-                      defaultValue: "Enter your new password below",
-                    })}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-8">
-              {success ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <div className="flex justify-center">
-                    <CheckCircle className="h-12 w-12 text-emerald-500" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-xl mx-auto w-full"
+            >
+              <Card className="border border-primary/10 shadow-xl shadow-primary/10 backdrop-blur-sm bg-card/80">
+                <CardHeader className="space-y-3">
+                  <div className="inline-flex items-center gap-2 w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <span>{t("auth.resetPassword", { defaultValue: "Reset Password" })}</span>
                   </div>
-                  <div className="text-center">
-                    <h3 className="font-semibold text-foreground mb-2">
-                      {t("auth.passwordReset", { defaultValue: "Password reset successful!" })}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {t("auth.passwordResetDesc", {
-                        defaultValue: "Your password has been reset. You can now log in with your new password.",
+                  <div>
+                    <CardTitle className="text-2xl font-bold">
+                      {t("auth.resetPassword", { defaultValue: "Reset Password" })}
+                    </CardTitle>
+                    <CardDescription className="mt-2 text-sm">
+                      {t("auth.resetPasswordDesc", {
+                        defaultValue: "Enter your new password below",
                       })}
-                    </p>
+                    </CardDescription>
                   </div>
-                  <Button asChild className="w-full">
-                    <WouterLink href="/">{t("auth.backToLogin", { defaultValue: "Back to Login" })}</WouterLink>
-                  </Button>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {t("auth.newPassword", { defaultValue: "New Password" })}
-                    </label>
-                    <div className="relative">
-                      <Input
-                        className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="•••••••••"
-                        value={newPassword}
-                        onChange={(e) => {
-                          setNewPassword(e.target.value);
-                          setPasswordStrength(calculatePasswordStrength(e.target.value));
-                        }}
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {t("auth.confirmPassword", { defaultValue: "Confirm Password" })}
-                    </label>
-                    <div className="relative">
-                      <Input
-                        className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="•••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {newPassword && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
-                        <span
-                          className={`font-semibold ${
-                            passwordStrength < 40
-                              ? "text-red-500"
-                              : passwordStrength < 70
-                              ? "text-yellow-500"
-                              : "text-green-500"
-                          }`}
-                        >
-                          {getPasswordStrengthText()}
-                        </span>
+                </CardHeader>
+                <CardContent className="pb-8">
+                  {success ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex justify-center">
+                        <CheckCircle className="h-12 w-12 text-emerald-500" />
                       </div>
-                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full ${getPasswordStrengthColor()}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${passwordStrength}%` }}
-                          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-                        />
+                      <div className="text-center">
+                        <h3 className="font-semibold text-foreground mb-2">
+                          {t("auth.passwordReset", { defaultValue: "Password reset successful!" })}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {t("auth.passwordResetDesc", {
+                            defaultValue: "Your password has been reset. You can now log in with your new password.",
+                          })}
+                        </p>
                       </div>
-                    </div>
+                      <Button asChild className="w-full">
+                        <WouterLink href="/">{t("auth.backToLogin", { defaultValue: "Back to Login" })}</WouterLink>
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      {error && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          {t("auth.newPassword", { defaultValue: "New Password" })}
+                        </label>
+                        <div className="relative">
+                          <Input
+                            className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="•••••••••"
+                            value={newPassword}
+                            onChange={(e) => {
+                              setNewPassword(e.target.value);
+                              setPasswordStrength(calculatePasswordStrength(e.target.value));
+                            }}
+                            required
+                            disabled={isLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          {t("auth.confirmPassword", { defaultValue: "Confirm Password" })}
+                        </label>
+                        <div className="relative">
+                          <Input
+                            className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="•••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            disabled={isLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {newPassword && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
+                            <span className={`font-semibold ${passwordStrength < 40 ? "text-red-500" :
+                                passwordStrength < 70 ? "text-yellow-500" :
+                                  "text-green-500"
+                              }`}>
+                              {getPasswordStrengthText()}
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              className={`h-full ${getPasswordStrengthColor()}`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${passwordStrength}%` }}
+                              transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-muted-foreground space-y-1 rounded-lg border border-border/70 bg-muted/30 p-3">
+                        <p className="font-semibold text-foreground text-sm">
+                          {t("auth.passwordRequirements", { defaultValue: "Password requirements:" })}
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          <li>{t("auth.passReq8Char", { defaultValue: "At least 8 characters" })}</li>
+                          <li>{t("auth.passReqLower", { defaultValue: "Lowercase letters" })}</li>
+                          <li>{t("auth.passReqUpper", { defaultValue: "Uppercase letters" })}</li>
+                          <li>{t("auth.passReqNumber", { defaultValue: "Numbers" })}</li>
+                        </ul>
+                      </div>
+
+                      {recaptchaEnabled && (
+                        <div className="flex justify-center">
+                          <ReCAPTCHA
+                            ref={recaptchaRef}
+                            key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
+                            sitekey={recaptchaSiteKey}
+                            onChange={handleRecaptchaChange}
+                            theme={isDarkMode ? "dark" : "light"}
+                          />
+                        </div>
+                      )}
+
+                      <Button
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/40"
+                        disabled={isLoading || !token}
+                      >
+                        {isLoading
+                          ? t("auth.resetting", { defaultValue: "Resetting..." })
+                          : t("auth.resetPassword", { defaultValue: "Reset Password" })}
+                      </Button>
+                    </form>
                   )}
-
-                  <div className="text-xs text-muted-foreground space-y-1 rounded-lg border border-border/70 bg-muted/30 p-3">
-                    <p className="font-semibold text-foreground text-sm">
-                      {t("auth.passwordRequirements", { defaultValue: "Password requirements:" })}
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      <li>{t("auth.passReq8Char", { defaultValue: "At least 8 characters" })}</li>
-                      <li>{t("auth.passReqLower", { defaultValue: "Lowercase letters" })}</li>
-                      <li>{t("auth.passReqUpper", { defaultValue: "Uppercase letters" })}</li>
-                      <li>{t("auth.passReqNumber", { defaultValue: "Numbers" })}</li>
-                    </ul>
-                  </div>
-
-                  {recaptchaEnabled && (
-                    <div className="flex justify-center">
-                      <ReCAPTCHA
-                        ref={recaptchaRef}
-                        key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
-                        sitekey={recaptchaSiteKey}
-                        onChange={handleRecaptchaChange}
-                        theme={isDarkMode ? "dark" : "light"}
-                      />
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/40"
-                    disabled={isLoading || !token}
-                  >
-                    {isLoading
-                      ? t("auth.resetting", { defaultValue: "Resetting..." })
-                      : t("auth.resetPassword", { defaultValue: "Reset Password" })}
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-            </Card>
-          </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
         </div>
       </main>

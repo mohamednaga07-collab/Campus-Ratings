@@ -50,7 +50,15 @@ export interface IStorage {
   getAllReviews(): Promise<Review[]>;
 
   // Stats
-  getStats(): Promise<{ totalDoctors: number; totalReviews: number }>;
+  getStats(): Promise<{
+    totalUsers: number;
+    totalDoctors: number;
+    totalReviews: number;
+    activeUsers: number;
+    usersGrowth: number;
+    doctorsGrowth: number;
+    reviewsGrowth: number;
+  }>;
 
   // Activity logging
   logActivity(data: {
@@ -346,13 +354,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Stats
-  async getStats(): Promise<{ totalDoctors: number; totalReviews: number }> {
+  async getStats(): Promise<{
+    totalUsers: number;
+    totalDoctors: number;
+    totalReviews: number;
+    activeUsers: number;
+    usersGrowth: number;
+    doctorsGrowth: number;
+    reviewsGrowth: number;
+  }> {
+    const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
     const [doctorCount] = await db.select({ count: sql<number>`count(*)` }).from(doctors);
     const [reviewCount] = await db.select({ count: sql<number>`count(*)` }).from(reviews);
 
+    // Active users: unique users who have logged in within the last 30 days
+    const [activeUserCount] = await db.execute(sql`
+      SELECT COUNT(DISTINCT ${activityLogs.userId}) as count 
+      FROM ${activityLogs} 
+      WHERE ${activityLogs.type} = 'login' 
+      AND ${activityLogs.timestamp} > NOW() - INTERVAL '30 days'
+    `);
+
+    // Previous counts (30 days ago) for growth calculation
+    const [prevUserCount] = await db.execute(sql`
+      SELECT COUNT(*) as count FROM ${users} WHERE ${users.createdAt} < NOW() - INTERVAL '30 days'
+    `);
+    const [prevDoctorCount] = await db.execute(sql`
+      SELECT COUNT(*) as count FROM ${doctors} WHERE ${doctors.createdAt} < NOW() - INTERVAL '30 days'
+    `);
+    const [prevReviewCount] = await db.execute(sql`
+      SELECT COUNT(*) as count FROM ${reviews} WHERE ${reviews.createdAt} < NOW() - INTERVAL '30 days'
+    `);
+
+    const calculateGrowth = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
     return {
+      totalUsers: Number(userCount?.count ?? 0),
       totalDoctors: Number(doctorCount?.count ?? 0),
       totalReviews: Number(reviewCount?.count ?? 0),
+      activeUsers: Number(activeUserCount?.count ?? 0),
+      usersGrowth: calculateGrowth(Number(userCount?.count ?? 0), Number(prevUserCount?.count ?? 0)),
+      doctorsGrowth: calculateGrowth(Number(doctorCount?.count ?? 0), Number(prevDoctorCount?.count ?? 0)),
+      reviewsGrowth: calculateGrowth(Number(reviewCount?.count ?? 0), Number(prevReviewCount?.count ?? 0)),
     };
   }
 }

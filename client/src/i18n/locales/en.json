@@ -581,7 +581,7 @@
     },
     "settings": {
       "title": "Admin Settings",
-      "subtitle": "Configure admin dashboard preferences",
+      "subtitle": "",
       "exportFormat": "Export Format",
       "exportFormatDesc": "Choose default format for data exports",
       "jsonFormat": "JSON Format",

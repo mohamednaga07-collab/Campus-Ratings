@@ -61,13 +61,16 @@ export function RoleBasedProfileMenu({
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
-          setHealth(data.status || 'healthy');
+          // Map backend "ok" status to frontend "healthy" state
+          const backendStatus = data.status === "ok" ? "healthy" : data.status;
+          setHealth(backendStatus || 'healthy');
           setHealthPercent(typeof data.percent === 'number' ? data.percent : 100);
         } else {
           setHealth('degraded');
           setHealthPercent(60);
         }
       } catch {
+        // If fetch fails completely, it's down
         setHealth('down');
         setHealthPercent(0);
       }
@@ -397,7 +400,16 @@ export function RoleBasedProfileMenu({
             transition={{ duration: 0.3, delay: 0.3 }}
             className="py-2"
           >
-            {/* Removed duplicate Profile Settings button */}
+            <DropdownMenuItem
+              onClick={() => {
+                navigate("/profile/settings");
+                setIsOpen(false);
+              }}
+              className="cursor-pointer text-foreground hover:bg-primary/10 px-4 py-2 transition-colors"
+            >
+              <Settings className="h-4 w-4 mr-3" />
+              <span className="text-sm font-medium">{t("profile.settings", { defaultValue: "Profile Settings" })}</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onLogout}
               className="cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 px-4 py-2 transition-colors"
