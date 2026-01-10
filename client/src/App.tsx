@@ -12,8 +12,9 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
+import Landing from "@/pages/Landing";
 // Lazy load pages for performance
-const Landing = lazy(() => import("@/pages/Landing"));
+// Landing is eager loaded to prevent initialization race conditions and improve LCP
 const Home = lazy(() => import("@/pages/Home"));
 const DoctorListing = lazy(() => import("@/pages/DoctorListing"));
 const DoctorProfile = lazy(() => import("@/pages/DoctorProfile"));

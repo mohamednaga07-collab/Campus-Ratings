@@ -36,18 +36,6 @@ export default function Landing() {
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Robust carousel rotation - high-speed & reliable
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const timeSinceLastInteraction = Date.now() - lastInteraction;
-    // Use 2000ms (2s) pause after interaction as requested
-      if (!isDragging && (timeSinceLastInteraction > 2000 || lastInteraction === 0)) {
-        handleNext();
-      }
-    }, 5000); 
-    return () => clearInterval(interval);
-  }, [isDragging, lastInteraction, handleNext]);
-
   const handleNext = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
@@ -59,6 +47,18 @@ export default function Landing() {
     setIsTransitioning(true);
     setCurrentIndex(prev => prev - 1);
   }, [isTransitioning]);
+
+  // Robust carousel rotation - high-speed & reliable
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const timeSinceLastInteraction = Date.now() - lastInteraction;
+    // Use 2000ms (2s) pause after interaction as requested
+      if (!isDragging && (timeSinceLastInteraction > 2000 || lastInteraction === 0)) {
+        handleNext();
+      }
+    }, 5000); 
+    return () => clearInterval(interval);
+  }, [isDragging, lastInteraction, handleNext]);
 
   // Instant reset logic for infinite loop
   const handleTransitionEnd = () => {
