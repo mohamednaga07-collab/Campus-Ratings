@@ -30,9 +30,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Smooth transitions for all elements - optimized for smoothness */
-* {
-  @apply transition-colors duration-500 ease-in-out;
+/* Smooth transitions for main layout elements */
+body, header, footer, nav, aside, main, section, .card, [role="dialog"], [role="menu"], [role="tabpanel"] {
+  transition: background-color 300ms ease-in-out, border-color 300ms ease-in-out, color 300ms ease-in-out;
 }
 
 button,
@@ -135,16 +135,7 @@ html[dir="rtl"] body {
     @apply ring-2 ring-primary ring-offset-2;
   }
 
-  /* Snappy color transitions for high performance */
-  * {
-    transition:
-      background-color 0.5s ease-in-out,
-      border-color 0.5s ease-in-out,
-      color 0.5s ease-in-out,
-      fill 0.5s ease-in-out,
-      stroke 0.5s ease-in-out,
-      box-shadow 0.3s ease-in-out;
-  }
+  /* Removed universal transition in favor of targeted transitions above */
 
   /* Card and container optimization */
   .card,

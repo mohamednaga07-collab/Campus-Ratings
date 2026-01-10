@@ -40,10 +40,11 @@ export default function Landing() {
   useEffect(() => {
     const interval = setInterval(() => {
       const timeSinceLastInteraction = Date.now() - lastInteraction;
-      if (!isDragging && (timeSinceLastInteraction > 1000 || lastInteraction === 0)) {
+      // Use 2000ms (2s) pause after interaction as requested
+      if (!isDragging && (timeSinceLastInteraction > 2000 || lastInteraction === 0)) {
         handleNext();
       }
-    }, 5000); // Restored 5s interval for majestic cinematic flow
+    }, 5000); 
     return () => clearInterval(interval);
   }, [isDragging, lastInteraction]); // Do NOT depend on currentIndex
 
@@ -119,15 +120,17 @@ export default function Landing() {
             }}
             transition={{
               type: "spring",
-              stiffness: 18,    // Majestic Deep Liquid flow (restored)
-              damping: 22,     // Cinematic settling
-              mass: 2.5,       // Elite weighted physical feel
+              stiffness: 260,
+              damping: 30,
+              mass: 1,
+              tension: 170,
+              friction: 26,
               duration: isTransitioning ? undefined : 0
             }}
             onAnimationComplete={handleTransitionEnd}
             drag="x"
-            dragConstraints={{ left: -150, right: 150 }} // Limit drag distance for discrete feel
-            dragElastic={0.7} 
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1} 
             dragMomentum={false}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(e, { offset, velocity }) => {
