@@ -23,7 +23,7 @@ export const registerLimiter = rateLimit({
   // Don't use custom keyGenerator - use defaults which handle IPv6
 });
 
-const BCRYPT_ROUNDS = 12; // Higher rounds = more secure but slower
+const BCRYPT_ROUNDS = 10; // Balanced: secure but faster (was 12, reduced for better UX)
 
 /**
  * Hash a password using bcrypt (industry standard)
