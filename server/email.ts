@@ -96,14 +96,21 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         console.log(`[RESEND] Method: POST`);
         console.log(`[RESEND] Headers: Authorization: Bearer ${RESEND_API_KEY?.substring(0, 10)}..., Content-Type: application/json`);
         
+        // Create a controller for the timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout
+
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
           body: JSON.stringify(payload),
         });
+
+        clearTimeout(timeoutId);
 
         console.log(`[RESEND] Fetch completed, status: ${response.status}`);
         

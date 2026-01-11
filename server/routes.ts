@@ -253,16 +253,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (!skipRecaptcha && recaptchaToken) {
           console.log("✅ Verifying reCAPTCHA token with Google");
           try {
+            // Add timeout to reCAPTCHA verification to prevent login hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
             const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
+              signal: controller.signal,
               body: new URLSearchParams({
                 secret: process.env.RECAPTCHA_SECRET_KEY || "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
                 response: recaptchaToken,
               }).toString(),
             });
+
+            clearTimeout(timeoutId);
 
             const recaptchaData = await recaptchaResponse.json();
             console.log("reCAPTCHA verification response:", recaptchaData);
@@ -593,49 +600,27 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const emailHtml = generateVerificationEmailHtml(username, verificationLink);
       const emailText = `Hi ${username},\n\nThank you for registering! Please verify your email address: ${verificationLink}\n\nOnce verified, you'll be able to log in.`;
       
-      console.log(`📧 [Registration] Attempting to send verification email to: ${email}`);
-      try {
-        const emailSent = await sendEmail({
-          to: email,
-          subject: "Verify Your Campus Ratings Account",
-          html: emailHtml,
-          text: emailText,
-        });
-        console.log(`✅ [Registration] Verification email sent successfully to ${email}`);
-      } catch (emailError: any) {
-        console.error(`❌ [Registration] Failed to send verification email to ${email}:`, emailError.message || emailError);
-        console.error(`   Stack trace:`, emailError.stack);
-        // Continue with registration even if email fails
-      }
-
-      // Verify that emailVerified is set to false in the database
-      const createdUser = await storage.getUser(newUser.id);
-      console.log(`🔍 [Registration] Verification check - User created with emailVerified: ${createdUser?.emailVerified}`);
-      
-      // Don't auto-login - user must verify email first
-      // Don't set session
-      
-      // Don't send password to client
-      const { password: _, ...userWithoutPassword } = newUser as any;
-      res.json({ 
-        user: userWithoutPassword,
-        message: "Registration successful. Please check your email to verify your account."
-      });
-
-      // Send verification email asynchronously (non-blocking) after response is sent
+      // Send verification email asynchronously (non-blocking) so registration is instant
       setImmediate(async () => {
         try {
-          console.log(`📧 [Async] Sending verification email to: ${email}`);
+          console.log(`📧 [Async Registration] Attempting to send verification email to: ${email}`);
           await sendEmail({
             to: email,
             subject: "Verify Your Campus Ratings Account",
             html: emailHtml,
             text: emailText,
           });
-          console.log(`✅ [Async] Verification email sent successfully to ${email}`);
+          console.log(`✅ [Async Registration] Verification email sent successfully to ${email}`);
         } catch (emailError: any) {
-          console.error(`❌ [Async] Failed to send verification email to ${email}:`, emailError.message || emailError);
+          console.error(`❌ [Async Registration] Failed to send verification email to ${email}:`, emailError.message || emailError);
         }
+      });
+
+      // Don't send password to client
+      const { password: _, ...userWithoutPassword } = newUser as any;
+      res.json({ 
+        user: userWithoutPassword,
+        message: "Registration successful. Please check your email to verify your account."
       });
     } catch (error) {
       console.error("Error during registration:", error);
