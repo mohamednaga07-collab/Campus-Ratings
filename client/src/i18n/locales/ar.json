@@ -76,6 +76,9 @@
     }
   },
   "auth": {
+    "email": "البريد الإلكتروني",
+    "enterEmail": "البريد الإلكتروني",
+    "chooseUsername": "اسم المستخدم",
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
     "logout": "تسجيل الخروج",
@@ -92,13 +95,14 @@
     "forgotPassword": "نسيت كلمة المرور؟",
     "forgotUsername": "نسيت اسم المستخدم؟",
     "placeholders": {
-      "username": "أدخل اسم المستخدم",
-      "password": "أدخل كلمة المرور",
-      "chooseUsername": "اختر اسم مستخدم",
-      "choosePassword": "اختر كلمة مرور",
-      "confirmPassword": "أعد إدخال كلمة المرور",
+      "username": "اسم المستخدم",
+      "password": "كلمة السر",
+      "chooseUsername": "اسم المستخدم",
+      "choosePassword": "كلمة السر",
+      "confirmPassword": "تأكيد كلمة السر",
       "firstName": "الاسم الأول",
-      "lastName": "اسم العائلة"
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني"
     },
     "serverUnavailableTitle": "الخادم غير متاح",
     "serverUnavailableDescription": "تعذر الاتصال بالخادم في {{origin}}.",

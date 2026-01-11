@@ -76,6 +76,9 @@
     }
   },
   "auth": {
+    "email": "Email",
+    "enterEmail": "Email",
+    "chooseUsername": "Username",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
@@ -92,13 +95,14 @@
     "forgotPassword": "Forgot password?",
     "forgotUsername": "Forgot username?",
     "placeholders": {
-      "username": "Enter your username",
-      "password": "Enter your password",
-      "chooseUsername": "Choose a username",
-      "choosePassword": "Choose a password",
-      "confirmPassword": "Re-enter your password",
-      "firstName": "First name",
-      "lastName": "Last name"
+      "username": "Username",
+      "password": "Password",
+      "chooseUsername": "Username",
+      "choosePassword": "Password",
+      "confirmPassword": "Confirm Password",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email"
     },
     "serverUnavailableTitle": "Server Unavailable",
     "serverUnavailableDescription": "Could not connect to the server at {{origin}}.",
