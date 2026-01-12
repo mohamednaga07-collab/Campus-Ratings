@@ -37,7 +37,7 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
+  profileImageUrl: text("profile_image_url"),
   role: varchar("role", { length: 20 }).notNull().default("student"),
   studentId: varchar("student_id"),
   resetToken: varchar("reset_token", { length: 255 }),
@@ -55,7 +55,7 @@ export const doctors = pgTable("doctors", {
   department: varchar("department", { length: 255 }).notNull(),
   title: varchar("title", { length: 100 }),
   bio: text("bio"),
-  profileImageUrl: varchar("profile_image_url"),
+  profileImageUrl: text("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
