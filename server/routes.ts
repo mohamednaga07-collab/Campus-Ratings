@@ -148,8 +148,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  });
-
   // Auth routes - public endpoint to check if user is logged in
   app.get("/api/auth/user", async (req: any, res) => {
     try {
