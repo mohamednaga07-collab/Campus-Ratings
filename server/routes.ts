@@ -200,7 +200,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (user) {
           // PERFORMANCE OPTIMIZATION: Truncate giant base64 images in auth user object
           const responseUser = { ...user };
-          if (responseUser.profileImageUrl && responseUser.profileImageUrl.length > 50000) {
+          if (responseUser.profileImageUrl && responseUser.profileImageUrl.length > 300000) {
             console.log(`✂️ AuthCheck: Truncating oversized profile image for ${user.username} (${Math.round(responseUser.profileImageUrl.length/1024)}KB)`);
             responseUser.profileImageUrl = responseUser.profileImageUrl.substring(0, 100) + "... (image too large)";
           }
@@ -217,7 +217,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
         // PERFORMANCE OPTIMIZATION: Truncate giant base64 images in auth user object
-    if (req.user && req.user.profileImageUrl && req.user.profileImageUrl.length > 50000) {
+    if (req.user && req.user.profileImageUrl && req.user.profileImageUrl.length > 300000) {
       const optimizedUser = { ...req.user };
       optimizedUser.profileImageUrl = optimizedUser.profileImageUrl.substring(0, 100) + "... (image too large)";
       return res.json(optimizedUser);
@@ -425,7 +425,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // PERFORMANCE OPTIMIZATION: Truncate giant base64 images in common responses
       const responseUser = { ...user };
-      if (responseUser.profileImageUrl && responseUser.profileImageUrl.length > 50000) {
+      if (responseUser.profileImageUrl && responseUser.profileImageUrl.length > 300000) {
         console.log(`✂️ Login: Truncating oversized profile image for ${username} (${Math.round(responseUser.profileImageUrl.length/1024)}KB)`);
         responseUser.profileImageUrl = responseUser.profileImageUrl.substring(0, 100) + "... (image too large)";
       }
