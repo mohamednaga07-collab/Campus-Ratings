@@ -67,6 +67,36 @@ export default function ProfileSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingUsername, setIsChangingUsername] = useState(false);
 
+  const compressImage = (base64Str: string, maxWidth = 1200, maxHeight = 1200): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+    });
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -81,8 +111,8 @@ export default function ProfileSettings() {
       return;
     }
 
-    // Validate file size (max 5MB recommended, backend allows 15MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Backend handles up to 15-20MB, but we'll compress for speed
+    if (file.size > 20 * 1024 * 1024) {
       toast({
         title: t("profile.upload.error.size"),
         description: t("profile.upload.error.sizeDesc"),
@@ -96,37 +126,40 @@ export default function ProfileSettings() {
 
       // Convert to base64
       const reader = new FileReader();
-      reader.readAsDataURL(file);
       reader.onload = async () => {
-        const base64Image = reader.result as string;
-
         try {
+          let imageData = reader.result as string;
+
+          // Compress if not a GIF
+          if (file.type !== 'image/gif') {
+            imageData = await compressImage(imageData);
+          }
+
           await apiRequest("POST", "/api/auth/upload-profile-picture", {
-            imageData: base64Image,
+            imageData,
           });
 
-          // Invalidate user query to refresh the avatar globally
+          // Invalidate queries
           queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
           queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/comparisons"] });
 
           toast({
             title: t("profile.upload.success"),
             description: t("profile.upload.successDesc"),
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error("Upload failed", error);
           toast({
             title: t("profile.upload.error.failed"),
-            description: t("profile.upload.error.failedDesc"),
+            description: error.message || t("profile.upload.error.failedDesc"),
             variant: "destructive",
           });
         } finally {
           setIsUploading(false);
+          if (event.target) event.target.value = '';
         }
       };
+
       reader.onerror = () => {
         setIsUploading(false);
         toast({
@@ -134,6 +167,8 @@ export default function ProfileSettings() {
           variant: "destructive",
         });
       };
+
+      reader.readAsDataURL(file);
     } catch (error) {
       setIsUploading(false);
     }
@@ -229,7 +264,13 @@ export default function ProfileSettings() {
             <div className="absolute -bottom-8 left-8">
               <div className="relative group cursor-pointer" onClick={triggerFileInput}>
                 <Avatar className="h-32 w-32 border-4 border-background shadow-2xl transition-transform hover:scale-105">
-                  <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.username || "User"} className="object-cover" />
+                  <AvatarImage 
+                    src={user.profileImageUrl?.includes("...") 
+                      ? `/api/profile-image/user/${user.id}?v=${user.updatedAt ? new Date(user.updatedAt).getTime() : '1'}` 
+                      : user.profileImageUrl ?? undefined} 
+                    alt={user.username || "User"} 
+                    className="object-cover" 
+                  />
                   <AvatarFallback className="text-4xl bg-primary/10 text-primary font-bold">
                     {(user.username || "U").substring(0, 2).toUpperCase()}
                   </AvatarFallback>

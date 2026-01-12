@@ -238,10 +238,6 @@ export function ProfilePictureUpload({
       {/* Full-size image viewer modal */}
       <Dialog open={showFullSize} onOpenChange={setShowFullSize}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 border bg-background">
-          <DialogClose className="absolute right-4 top-4 z-50 rounded-md border border-input bg-background p-1.5 text-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-            <X className="h-5 w-5" />
-          </DialogClose>
-          
           <div className="flex items-center justify-center h-full w-full p-4">
             {user.profileImageUrl ? (
               <img 
