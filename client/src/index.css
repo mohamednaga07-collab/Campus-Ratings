@@ -521,8 +521,8 @@ html[dir="rtl"] body {
   margin: 1rem auto !important;
   overflow: visible !important;
   position: relative !important;
-  /* Nudge position as requested to fix visual alignment - significantly increased offset */
-  transform: translate(40px, 24px) !important;
+  /* Nudge position as requested to fix visual alignment - significantly increased jump */
+  transform: translate(64px, 32px) !important;
 }
 
 /* Force transparency on all Google reCAPTCHA components */

@@ -24,15 +24,18 @@ if (USE_RESEND) {
 }
 
 // Create Gmail transporter as fallback
-// Port 465 with secure: true is often more reliable on hosting providers like Render
+// Port 587 with secure: false is often more reliable on cloud providers
 const gmailTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASSWORD,
   },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 // Test Gmail connection
