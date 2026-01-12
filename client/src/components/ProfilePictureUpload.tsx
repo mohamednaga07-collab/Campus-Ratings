@@ -243,7 +243,7 @@ export function ProfilePictureUpload({
           <div className="flex items-center justify-center h-full w-full p-4">
             {user.profileImageUrl ? (
               <img 
-                src={user.profileImageUrl}
+                src={user.profileImageUrl?.includes("...") ? `/api/profile-image/user/${user.id}` : user.profileImageUrl ?? ""}
                 alt={`${user.firstName ?? "User"}'s profile picture`}
                 className="max-w-full max-h-[80vh] rounded-lg object-contain"
               />

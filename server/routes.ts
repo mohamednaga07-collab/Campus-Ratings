@@ -1539,11 +1539,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Catch-all for API routes to prevent fallback to client routing (which causes loops)
-  app.all("/api/*", (req, res) => {
-    res.status(404).json({ message: "API endpoint not found" });
-  });
-
   // Profile Image Fetch (for full-size truncated images)
   app.get("/api/profile-image/:type/:id", async (req, res) => {
     try {
@@ -1581,6 +1576,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.error("Error fetching profile image:", error);
       res.status(500).json({ message: "Failed to fetch profile image" });
     }
+  });
+
+  // Catch-all for API routes to prevent fallback to client routing (which causes loops)
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ message: "API endpoint not found" });
   });
 
   // Admin Email Diagnostic
