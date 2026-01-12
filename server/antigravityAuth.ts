@@ -68,9 +68,24 @@ export function getSession() {
   }
 
   const pgStore = connectPg(session);
+  
+  // Manually create session table if it doesn't exist
+  // This avoids the table.sql file dependency issue in production builds
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS session (
+      sid varchar NOT NULL COLLATE "default",
+      sess json NOT NULL,
+      expire timestamp(6) NOT NULL,
+      CONSTRAINT session_pkey PRIMARY KEY (sid)
+    );
+    CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire);
+  `).catch((err) => {
+    console.error('Failed to create session table:', err);
+  });
+  
   const sessionStore = new pgStore({
     pool: pool, // Use the shared pool with correct SSL settings
-    createTableIfMissing: true,
+    createTableIfMissing: false, // We create it manually above
     ttl: sessionTtl, // in seconds for connect-pg-simple, effectively
     tableName: "session", // "session" is the default standard name
     pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 min
