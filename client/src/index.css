@@ -512,34 +512,29 @@ html[dir="rtl"] body {
   justify-content: center !important;
   align-items: center !important;
   padding: 0 !important;
-  border-radius: 8px !important;
-  background-color: transparent !important;
-  border: none !important;
+  border-radius: 4px !important;
+  background-color: #222 !important; /* Matches the dark theme card background */
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   min-height: 78px;
-  width: auto !important;
-  max-width: 304px !important;
-  margin: 1rem auto !important;
-  overflow: visible !important;
+  width: 304px !important;
+  margin: 1.5rem auto !important;
+  overflow: hidden !important; /* This clips the 1px white border from the iframe */
   position: relative !important;
-  /* Nudge position as requested to fix visual alignment - significantly increased jump */
-  transform: translate(64px, 32px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Force transparency on all Google reCAPTCHA components */
+/* Force transparency on all Google reCAPTCHA components to help masking */
 .g-recaptcha,
 .g-recaptcha > div,
 .g-recaptcha iframe,
 .recaptcha-wrapper iframe {
   border: none !important;
   background: transparent !important;
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   box-shadow: none !important;
-}
-
-/* Specific fix for the white background/border in dark mode */
-.dark .recaptcha-wrapper {
-  background-color: transparent !important;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.1));
+  /* Slightly scale up the iframe to push its white border into the "overflow: hidden" zone */
+  transform: scale(1.02);
+  transform-origin: center center;
 }
 
 /* Scale adjustments for mobile */
