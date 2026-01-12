@@ -647,7 +647,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.log("✅ New user created:", username, "with role:", role);
 
       // Send verification email
-      const appUrl = process.env.APP_URL || "http://localhost:5173";
+      const appUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
       console.log(`📧 [Registration] APP_URL for verification link: ${appUrl}`);
       
       const verificationLink = `${appUrl}/verify-email?token=${verificationToken}`;

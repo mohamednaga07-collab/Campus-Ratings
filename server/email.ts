@@ -3,12 +3,14 @@ import nodemailer from "nodemailer";
 // Email configuration
 const EMAIL_USER = process.env.EMAIL_USER || "mohamednaga07@gmail.com";
 const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "ytwzsquhkukwldpc").replace(/\s/g, "");
-const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate Support <noreply@profrate.com>`;
+const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate Support <onboarding@resend.dev>`;
 
 // Resend configuration (preferred for production - simple API)
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // Use a verified domain if provided, else fall back to Resend onboarding domain
-const RESEND_FROM = process.env.RESEND_FROM || 'ProfRate Support <noreply@profrate.com>';
+// IMPORTANT: Resend requires a verified domain to send FROM your own domain.
+// If you haven't verified profrate.com, this will fail.
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 const USE_RESEND = !!RESEND_API_KEY;
 
 console.log("[Email Setup] Initializing with:");
