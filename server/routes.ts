@@ -504,17 +504,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     pendingRegistrations.add(registrationKey);
     console.log(`🔒 Guard active for: ${registrationKey}`);
     
-    // Ensure the key is removed even if the request fails or times out
-    const cleanup = () => {
-      if (pendingRegistrations.has(registrationKey)) {
-        pendingRegistrations.delete(registrationKey);
-        console.log(`🔓 Guard released for: ${registrationKey}`);
-      }
-    };
-
-    // Auto-cleanup after 30 seconds as a fallback
-    const timeoutId = setTimeout(cleanup, 30000);
-
     try {
       const { password, firstName, lastName, role, recaptchaToken, skipRecaptcha } = req.body;
       
@@ -583,16 +572,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             console.log("reCAPTCHA verification response:", recaptchaData);
 
             if (!recaptchaData.success) {
+              console.warn(`❌ Registration reCAPTCHA failed for ${username}:`, recaptchaData["error-codes"]);
+              pendingRegistrations.delete(registrationKey); // Clear guard on verification failure
               return res.status(400).json({ message: "reCAPTCHA verification failed. Please try again." });
             }
 
             // Check score (for v3) - scores closer to 1.0 are more human-like
             if (recaptchaData.score && recaptchaData.score < 0.5) {
               console.warn("⚠️  Suspicious registration activity from IP:", req.ip);
+              pendingRegistrations.delete(registrationKey); // Clear guard on suspicious score
               return res.status(400).json({ message: "Suspicious activity detected. Please try again." });
             }
           } catch (recaptchaError) {
             console.error("Error verifying reCAPTCHA:", recaptchaError);
+            pendingRegistrations.delete(registrationKey); // Clear guard on API error
             return res.status(500).json({ message: "reCAPTCHA verification error" });
           }
         }
@@ -622,6 +615,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const existingEmail = await storage.getUserByEmail(email);
       if (existingEmail) {
         console.log("⚠️  Email already exists:", email);
+        pendingRegistrations.delete(registrationKey);
         return res.status(409).json({ message: "Email already associated with an account" });
       }
 
@@ -680,12 +674,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
       
       // Request successful, release the guard
-      clearTimeout(timeoutId);
-      cleanup();
+      pendingRegistrations.delete(registrationKey);
+      console.log(`🔓 Guard released for: ${registrationKey} (SUCCESS)`);
     } catch (error) {
       // Request failed, release the guard
-      clearTimeout(timeoutId);
-      cleanup();
+      pendingRegistrations.delete(registrationKey);
+      console.log(`🔓 Guard released for: ${registrationKey} (ERROR)`);
       console.error("Error during registration:", error);
       res.status(500).json({ message: "Registration failed" });
     }

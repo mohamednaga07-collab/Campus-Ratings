@@ -217,7 +217,7 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
     }
 
     if (recaptchaEnabled && !recaptchaToken && !isSessionVerified) {
-      errors.push(t("auth.validation.recaptchaRequired", { defaultValue: "Please verify you are human" }));
+      errors.push(t("auth.validation.recaptchaRequired", { defaultValue: "Please complete the reCAPTCHA verification" }));
     }
 
     if (!registerFirstName.trim()) errors.push(t("auth.validation.firstNameRequired", { defaultValue: "First Name is required" }));
@@ -249,13 +249,16 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   };
 
   const handleRecaptchaChange = (token: string | null) => {
+    console.log("🔹 Registration reCAPTCHA token received:", !!token);
     setRecaptchaToken(token);
     // Mark user as verified for 30 minutes across all forms
     if (token) {
       markRecaptchaVerified();
+      // Keep token valid for 2 minutes locally to avoid immediate expiration
       setTimeout(() => {
         setRecaptchaToken(null);
-      }, 120000);
+        if (recaptchaRef.current) recaptchaRef.current.reset();
+      }, 115000); // Reset just before 2 minutes
     }
   };
 
@@ -520,15 +523,18 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         setTimeout(() => {
           setActiveTab("login");
           setRegistrationSuccess(false);
-          // Reset form fields
-          setRegisterEmail("");
-          setRegisterUsername("");
-          setRegisterPassword("");
-          setRegisterPasswordConfirm("");
-          setRegisterFirstName("");
-          setRegisterLastName("");
-          setRecaptchaToken(null);
-        }, 2000);
+          // Wait for tab switch animation then reset fields
+          setTimeout(() => {
+            setRegisterEmail("");
+            setRegisterUsername("");
+            setRegisterPassword("");
+            setRegisterPasswordConfirm("");
+            setRegisterFirstName("");
+            setRegisterLastName("");
+            setRecaptchaToken(null);
+            if (recaptchaRef.current) recaptchaRef.current.reset();
+          }, 300);
+        }, 3000);
 
         if (onSuccess) onSuccess();
       } else {
@@ -557,7 +563,13 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         variant: "destructive",
       });
     } finally {
+      // Don't reset isLoading immediately if successful to prevent button flickers
       setIsLoading(false);
+      // If error occurred, reset reCAPTCHA
+      if (!isSessionVerified && recaptchaRef.current) {
+        recaptchaRef.current.reset();
+        setRecaptchaToken(null);
+      }
     }
   };
 
