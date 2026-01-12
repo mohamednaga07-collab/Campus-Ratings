@@ -19,9 +19,9 @@ async function runMigrations() {
     try {
       console.log(`📡 Migration attempt ${attempts + 1}/${maxAttempts}...`);
       
-      // Use yes | to pipe 'y' to any prompts
       // Use --url to provide connection string explicitly
-      execSync(`yes | npx drizzle-kit push --dialect=postgresql --schema=shared/schema.ts --url="${process.env.DATABASE_URL}" --force`, {
+      // Schema is now aligned so prompts should not occur
+      execSync(`npx drizzle-kit push --dialect=postgresql --schema=shared/schema.ts --url="${process.env.DATABASE_URL}" --force`, {
         stdio: 'inherit',
         env: { ...process.env, NODE_ENV: 'production' }
       });
