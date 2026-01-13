@@ -237,8 +237,8 @@ export function ProfilePictureUpload({
 
       {/* Full-size image viewer modal */}
       <Dialog open={showFullSize} onOpenChange={setShowFullSize}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border border-border bg-background shadow-2xl overflow-visible [&>button]:hidden rounded-xl">
-          <DialogClose className="absolute start-4 top-4 z-[100] rounded-full border border-border bg-background/80 backdrop-blur-md p-2 text-foreground hover:bg-accent transition-all shadow-xl hover:scale-110">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-0 bg-background shadow-2xl overflow-visible [&>button]:hidden rounded-xl">
+          <DialogClose className="absolute start-4 top-4 z-[100] rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-all shadow-xl hover:scale-110">
             <X className="h-5 w-5" />
           </DialogClose>
           
