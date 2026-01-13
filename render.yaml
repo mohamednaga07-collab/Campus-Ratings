@@ -21,9 +21,11 @@ services:
         sync: false
       - key: RECAPTCHA_ENABLED
         sync: false
-      - key: RECAPTCHA_SITE_KEY
-        sync: false
       - key: RECAPTCHA_SECRET_KEY
+        sync: false
+      - key: VITE_RECAPTCHA_ENABLED
+        sync: false
+      - key: VITE_RECAPTCHA_SITE_KEY
         sync: false
 
 databases:
