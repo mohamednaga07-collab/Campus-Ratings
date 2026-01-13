@@ -249,22 +249,22 @@ export function ProfilePictureUpload({
 
       {/* Full-size image viewer modal */}
       <Dialog open={showFullSize} onOpenChange={setShowFullSize}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[95vh] p-0 border-0 bg-transparent shadow-none [&>button:not(.custom-close)]:hidden overflow-visible flex items-center justify-center">
-          <div className="relative flex items-center justify-center p-0 m-0 overflow-hidden rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-            <DialogClose className="custom-close absolute start-3 top-3 z-[110] rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-all shadow-xl hover:scale-110">
-              <X className="h-5 w-5" />
-            </DialogClose>
-            
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[95vh] p-0 border border-border bg-background shadow-2xl overflow-visible [&>button:not(.custom-close)]:hidden rounded-xl flex flex-col">
+          <DialogClose className="custom-close absolute start-4 top-4 z-[110] rounded-full bg-black/60 p-2.5 text-white hover:bg-black/80 transition-all shadow-xl hover:scale-110">
+            <X className="h-5 w-5" />
+          </DialogClose>
+          
+          <div className="flex items-center justify-center p-6 min-h-[300px] w-full h-full overflow-hidden">
             {user.profileImageUrl ? (
               <img 
                 src={user.profileImageUrl?.includes("...") 
                   ? `/api/profile-image/user/${user.id}?v=${user.updatedAt ? new Date(user.updatedAt).getTime() : '1'}` 
                   : user.profileImageUrl ?? ""}
                 alt="Profile View"
-                className="max-w-full max-h-[90vh] object-contain block m-0 p-0"
+                className="max-w-full max-h-[80vh] rounded-lg shadow-sm object-contain"
               />
             ) : (
-              <div className="bg-background text-center text-muted-foreground p-12 rounded-xl">
+              <div className="text-center text-muted-foreground p-12 w-full">
                 <ZoomIn className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <p>{t("components.profileUpload.noPicture")}</p>
               </div>
