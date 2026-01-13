@@ -237,22 +237,22 @@ export function ProfilePictureUpload({
 
       {/* Full-size image viewer modal */}
       <Dialog open={showFullSize} onOpenChange={setShowFullSize}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-0 bg-background shadow-2xl overflow-visible [&>button]:hidden rounded-xl">
-          <DialogClose className="absolute start-4 top-4 z-[100] rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-all shadow-xl hover:scale-110">
-            <X className="h-5 w-5" />
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[95vh] p-0 border-0 bg-transparent shadow-none [&>button:not(.custom-close)]:hidden overflow-visible flex items-center justify-center">
+          <DialogClose className="custom-close absolute start-4 top-4 z-[110] rounded-full bg-black/60 p-2.5 text-white hover:bg-black/80 transition-all shadow-xl hover:scale-110">
+            <X className="h-6 w-6" />
           </DialogClose>
           
-          <div className="flex items-center justify-center h-full w-full p-4 min-h-[300px]">
+          <div className="relative flex items-center justify-center p-0 m-0 overflow-hidden rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             {user.profileImageUrl ? (
               <img 
                 src={user.profileImageUrl?.includes("...") 
                   ? `/api/profile-image/user/${user.id}?v=${user.updatedAt ? new Date(user.updatedAt).getTime() : '1'}` 
                   : user.profileImageUrl ?? ""}
-                alt={`${user.firstName ?? "User"}'s profile picture`}
-                className="max-w-full max-h-[80vh] rounded-lg object-contain"
+                alt="Profile View"
+                className="max-w-full max-h-[90vh] object-contain block m-0 p-0"
               />
             ) : (
-              <div className="text-center text-muted-foreground">
+              <div className="bg-background text-center text-muted-foreground p-12 rounded-xl">
                 <ZoomIn className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <p>{t("components.profileUpload.noPicture")}</p>
               </div>
