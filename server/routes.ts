@@ -36,27 +36,54 @@ function getUserId(req: any): string | null {
 
 async function seedSampleData() {
   try {
-    // 1. Seed Admin User if none exists
-    const users = await storage.getAllUsers();
-    const adminExists = users.some(u => u.username?.toLowerCase() === 'admin' || u.role === 'admin');
+    // 1. Clear existing users (As requested by the user to reset data)
+    const existingUsers = await storage.getAllUsers();
+    if (existingUsers.length > 0) {
+      console.log(`🧹 Clearing ${existingUsers.length} existing users...`);
+      for (const u of existingUsers) {
+        await storage.deleteUser(u.id);
+      }
+    }
+
+    console.log("🚀 Seeding verified accounts...");
     
-    if (!adminExists) {
-      console.log("🚀 Seeding default admin user...");
-      const adminId = randomUUID();
-      const defaultAdminPassword = "AdminPassword123!";
-      const hashedPassword = await hashPassword(defaultAdminPassword);
-      
-      await storage.createUser({
-        id: adminId,
+    const accounts = [
+      {
         username: "Admin",
-        password: hashedPassword,
+        password: "AdminPassword123!",
         email: "admin@profrate.app",
         firstName: "System",
         lastName: "Administrator",
-        role: "admin",
+        role: "admin"
+      },
+      {
+        username: "Student",
+        password: "Student123!",
+        email: "student@profrate.app",
+        firstName: "Sample",
+        lastName: "Student",
+        role: "student"
+      },
+      {
+        username: "Teacher",
+        password: "Teacher123!",
+        email: "teacher@profrate.app",
+        firstName: "Sample",
+        lastName: "Teacher",
+        role: "teacher"
+      }
+    ];
+
+    for (const acc of accounts) {
+      const id = randomUUID();
+      const hashedPassword = await hashPassword(acc.password);
+      await storage.createUser({
+        ...acc,
+        id,
+        password: hashedPassword,
         emailVerified: true
       });
-      console.log("✅ Admin user created (User: Admin, Pass: AdminPassword123!)");
+      console.log(`✅ Created ${acc.role} account: ${acc.username}`);
     }
 
     // 2. Seed Doctors if table is empty
