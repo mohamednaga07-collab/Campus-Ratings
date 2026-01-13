@@ -132,6 +132,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         if (!response.ok) {
           const errorMessage = responseData?.message || responseData?.error || 'Unknown error';
           console.error(`[RESEND] ❌ API Error - Status: ${response.status}, Message: ${errorMessage}`);
+          
+          // If Resend fails due to unverified email/unauthorized (standard for onboarding mode),
+          // throw an error to trigger the Gmail fallback.
           throw new Error(`Resend API error: ${response.status} - ${errorMessage}`);
         }
         
@@ -145,9 +148,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         return true;
       } catch (resendError: any) {
         console.error(`\n❌ [RESEND] Failed:`, resendError.message || resendError);
-        console.error(`[RESEND] Error type:`, resendError.constructor.name);
-        console.error(`[RESEND] Full error:`, resendError);
-        console.log(`[GMAIL FALLBACK] Attempting to send via Gmail SMTP...`);
+        console.log(`[GMAIL FALLBACK] Resend unavailable or restricted. Attempting Gmail SMTP fallback for ${options.to}...`);
       }
     }
 
