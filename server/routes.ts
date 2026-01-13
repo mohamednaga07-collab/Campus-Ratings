@@ -949,55 +949,66 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const { email: rawEmail } = req.body;
       const email = rawEmail ? rawEmail.trim() : "";
-      console.log(`[forgot-password] Received request for email: '${email}'`);
+      console.log(`\n${'='.repeat(40)}`);
+      console.log(`[FORGOT-PASSWORD] Initializing request for: '${email}'`);
+      
       if (!email) {
+        console.log(`[FORGOT-PASSWORD] ❌ Rejected: Email is missing`);
         return res.status(400).json({ message: "Email is required" });
       }
 
       const user = await storage.getUserByEmail(email);
-      console.log(`[forgot-password] Found user: ${user ? (user.username || user.email || user.id) : "NOT FOUND"}`);
       if (!user) {
+        console.log(`[FORGOT-PASSWORD] ℹ️  User not found for email: '${email}'. Returning success for security.`);
         // For security, don't reveal if email exists
         return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
       }
+
+      console.log(`[FORGOT-PASSWORD] ✅ User found: ${user.username} (ID: ${user.id})`);
 
       const resetToken = crypto.randomBytes(32).toString("hex");
       const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       try {
         await storage.updateUserResetToken(user.id, resetToken, resetTokenExpiry);
+        console.log(`[FORGOT-PASSWORD] ✅ Reset token stored in DB for ${user.username}`);
       } catch (dbError: any) {
-        console.error("Database error updating reset token:", dbError);
+        console.error("[FORGOT-PASSWORD] ❌ Database error updating reset token:", dbError);
         return res.status(500).json({ message: `Database error: ${dbError.message}` });
       }
 
-      // Send email with reset link
-      // Use HTTPS for production links to prevent "Suspicious Link" warnings
-      const baseUrl = process.env.APP_URL || "http://localhost:5173";
-      const secureUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-      // Force HTTPS if not localhost (Render provides https)
-      const finalUrl = secureUrl.includes('localhost') ? secureUrl : secureUrl.replace('http:', 'https:');
+      // Robust Link Generation
+      let baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
+      // Remove trailing slash if present to avoid double slashes
+      baseUrl = baseUrl.replace(/\/$/, "");
       
-      const resetLink = `${finalUrl}/reset-password?token=${resetToken}`;
+      const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+      console.log(`[FORGOT-PASSWORD] 🔗 Generated link: ${resetLink}`);
+      
       const emailHtml = generateForgotPasswordEmailHtml(user.username || "User", resetLink);
       const emailText = `Hi ${user.username || "User"},\n\nWe received a request to reset your password.\n\nReset your password: ${resetLink}\n\nThis link will expire in 24 hours. If you didn’t request this, you can ignore this email.`;
       
-      try {
-        await sendEmail({
-          to: email,
-          subject: "Reset Your Campus Ratings Password",
-          html: emailHtml,
-          text: emailText,
-        });
-        console.log(`[forgot-password] Email sent (accepted by provider) to ${email}`);
-      } catch (emailError: any) {
-        console.error("Email sending failed:", emailError);
-        return res.status(500).json({ message: `Email sending failed: ${emailError.message}` });
-      }
+      // Use setImmediate to send email asynchronously (non-blocking) similar to registration
+      setImmediate(async () => {
+        try {
+          console.log(`[FORGOT-PASSWORD] 📧 Attempting to dispatch email to: ${email}`);
+          await sendEmail({
+            to: email,
+            subject: "Reset Your Campus Ratings Password",
+            html: emailHtml,
+            text: emailText,
+          });
+          console.log(`[FORGOT-PASSWORD] ✅ Email successfully dispatched to ${email}`);
+        } catch (emailError: any) {
+          console.error(`[FORGOT-PASSWORD] ❌ DISPATCH FAILED for ${email}:`, emailError.message || emailError);
+        }
+      });
 
+      console.log(`[FORGOT-PASSWORD] 🏁 Request accepted. Dispatched async. Returning 200.`);
+      console.log(`${'='.repeat(40)}\n`);
       res.status(200).json({ message: "If an account exists, a reset link has been sent." });
     } catch (error: any) {
-      console.error("Unexpected error in forgot password:", error);
+      console.error("[FORGOT-PASSWORD] ❌ Unexpected fatal error:", error);
       res.status(500).json({ message: `Unexpected error: ${error.message}` });
     }
   });
@@ -1005,12 +1016,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/auth/reset-password", async (req: any, res) => {
     try {
       const { token, newPassword } = req.body;
+      console.log(`[RESET-PASSWORD] Processing reset request for token: ${token ? token.substring(0, 8) + '...' : 'NONE'}`);
+      
       if (!token || !newPassword) {
         return res.status(400).json({ message: "Token and new password are required" });
       }
 
       const user = await storage.getUserByResetToken(token);
       if (!user || !user.resetTokenExpiry) {
+        console.log(`[RESET-PASSWORD] ❌ Invalid or missing expiry for token: ${token.substring(0, 8)}...`);
         return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
