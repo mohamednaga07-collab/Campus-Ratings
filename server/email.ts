@@ -194,13 +194,23 @@ function generateBaseEmailHtml({
   footerMessage?: string;
 }) {
   const logoUrl = "https://campus-ratings.onrender.com/favicon.png";
+  const supportAvatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"; // A friendly support face
   
-  // Use a simple table for the welcome section to ensure compatibility with all email clients
-  const profileImageCell = profileImageUrl 
+  // CRITICAL: Prevent email clipping by skipping giant base64 images
+  // Gmail clips at 102KB. A base64 image can easily exceed this.
+  let safeProfileImage = profileImageUrl;
+  if (profileImageUrl && profileImageUrl.startsWith('data:') && profileImageUrl.length > 30000) {
+    console.log(`[Email] Skipping oversized base64 profile image (${Math.round(profileImageUrl.length/1024)}KB) to prevent Gmail clipping.`);
+    safeProfileImage = null; // Don't include it in email if it's too big
+  }
+
+  const profileImageCell = safeProfileImage 
     ? `<td style="padding-right: 15px; width: 60px;">
-         <img src="${profileImageUrl}" style="width: 50px; height: 50px; border-radius: 25px; object-fit: cover; border: 2px solid #e2e8f0; display: block;" alt="${username}">
+         <img src="${safeProfileImage}" style="width: 50px; height: 50px; border-radius: 25px; object-fit: cover; border: 2px solid #e2e8f0; display: block;" alt="${username}">
        </td>`
-    : "";
+    : `<td style="padding-right: 15px; width: 60px;">
+         <div style="width: 50px; height: 50px; border-radius: 25px; background: #e2e8f0; color: #64748b; text-align: center; line-height: 50px; font-weight: bold; font-size: 20px;">${username.charAt(0).toUpperCase()}</div>
+       </td>`;
 
   return `
     <!DOCTYPE html>
@@ -210,50 +220,65 @@ function generateBaseEmailHtml({
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f8fafc; }
         .wrapper { background-color: #f8fafc; padding: 40px 20px; }
-        .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 40px 20px; text-align: center; }
-        .logo { width: 56px; height: 56px; margin-bottom: 16px; border-radius: 12px; }
-        .content { padding: 40px 32px; }
-        .welcome-text { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0; }
-        .message { font-size: 16px; color: #475569; margin-bottom: 24px; margin-top: 24px; }
-        .button-container { text-align: center; margin: 32px 0; }
-        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 34px; text-decoration: none !important; border-radius: 10px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
-        .footer { font-size: 13px; color: #64748b; text-align: center; padding: 30px; border-top: 1px solid #f1f5f9; background-color: #fcfcfc; }
-        .link-text { word-break: break-all; color: #94a3b8; font-size: 11px; margin-top: 16px; }
+        .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); color: white; padding: 35px 20px; text-align: center; }
+        .logo { width: 50px; height: 50px; margin-bottom: 12px; border-radius: 10px; }
+        .content { padding: 35px 30px; }
+        .welcome-text { font-size: 20px; font-weight: 700; color: #1e293b; margin: 0; }
+        .message { font-size: 16px; color: #334155; margin-bottom: 24px; margin-top: 24px; line-height: 1.7; }
+        .button-container { text-align: center; margin: 35px 0; }
+        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 38px; text-decoration: none !important; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
+        .sender-info { display: flex; align-items: center; gap: 12px; margin-top: 30px; padding-top: 25px; border-top: 1px solid #f1f5f9; }
+        .footer { font-size: 12px; color: #94a3b8; text-align: center; padding: 25px; background-color: #fcfcfc; }
+        .link-text { word-break: break-all; color: #cbd5e1; font-size: 10px; margin-top: 15px; }
       </style>
     </head>
     <body>
-      <div class="wrapper">
-        <div class="container">
-          <div class="header">
-            <img src="${logoUrl}" alt="ProfRate Header" class="logo">
-            <h1 style="margin: 0; font-size: 24px;">${title}</h1>
+      <div class="wrapper" style="background-color: #f8fafc; padding: 30px 15px;">
+        <div class="container" style="max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e1e8f0;">
+          <div class="header" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%); color: white; padding: 40px 20px; text-align: center;">
+            <img src="${logoUrl}" alt="ProfRate Logo" class="logo" style="width: 50px; height: 50px; margin-bottom: 12px; border-radius: 10px;">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">${title}</h1>
           </div>
-          <div class="content">
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+          <div class="content" style="padding: 35px 25px;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 ${profileImageCell}
                 <td style="vertical-align: middle;">
-                  <h2 class="welcome-text">Hi ${username},</h2>
+                  <h2 class="welcome-text" style="font-size: 20px; font-weight: 700; color: #1e293b; margin: 0;">Hi ${username},</h2>
                 </td>
               </tr>
             </table>
             
-            <div class="message">
+            <div class="message" style="font-size: 16px; color: #334155; margin-bottom: 24px; margin-top: 24px; line-height: 1.7;">
               ${contentHtml}
             </div>
             
             ${buttonLink ? `
-            <div class="button-container">
-              <a href="${buttonLink}" class="button">${buttonText}</a>
+            <div class="button-container" style="text-align: center; margin: 35px 0;">
+              <a href="${buttonLink}" class="button" style="display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 40px; text-decoration: none !important; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                ${buttonText}
+              </a>
             </div>
             ` : ""}
             
-            <p style="font-size: 14px; color: #64748b; margin-top: 24px;">${footerMessage}</p>
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+              <tr>
+                <td style="width: 45px;">
+                  <img src="${supportAvatarUrl}" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid #e2e8f0;" alt="ProfRate Support">
+                </td>
+                <td style="padding-left: 12px;">
+                  <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1e293b;">ProfRate Support Team</p>
+                  <p style="margin: 0; font-size: 12px; color: #64748b;">Helping students since 2024</p>
+                </td>
+              </tr>
+            </table>
+
+            <p style="font-size: 13px; color: #94a3b8; margin-top: 25px; line-height: 1.5;">${footerMessage}</p>
           </div>
           <div class="footer">
-            <p style="margin: 0;">© 2026 <strong>ProfRate</strong>. Campus Ratings for Students.</p>
-            ${buttonLink ? `<div class="link-text">Button not working? Copy and paste this link:<br>${buttonLink}</div>` : ""}
+            <p style="margin: 0;">© 2026 <strong>ProfRate</strong>. All rights reserved.</p>
+            ${buttonLink ? `<div class="link-text">Link not working? Copy & paste:<br>${buttonLink}</div>` : ""}
           </div>
         </div>
       </div>
@@ -276,22 +301,24 @@ export function generateForgotPasswordEmailHtml(username: string, resetLink: str
 
 export function generateVerificationEmailHtml(username: string, verificationLink: string, profileImageUrl?: string | null): string {
   return generateBaseEmailHtml({
-    title: "Welcome to ProfRate",
+    title: "Verify Your Email",
     username,
     profileImageUrl,
-    contentHtml: `Thank you for joining <strong>ProfRate (Campus Ratings)</strong>! We're excited to have you in our community. To get started, please verify your email address by clicking the high-speed link below:`,
+    contentHtml: `Thank you for joining <strong>ProfRate (Campus Ratings)</strong>! We're excited to have you in our community. Please verify your email address to activate your account:`,
     buttonLink: verificationLink,
     buttonText: "Verify Email Address",
-    footerMessage: "Once verified, you'll have full access to rate professors, view analytics, and help fellow students."
+    footerMessage: "Once verified, you'll have full access to rate professors and join the discussion."
   });
 }
 
-export function generateForgotUsernameEmailHtml(username: string, profileImageUrl?: string | null): string {
+export function generateForgotUsernameEmailHtml(username: string, loginLink?: string, profileImageUrl?: string | null): string {
   return generateBaseEmailHtml({
     title: "Your Username",
     username: "Account Holder",
     profileImageUrl,
-    contentHtml: `We received a request for your username on Campus Ratings. Your username is: <br><br><span style="background: #f1f5f9; padding: 12px 20px; border-radius: 8px; font-family: monospace; font-size: 18px; color: #1e293b; border: 1px solid #e2e8f0; display: inline-block;">${username}</span><br><br>You can use this to sign in to your account.`,
+    contentHtml: `We received a request for your username on Campus Ratings. Your username is: <br><br><span style="background: #f1f5f9; padding: 12px 20px; border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 20px; font-weight: 700; color: #1e293b; border: 1px solid #e2e8f0; display: inline-block;">${username}</span><br><br>You can now use this to sign in to your account.`,
+    buttonLink: loginLink,
+    buttonText: "Login Now",
     footerMessage: "If you didn't request this information, please ignore this email."
   });
 }

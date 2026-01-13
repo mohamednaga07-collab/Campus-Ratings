@@ -1062,9 +1062,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(200).json({ message: "If an account exists, your username has been sent to the email on file." });
       }
 
+      // Robust Link Generation
+      let baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
+      baseUrl = baseUrl.replace(/\/$/, "");
+      const loginLink = `${baseUrl}/auth`;
+
       // Send email with username
       console.log(`[forgot-username] Sending email to ${email}`);
-      const emailHtml = generateForgotUsernameEmailHtml(user.username || "Your Username", user.profileImageUrl);
+      const emailHtml = generateForgotUsernameEmailHtml(user.username || "Your Username", loginLink, user.profileImageUrl);
       
       try {
         await sendEmail({
