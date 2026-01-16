@@ -105,6 +105,10 @@ export default function ForgotUsername() {
       setEmail("");
     } catch (err: any) {
       setError(err.message);
+      if (err.message === "reCAPTCHA verification is required") {
+        localStorage.removeItem('recaptcha_verified');
+        setIsSessionVerified(false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +133,7 @@ export default function ForgotUsername() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
             className="max-w-xl mx-auto w-full"
           >
             <Card className="border border-primary/10 shadow-xl shadow-primary/10 backdrop-blur-sm bg-card/80">

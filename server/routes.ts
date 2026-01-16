@@ -1074,9 +1074,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const user = await storage.getUserByEmail(email);
       if (!user) {
-        console.log(`[FORGOT-PASSWORD] ℹ️  User not found for email: '${email}'. Returning success for security.`);
-        // For security, don't reveal if email exists
-        return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
+        console.log(`[FORGOT-PASSWORD] ❌ User not found for email: '${email}'.`);
+        return res.status(400).json({ message: "Email not found" });
       }
 
       console.log(`[FORGOT-PASSWORD] ✅ User found: ${user.username} (ID: ${user.id})`);
@@ -1239,8 +1238,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       console.log(`[forgot-username] Found user: ${user ? user.username : "NOT FOUND"}`);
       
       if (!user) {
-        // For security, don't reveal if email exists
-        return res.status(200).json({ message: "If an account exists, your username has been sent to the email on file." });
+        return res.status(400).json({ message: "Email not found" });
       }
 
       // Robust Link Generation

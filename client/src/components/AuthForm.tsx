@@ -579,16 +579,16 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
       initial={{ opacity: 0, y: 60, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
-        duration: 1.2,
+        duration: 0.6,
         ease: [0.34, 1.56, 0.64, 1],
-        staggerChildren: 0.12
+        staggerChildren: 0.04
       }}
     >
       {registrationSuccess && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
           className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60 backdrop-blur-sm"
         >
           <Card className="w-full max-w-md mx-4 shadow-2xl border-green-500/50">
@@ -613,21 +613,21 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
         ref={authCardRef}
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.15 }}
+        transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1], delay: 0.05 }}
         className="w-full max-w-md mx-auto"
       >
         <Card className="w-full shadow-xl hover:shadow-2xl transition-shadow duration-300 border-border/50">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.35 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
           >
             <CardHeader className="space-y-1 pb-4">
               <motion.div
                 className="flex items-center justify-center mb-4"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: 0.7, delay: 0.5, type: "spring", stiffness: 80, damping: 15 }}
+                transition={{ duration: 0.4, delay: 0.2, type: "spring", stiffness: 120, damping: 15 }}
               >
                 <motion.div
                   className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg"
