@@ -214,11 +214,8 @@ export function ProfilePictureUpload({
         <AnimatePresence mode="sync">
           {(user.profileImageUrl || previewUrl) && (
             <motion.div
-              // Key changes when previewUrl is set to verify we're showing the new one
-              key={previewUrl || user.profileImageUrl}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
               transition={{ 
                 duration: 0.2,
                 ease: "easeInOut",

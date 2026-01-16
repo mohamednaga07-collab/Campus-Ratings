@@ -349,7 +349,7 @@ export default function ProfileSettings() {
                 <div className="space-y-2">
                   <Label className={`flex items-center gap-2 font-semibold ${theme.accent}`}>
                     <User className="h-4 w-4" />
-                    {t("profile.username")}
+                    {t("auth.username")}
                   </Label>
                   <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
                     <p className="font-medium">{user.username}</p>
