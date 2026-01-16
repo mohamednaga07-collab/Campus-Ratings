@@ -29,6 +29,33 @@ export default function ResetPassword() {
     import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
+
+  // Check for existing reCAPTCHA verification in local storage (matches AuthForm)
+  const checkRecaptchaVerification = () => {
+    const verification = localStorage.getItem('recaptcha_verified');
+    if (verification) {
+      const timestamp = parseInt(verification, 10);
+      const now = Date.now();
+      const thirtyMinutes = 30 * 60 * 1000;
+
+      if (now - timestamp < thirtyMinutes) {
+        setIsSessionVerified(true);
+        return true;
+      } else {
+        localStorage.removeItem('recaptcha_verified');
+        setIsSessionVerified(false);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const markRecaptchaVerified = () => {
+    const now = Date.now();
+    localStorage.setItem('recaptcha_verified', now.toString());
+    setIsSessionVerified(true);
+  };
 
   useEffect(() => {
     console.log("ResetPassword component mounted");
@@ -48,6 +75,11 @@ export default function ResetPassword() {
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
 
+    // Initial check
+    checkRecaptchaVerification();
+
+    const interval = setInterval(checkRecaptchaVerification, 1000);
+
     const observer = new MutationObserver(() => {
       const isDarkNow = document.documentElement.classList.contains("dark");
       setIsDarkMode(isDarkNow);
@@ -58,7 +90,10 @@ export default function ResetPassword() {
       attributeFilter: ["class"],
     });
 
-    return () => observer.disconnect();
+    return () => {
+        observer.disconnect();
+        clearInterval(interval);
+    };
   }, []);
 
   const validatePassword = (password: string) => {
@@ -105,6 +140,7 @@ export default function ResetPassword() {
   const handleRecaptchaChange = (token: string | null) => {
     setRecaptchaToken(token);
     if (token) {
+      markRecaptchaVerified();
       setTimeout(() => setRecaptchaToken(null), 120000);
     }
   };
@@ -135,7 +171,29 @@ export default function ResetPassword() {
       return;
     }
 
-    if (recaptchaEnabled && !recaptchaToken) {
+    // Check local verification state OR active token
+    const isActuallyVerified = isSessionVerified || !!recaptchaToken;
+
+    // Wait, backend expects token ONLY if not skipping?
+    // reset-password endpoint currently expects token.
+    // If I want to support session verification on backend for reset-password, I need to send "skipRecaptcha: true" or similar?
+    // BUT reset-password endpoint I just wrote DOES NOT look for skipRecaptcha.
+    // I must update the backend to support skipRecaptcha if I want this frontend logic to work without a token.
+    // FOR NOW, I will stick to what the user asked: "make it look the same".
+    // If "Verified Human", I must ensure the backend accepts it.
+    // I already updated backend to require token.
+    // If "Verified Human" (isSessionVerified true), we HAVE NO TOKEN to send (it expired or was used elsewhere).
+    // So I MUST update backend `reset-password` to allow skipping if verified?
+    // OR I just enforce re-verification for reset-password?
+    // The user said "still remembers".
+    // So the session must be respected.
+    
+    // I will pass `recaptchaToken: null` and backend should fail unless I modify backend.
+    
+    // TEMPORARY: I will complete the frontend logic to match AuthForm.
+    // AND I will modify the backend `reset-password` safely in next step.
+    
+    if (recaptchaEnabled && !recaptchaToken && !isSessionVerified) {
       setError(t("auth.errors.recaptchaRequiredDescription", { defaultValue: "Please complete the reCAPTCHA" }));
       return;
     }
@@ -146,7 +204,9 @@ export default function ResetPassword() {
       await apiRequest("POST", "/api/auth/reset-password", {
         token,
         newPassword,
-        recaptchaToken
+        newPassword,
+        recaptchaToken,
+        skipRecaptcha: isSessionVerified && !recaptchaToken
       });
 
       setSuccess(true);
@@ -326,16 +386,41 @@ export default function ResetPassword() {
                       </div>
 
                       {recaptchaEnabled && (
-                      <div className="recaptcha-wrapper">
-                        <ReCAPTCHA
-                          ref={recaptchaRef}
-                          key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
-                          sitekey={recaptchaSiteKey}
-                          onChange={handleRecaptchaChange}
-                          theme={isDarkMode ? "dark" : "light"}
-                          hl={i18n.language}
-                        />
-                      </div>
+                        isSessionVerified ? (
+                          <motion.div
+                            className="flex items-center justify-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+                            initial={{ scale: 0.8, opacity: 0, y: 10 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          >
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 20 }}
+                            >
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            </motion.div>
+                            <motion.span
+                              className="text-sm font-medium text-green-500"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.2, duration: 0.3 }}
+                            >
+                              {t("auth.verifiedHuman", { defaultValue: "Verified Human" })}
+                            </motion.span>
+                          </motion.div>
+                        ) : (
+                          <div className="recaptcha-wrapper">
+                            <ReCAPTCHA
+                              ref={recaptchaRef}
+                              key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
+                              sitekey={recaptchaSiteKey}
+                              onChange={handleRecaptchaChange}
+                              theme={isDarkMode ? "dark" : "light"}
+                              hl={i18n.language}
+                            />
+                          </div>
+                        )
                       )}
 
                       <Button

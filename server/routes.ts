@@ -1110,24 +1110,36 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // ReCAPTCHA Verification
       const recaptchaEnabled = process.env.RECAPTCHA_ENABLED === "true";
+      const { skipRecaptcha } = req.body;
+
       if (recaptchaEnabled) {
-          if (!recaptchaToken) {
+          // Check for session-based skip
+          if (skipRecaptcha && req.session.recaptchaVerified) {
+             console.log("✅ Skipping reCAPTCHA (session verified)");
+          } else if (!recaptchaToken) {
              return res.status(400).json({ message: "reCAPTCHA verification is required" });
-          }
-          try {
-             const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-               method: "POST",
-               headers: { "Content-Type": "application/x-www-form-urlencoded" },
-               body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`,
-             });
-             const recaptchaData = await recaptchaResponse.json();
-             if (!recaptchaData.success) {
-               console.warn("❌ reCAPTCHA verification failed:", recaptchaData["error-codes"]);
-               return res.status(400).json({ message: "reCAPTCHA verification failed" });
+          } else {
+             // Verify new token
+             try {
+                const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`,
+                });
+                const recaptchaData = await recaptchaResponse.json();
+                if (!recaptchaData.success) {
+                  console.warn("❌ reCAPTCHA verification failed:", recaptchaData["error-codes"]);
+                  return res.status(400).json({ message: "reCAPTCHA verification failed" });
+                }
+                
+                // Mark session as verified on success
+                req.session.recaptchaVerified = true;
+                req.session.save(); // Ensure it saves
+
+             } catch (error) {
+                console.error("reCAPTCHA error:", error);
+                return res.status(500).json({ message: "reCAPTCHA verification error" });
              }
-          } catch (error) {
-             console.error("reCAPTCHA error:", error);
-             return res.status(500).json({ message: "reCAPTCHA verification error" });
           }
       }
 
