@@ -704,11 +704,6 @@ export const sqliteStorage = {
         return ((current - previous) / previous) * 100;
       };
 
-      return {
-        totalUsers: userCount?.count || 0,
-        totalDoctors: doctorCount?.count || 0,
-        totalReviews: reviewCount?.count || 0,
-        activeUsers: activeUserCount?.count || 0,
       const usersGrowth = calculateGrowth(userCount?.count || 0, prevUserCount?.count || 0);
       const doctorsGrowth = calculateGrowth(doctorCount?.count || 0, prevDoctorCount?.count || 0);
       const reviewsGrowth = calculateGrowth(reviewCount?.count || 0, prevReviewCount?.count || 0);

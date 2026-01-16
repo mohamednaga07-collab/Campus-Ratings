@@ -144,6 +144,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         console.error(`\n❌ [RESEND] Failed:`, resendError.message || resendError);
       }
     }
+    return false;
   } catch (error) {
     console.error(`\n${'='.repeat(60)}`);
     console.error(`❌ [EMAIL SERVICE] FAILED TO SEND EMAIL`);
