@@ -4,12 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 export function VerifyEmail() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState(t("auth.verify.verifying"));
+  
+  // Resend logic state
+  const [isResending, setIsResending] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
+  const [showResendInput, setShowResendInput] = useState(false);
 
   const verifyEmail = useCallback(async () => {
     try {
@@ -49,6 +58,49 @@ export function VerifyEmail() {
     verifyEmail();
   }, [verifyEmail]);
 
+  const handleResend = async () => {
+    if (!resendEmail || !resendEmail.includes("@")) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast({
+          title: "Verification Sent",
+          description: "Please check your email for the new link.",
+        });
+        setShowResendInput(false);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Failed",
+          description: data.message || "Could not resend email. Account might not exist.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Network error occurred.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
@@ -81,14 +133,61 @@ export function VerifyEmail() {
               >
                 {t("auth.verify.tryLoginCta", { defaultValue: t("auth.tryLoginCta") })}
               </Button>
+              
               {status === 'error' && (
-                <Button 
-                  variant="outline"
-                  className="w-full" 
-                  onClick={() => setLocation("/register")}
-                >
-                  {t("auth.verify.registerCta", { defaultValue: t("auth.registerCta") })}
-                </Button>
+                <>
+                  {!showResendInput ? (
+                    <div className="space-y-2">
+                      <Button 
+                        variant="secondary"
+                        className="w-full" 
+                        onClick={() => setShowResendInput(true)}
+                      >
+                        Resend Verification Email
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="w-full" 
+                        onClick={() => setLocation("/register")}
+                      >
+                        {t("auth.verify.registerCta", { defaultValue: t("auth.registerCta") })}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg border text-left">
+                      <div className="space-y-1">
+                        <Label htmlFor="resend-email" className="text-xs font-medium">
+                          Enter your email to verify
+                        </Label>
+                        <Input 
+                          id="resend-email"
+                          type="email" 
+                          placeholder="name@example.com"
+                          value={resendEmail}
+                          onChange={(e) => setResendEmail(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="flex-1"
+                          onClick={() => setShowResendInput(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={handleResend}
+                          disabled={isResending}
+                        >
+                          {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Link"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

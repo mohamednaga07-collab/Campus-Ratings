@@ -705,15 +705,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
-        console.log("⚠️  Username already exists:", username);
-        return res.status(409).json({ message: "Username (Email) already exists. Please login." });
+      if (existingUser && existingUser.emailVerified) {
+        console.log("⚠️  Username already exists and verified:", username);
+        return res.status(409).json({ message: "Username already exists. Please login." });
       }
 
       // Check if email already exists
       const existingEmail = await storage.getUserByEmail(email);
-      if (existingEmail) {
-        console.log("⚠️  Email already exists:", email);
+      if (existingEmail && existingEmail.emailVerified) {
+        console.log("⚠️  Email already exists and verified:", email);
         pendingRegistrations.delete(registrationKey);
         return res.status(409).json({ message: "Email already associated with an account" });
       }
@@ -725,19 +725,43 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Generate verification token
       const verificationToken = crypto.randomBytes(32).toString("hex");
       
-      const newUser = await storage.createUser({
-        id: randomUUID(),
-        username,
-        password: hashedPassword,
-        email,
-        firstName: firstName || null,
-        lastName: lastName || null,
-        role,
-        emailVerified: false,
-        verificationToken,
-      });
-
-      console.log("✅ New user created:", username, "with role:", role);
+      let newUser;
+      
+      // If user exists but NOT verified, update them (overwrite old registration)
+      if (existingUser || existingEmail) {
+         const targetId = existingUser ? existingUser.id : existingEmail!.id;
+         console.log(`♻️  Overwriting unverified registration for: ${username}`);
+         
+         newUser = await storage.updateUser(targetId, {
+           username,
+           password: hashedPassword,
+           firstName: firstName || null,
+           lastName: lastName || null,
+           email,
+           role,
+           // Reset verification status
+           emailVerified: false, 
+           verificationToken: verificationToken
+         } as any);
+         
+         // Explicitly update verification token in storage as updateUser might not handle it in all implementations
+         await storage.updateUserVerificationToken(targetId, verificationToken);
+         
+      } else {
+         // Create brand new user
+         newUser = await storage.createUser({
+          id: randomUUID(),
+          username,
+          password: hashedPassword,
+          email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          role,
+          emailVerified: false,
+          verificationToken,
+        });
+        console.log("✅ New user created:", username, "with role:", role);
+      }
 
       // Send verification email
       const appUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
@@ -1161,6 +1185,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ message: "auth.verify.noToken" });
       }
 
+
+      
       const user = await storage.getUserByVerificationToken(token as string);
       console.log(`[verify-email] Found user: ${user ? user.username : "NOT FOUND"}`);
       
@@ -1182,6 +1208,53 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (error: any) {
       console.error("Error verifying email:", error);
       res.status(500).json({ message: "auth.verify.errorMsg" });
+    }
+  });
+
+  // Resend Verification Email Route
+  app.post("/api/auth/resend-verification", async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Return success even if user not found for security (or 404 if we want to be helpful)
+        // Given the context of "glitchy" behaviors, let's be more transparent or just generic.
+        // If user is not found, they should register again.
+        return res.status(404).json({ message: "User not found. Please register again." });
+      }
+
+      if (user.emailVerified) {
+        return res.status(400).json({ message: "Email is already verified. Please login." });
+      }
+
+      // Generate new token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      await storage.updateUserVerificationToken(user.id, verificationToken);
+
+      // Send email
+      const appUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
+      const verificationLink = `${appUrl}/verify-email?token=${verificationToken}`;
+      
+      const emailHtml = generateVerificationEmailHtml(user.username || "User", verificationLink, (user as any).profileImageUrl || null);
+      
+      setImmediate(async () => {
+         try {
+           await sendEmail({
+             to: email,
+             subject: "Verify Your Campus Ratings Account (Resent)",
+             html: emailHtml,
+           });
+         } catch(e) { console.error("Resend email failed", e); }
+      });
+
+      res.json({ message: "Verification link sent successfully!" });
+    } catch (error) {
+      console.error("Error resending verification:", error);
+      res.status(500).json({ message: "Failed to resend verification email" });
     }
   });
 

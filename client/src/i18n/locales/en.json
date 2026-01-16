@@ -192,7 +192,7 @@
       "registerCta": "Create New Account",
       "tryLoginCta": "Login",
       "noToken": "Verification token required",
-      "invalidToken": "Invalid or expired verification token",
+      "invalidToken": "Invalid link (or session expired). Please register again.",
       "successMsg": "Email verified successfully!",
       "failedMsg": "Email verification failed. Please try registering again.",
       "errorMsg": "An error occurred while connecting to the server. Please try again later."

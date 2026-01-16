@@ -56,12 +56,19 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
     setCurrentIndex(prev => prev - 1);
   }, [isTransitioning]);
 
+
+
   // Robust carousel rotation - high-speed & reliable
   useEffect(() => {
+    // Determine if we should pause only if dragging (user manual movement)
+    const shouldPause = isDragging;
+    
+    if (shouldPause) return; // Don't even start timer if paused
+
     const autoplayTimer = setInterval(() => {
       const timeSinceLastInteraction = Date.now() - lastInteraction;
-    // Use 2000ms (2s) pause after interaction as requested
-      if (!isDragging && (timeSinceLastInteraction > 2000 || lastInteraction === 0)) {
+      // Use 2000ms (2s) pause after interaction as requested
+      if (timeSinceLastInteraction > 2000 || lastInteraction === 0) {
         handleNext();
       }
     }, 5000); 
