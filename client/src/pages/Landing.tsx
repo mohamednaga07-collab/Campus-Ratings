@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthForm } from "@/components/AuthForm";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { GraduationCap, Star, BarChart3, Shield, CheckCircle } from "lucide-react";
+import { GraduationCap, Star, BarChart3, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
@@ -35,7 +35,7 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
               {t("auth.login")}
             </Button>
             <Button size="sm" onClick={scrollToAuth} className="sm:hidden">
-              {t("auth.getStarted")}
+              {t("landing.getStarted")}
             </Button>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                   {t("landing.hero.title")}{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-600">
-                    {t("landing.hero.titleEmphasis")}
+                    {t("landing.hero.highlight")}
                   </span>
                 </h1>
                 
@@ -77,9 +77,9 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
                   <Button size="lg" className="h-12 px-8 text-base font-semibold shadow-lg shadow-primary/25" onClick={scrollToAuth}>
-                    {t("auth.getStarted")}
+                    {t("landing.getStarted")}
                   </Button>
-                  <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" onClick={() => document.getElementById("features").scrollIntoView({ behavior: "smooth" })}>
+                  <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}>
                     {t("landing.learnMore")}
                   </Button>
                 </div>
@@ -117,7 +117,7 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
               >
                 {/* Visual Polish behind card */}
                 <div className="absolute inset-0 bg-primary/5 rounded-3xl -rotate-2 scale-105 -z-10" />
-                <div className="absolute inset-0 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
+                <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
                   <AuthForm defaultTab={defaultTab} />
                 </div>
               </motion.div>
@@ -130,14 +130,14 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
           <div className="container mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto mb-16">
               <h2 className="text-3xl font-bold mb-4">{t("landing.features.title")}</h2>
-              <p className="text-muted-foreground">{t("landing.features.description")}</p>
+              <p className="text-muted-foreground">{t("landing.features.subtitle")}</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
               {[
-                { icon: Shield, title: t("landing.features.anonymity"), desc: t("landing.features.anonymityDesc") },
-                { icon: BarChart3, title: t("landing.features.insights"), desc: t("landing.features.insightsDesc") },
-                { icon: Star, title: t("landing.features.quality"), desc: t("landing.features.qualityDesc") }
+                { icon: Shield, title: t("landing.features.cards.anonymity.title"), desc: t("landing.features.cards.anonymity.description") },
+                { icon: BarChart3, title: t("landing.features.cards.comparison.title"), desc: t("landing.features.cards.comparison.description") },
+                { icon: Star, title: t("landing.features.cards.factors.title"), desc: t("landing.features.cards.factors.description") }
               ].map((feature, i) => (
                 <Card key={i} className="bg-background/60 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-colors shadow-sm">
                   <CardContent className="pt-6">
@@ -170,7 +170,7 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
 }
 
 // Minimal Card components for clean layout
-function Card({ children, className = "" }) {
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`rounded-3xl border ${className}`}>
       {children}
@@ -178,7 +178,7 @@ function Card({ children, className = "" }) {
   );
 }
 
-function CardContent({ children, className = "" }) {
+function CardContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`p-6 ${className}`}>
       {children}

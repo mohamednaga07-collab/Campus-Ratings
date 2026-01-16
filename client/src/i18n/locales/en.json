@@ -1,6 +1,7 @@
 {
   "brand": {
-    "name": "ProfRate"
+    "name": "ProfRate",
+    "rights": "All rights reserved."
   },
   "language": {
     "change": "Change language",
@@ -39,6 +40,10 @@
         "sync": "Sync saved campuses, educators, and follow-ups across devices.",
         "preferences": "Surface nearby or online options tailored to your preferences."
       }
+    },
+    "stats": {
+      "reviews": "Reviews",
+      "doctors": "Professors"
     },
     "features": {
       "title": "Why Use ProfRate?",

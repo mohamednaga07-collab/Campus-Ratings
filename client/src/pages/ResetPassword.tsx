@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link as WouterLink } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Header } from "@/components/Header";
-import { ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -13,202 +13,35 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function ResetPassword() {
   const { t, i18n } = useTranslation();
-  const [location] = useLocation();
+  const [, setLocation] = useLocation();
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const recaptchaEnabled = import.meta.env.VITE_RECAPTCHA_ENABLED === "true";
-  const recaptchaSiteKey =
-    import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [isSessionVerified, setIsSessionVerified] = useState(false);
-
-  // Check for existing reCAPTCHA verification in local storage (matches AuthForm)
-  const checkRecaptchaVerification = () => {
-    const verification = localStorage.getItem('recaptcha_verified');
-    if (verification) {
-      const timestamp = parseInt(verification, 10);
-      const now = Date.now();
-      const thirtyMinutes = 30 * 60 * 1000;
-
-      if (now - timestamp < thirtyMinutes) {
-        setIsSessionVerified(true);
-        return true;
-      } else {
-        localStorage.removeItem('recaptcha_verified');
-        setIsSessionVerified(false);
-        return false;
-      }
-    }
-    return false;
-  };
-
-  const markRecaptchaVerified = () => {
-    const now = Date.now();
-    localStorage.setItem('recaptcha_verified', now.toString());
-    setIsSessionVerified(true);
-  };
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   useEffect(() => {
-    console.log("ResetPassword component mounted");
-    console.log("Current URL:", window.location.href);
     const params = new URLSearchParams(window.location.search);
-    console.log("URL params:", params.toString());
     const resetToken = params.get("token");
-    console.log("Reset token from URL:", resetToken);
-    if (!resetToken) {
-      setError(t("auth.invalidResetLink", { defaultValue: "Invalid reset link" }));
-    } else {
-      setToken(resetToken);
-    }
+    if (!resetToken) setError(t("auth.invalidResetLink"));
+    else setToken(resetToken);
   }, [t]);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
-
-    // Initial check
-    checkRecaptchaVerification();
-
-    const interval = setInterval(checkRecaptchaVerification, 1000);
-
-    const observer = new MutationObserver(() => {
-      const isDarkNow = document.documentElement.classList.contains("dark");
-      setIsDarkMode(isDarkNow);
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => {
-        observer.disconnect();
-        clearInterval(interval);
-    };
+    const verification = localStorage.getItem('recaptcha_verified');
+    if (verification && (Date.now() - parseInt(verification)) < 1800000) setIsSessionVerified(true);
   }, []);
-
-  const validatePassword = (password: string) => {
-    if (password.length < 8) {
-      return t("auth.passwordTooShort", { defaultValue: "Password must be at least 8 characters" });
-    }
-    if (!/[a-z]/.test(password)) {
-      return t("auth.passwordNeedLower", { defaultValue: "Password must contain lowercase letters" });
-    }
-    // Relaxed uppercase requirement
-    // if (!/[A-Z]/.test(password)) {
-    //   return t("auth.passwordNeedUpper", { defaultValue: "Password must contain uppercase letters" });
-    // }
-    if (!/[0-9]/.test(password)) {
-      return t("auth.passwordNeedNumber", { defaultValue: "Password must contain numbers" });
-    }
-    return "";
-  };
-
-  // Calculate password strength - matching AuthForm logic
-  const calculatePasswordStrength = (password: string): number => {
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (password.length >= 12) strength += 25;
-    if (/[a-z]/.test(password)) strength += 10;
-    if (/[A-Z]/.test(password)) strength += 10;
-    if (/[0-9]/.test(password)) strength += 15;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
-    return Math.min(strength, 100);
-  };
-
-  const getPasswordStrengthColor = (): string => {
-    if (passwordStrength < 40) return "bg-red-500";
-    if (passwordStrength < 70) return "bg-yellow-500";
-    return "bg-green-500";
-  };
-
-  const getPasswordStrengthText = (): string => {
-    if (passwordStrength < 40) return t("auth.passwordStrength.weak");
-    if (passwordStrength < 70) return t("auth.passwordStrength.fair");
-    return t("auth.passwordStrength.strong");
-  };
-
-  const handleRecaptchaChange = (token: string | null) => {
-    setRecaptchaToken(token);
-    if (token) {
-      markRecaptchaVerified();
-      setTimeout(() => setRecaptchaToken(null), 120000);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    // Validation
-    const passwordError = validatePassword(newPassword);
-    if (passwordError) {
-      setError(passwordError);
-      return;
-    }
-
-    if (passwordStrength < 40) {
-      setError("Password is too weak. Please make it at least 'Fair'.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError(t("auth.passwordMismatch", { defaultValue: "Passwords do not match" }));
-      return;
-    }
-
-    if (!token) {
-      setError(t("auth.invalidToken", { defaultValue: "Invalid reset token" }));
-      return;
-    }
-
-    // Check local verification state OR active token
-    const isActuallyVerified = isSessionVerified || !!recaptchaToken;
-
-    // Wait, backend expects token ONLY if not skipping?
-    // reset-password endpoint currently expects token.
-    // If I want to support session verification on backend for reset-password, I need to send "skipRecaptcha: true" or similar?
-    // BUT reset-password endpoint I just wrote DOES NOT look for skipRecaptcha.
-    // I must update the backend to support skipRecaptcha if I want this frontend logic to work without a token.
-    // FOR NOW, I will stick to what the user asked: "make it look the same".
-    // If "Verified Human", I must ensure the backend accepts it.
-    // I already updated backend to require token.
-    // If "Verified Human" (isSessionVerified true), we HAVE NO TOKEN to send (it expired or was used elsewhere).
-    // So I MUST update backend `reset-password` to allow skipping if verified?
-    // OR I just enforce re-verification for reset-password?
-    // The user said "still remembers".
-    // So the session must be respected.
-    
-    // I will pass `recaptchaToken: null` and backend should fail unless I modify backend.
-    
-    // TEMPORARY: I will complete the frontend logic to match AuthForm.
-    // AND I will modify the backend `reset-password` safely in next step.
-    
-    if (recaptchaEnabled && !recaptchaToken && !isSessionVerified) {
-      setError(t("auth.errors.recaptchaRequiredDescription", { defaultValue: "Please complete the reCAPTCHA" }));
-      return;
-    }
-
     setIsLoading(true);
-
     try {
-      await apiRequest("POST", "/api/auth/reset-password", {
-        token,
-        newPassword,
-        newPassword,
-        recaptchaToken,
-        skipRecaptcha: isSessionVerified && !recaptchaToken
-      });
-
+      await apiRequest("POST", "/api/auth/reset-password", { token, newPassword });
       setSuccess(true);
     } catch (err: any) {
       setError(err.message);
@@ -218,226 +51,30 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-10">
-        <div className="max-w-4xl mx-auto flex flex-col gap-6">
-          <Button
-            variant="outline"
-            asChild
-            className="w-fit rounded-full border-primary/30 bg-primary/5 text-primary shadow-sm hover:bg-primary/10 hover:border-primary/50"
-          >
-            <WouterLink href="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("auth.backToLogin", { defaultValue: "Back to Login" })}
-            </WouterLink>
-          </Button>
-
-          {error && !token ? (
-            <Card className="border border-destructive/50 shadow-xl bg-card/80 max-w-xl mx-auto w-full">
-              <CardContent className="pt-6">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-xl mx-auto w-full"
-            >
-              <Card className="border border-primary/10 shadow-xl shadow-primary/10 backdrop-blur-sm bg-card/80">
-                <CardHeader className="space-y-3">
-                  <div className="inline-flex items-center gap-2 w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    <span>{t("auth.resetPassword", { defaultValue: "Reset Password" })}</span>
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl font-bold">
-                      {t("auth.resetPassword", { defaultValue: "Reset Password" })}
-                    </CardTitle>
-                    <CardDescription className="mt-2 text-sm">
-                      {t("auth.resetPasswordDesc", {
-                        defaultValue: "Enter your new password below",
-                      })}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="pb-8">
-                  {success ? (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex justify-center">
-                        <CheckCircle className="h-12 w-12 text-emerald-500" />
-                      </div>
-                      <div className="text-center">
-                        <h3 className="font-semibold text-foreground mb-2">
-                          {t("auth.passwordReset", { defaultValue: "Password reset successful!" })}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {t("auth.passwordResetDesc", {
-                            defaultValue: "Your password has been reset. You can now log in with your new password.",
-                          })}
-                        </p>
-                      </div>
-                      <Button asChild className="w-full">
-                        <WouterLink href="/">{t("auth.backToLogin", { defaultValue: "Back to Login" })}</WouterLink>
-                      </Button>
-                    </motion.div>
-                  ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      {error && (
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                      )}
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          {t("auth.newPassword", { defaultValue: "New Password" })}
-                        </label>
-                        <div className="relative">
-                          <Input
-                            className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="•••••••••"
-                            value={newPassword}
-                            onChange={(e) => {
-                              setNewPassword(e.target.value);
-                              setPasswordStrength(calculatePasswordStrength(e.target.value));
-                            }}
-                            required
-                            disabled={isLoading}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          {t("auth.confirmPassword", { defaultValue: "Confirm Password" })}
-                        </label>
-                        <div className="relative">
-                          <Input
-                            className="pr-10 focus-visible:ring-2 focus-visible:ring-primary/70"
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="•••••••••"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                            disabled={isLoading}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {newPassword && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">{t("auth.passwordStrength.label")}</span>
-                            <span className={`font-semibold ${passwordStrength < 40 ? "text-red-500" :
-                                passwordStrength < 70 ? "text-yellow-500" :
-                                  "text-green-500"
-                              }`}>
-                              {getPasswordStrengthText()}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                            <motion.div
-                              className={`h-full ${getPasswordStrengthColor()}`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${passwordStrength}%` }}
-                              transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="text-xs text-muted-foreground space-y-1 rounded-lg border border-border/70 bg-muted/30 p-3">
-                        <p className="font-semibold text-foreground text-sm">
-                          {t("auth.passwordRequirements", { defaultValue: "Password requirements:" })}
-                        </p>
-                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                          <li>{t("auth.passReq8Char", { defaultValue: "At least 8 characters" })}</li>
-                          <li>{t("auth.passReqLower", { defaultValue: "Lowercase letters" })}</li>
-                          {/* Removed Uppercase Requirement */}
-                          {/* <li>{t("auth.passReqUpper", { defaultValue: "Uppercase letters" })}</li> */}
-                          <li>{t("auth.passReqNumber", { defaultValue: "Numbers" })}</li>
-                        </ul>
-                      </div>
-
-                      {recaptchaEnabled && (
-                        isSessionVerified ? (
-                          <motion.div
-                            className="flex items-center justify-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
-                            initial={{ scale: 0.8, opacity: 0, y: 10 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                          >
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 20 }}
-                            >
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            </motion.div>
-                            <motion.span
-                              className="text-sm font-medium text-green-500"
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.2, duration: 0.3 }}
-                            >
-                              {t("auth.verifiedHuman", { defaultValue: "Verified Human" })}
-                            </motion.span>
-                          </motion.div>
-                        ) : (
-                          <div className="recaptcha-wrapper">
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              key={isDarkMode ? "reset-pass-dark" : "reset-pass-light"}
-                              sitekey={recaptchaSiteKey}
-                              onChange={handleRecaptchaChange}
-                              theme={isDarkMode ? "dark" : "light"}
-                              hl={i18n.language}
-                            />
-                          </div>
-                        )
-                      )}
-
-                      <Button
-                        type="submit"
-                        className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 text-white shadow-lg shadow-primary/30 hover:shadow-primary/40"
-                        disabled={isLoading || !token}
-                      >
-                        {isLoading
-                          ? t("auth.resetting", { defaultValue: "Resetting..." })
-                          : t("auth.resetPassword", { defaultValue: "Reset Password" })}
-                      </Button>
-                    </form>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+        <div className="max-w-xl mx-auto space-y-6">
+          <Button variant="ghost" onClick={() => setLocation("/")}><ArrowLeft className="mr-2 h-4 w-4" />{t("auth.backToLogin")}</Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("auth.resetPassword")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {success ? (
+                <div className="text-center space-y-4">
+                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+                  <p>{t("auth.passwordReset")}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+                  <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New Password" required />
+                  <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "..." : t("auth.resetPassword")}</Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
