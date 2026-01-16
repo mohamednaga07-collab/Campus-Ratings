@@ -401,7 +401,7 @@ export default function ProfileSettings() {
               <form onSubmit={handleChangeUsername} className="space-y-4">
                  <div className="space-y-2">
                    <Label htmlFor="new-username" className="font-semibold">
-                     {t("profile.changeUsername.newLabel", { defaultValue: "New Username" })}
+                     {t("profile.changeUsername.newLabel", "New Username")}
                    </Label>
                    <div className="relative">
                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

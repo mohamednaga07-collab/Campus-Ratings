@@ -15,11 +15,13 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout-custom", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST" });
     } catch (e) {
-      // ignore errors
+      console.error("Logout failed:", e);
+    } finally {
+      // Always redirect to home, even if the request fails
+      window.location.href = "/";
     }
-    window.location.href = "/";
   };
 
   return {

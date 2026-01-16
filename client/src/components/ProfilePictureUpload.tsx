@@ -26,7 +26,9 @@ export function ProfilePictureUpload({
   showEditButton = true 
 }: ProfilePictureUploadProps) {
   const [uploading, setUploading] = useState(false);
+
   const [showFullSize, setShowFullSize] = useState(false); // Show full-size image modal
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Optimistic UI state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -102,6 +104,9 @@ export function ProfilePictureUpload({
         try {
           let imageData = reader.result as string;
           
+          // Optimistic UI: Show the image IMMEDIATELY
+          setPreviewUrl(imageData);
+          
           // Only compress static images. GIFs are kept raw to preserve animation.
           if (file.type !== 'image/gif') {
             console.log('🖼️ Optimizing static image...');
@@ -148,6 +153,8 @@ export function ProfilePictureUpload({
           });
         } finally {
           setUploading(false);
+          // Don't clear preview URL here, let the query invalidation take over naturally
+          // or keep it until component unmounts
           if (e.target) e.target.value = '';
         }
       };
@@ -161,6 +168,7 @@ export function ProfilePictureUpload({
         variant: "destructive",
       });
       setUploading(false);
+      setPreviewUrl(null); // Revert on error
     }
   };
 
@@ -191,8 +199,8 @@ export function ProfilePictureUpload({
           }
         }}
       >
-        {/* Only show fallback when there's no profile image */}
-        {!user.profileImageUrl && (
+        {/* Only show fallback when there's no profile image AND no preview */}
+        {!user.profileImageUrl && !previewUrl && (
           <AvatarFallback className="font-semibold z-0">
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -204,9 +212,10 @@ export function ProfilePictureUpload({
 
         {/* Image layer with smooth crossfade animation */}
         <AnimatePresence mode="sync">
-          {user.profileImageUrl && (
+          {(user.profileImageUrl || previewUrl) && (
             <motion.div
-              key={user.profileImageUrl.includes("...") ? `fallback-${user.id}-${user.updatedAt}` : user.profileImageUrl}
+              // Key changes when previewUrl is set to verify we're showing the new one
+              key={previewUrl || user.profileImageUrl}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -221,9 +230,9 @@ export function ProfilePictureUpload({
               }}
             >
               <AvatarImage 
-                src={user.profileImageUrl?.includes("...") 
+                src={previewUrl ?? (user.profileImageUrl?.includes("...") 
                   ? `/api/profile-image/user/${user.id}?v=${user.updatedAt ? new Date(user.updatedAt).getTime() : '1'}` 
-                  : user.profileImageUrl ?? undefined} 
+                  : user.profileImageUrl ?? undefined)} 
                 alt={user.firstName ?? "User"}
                 className="w-full h-full object-cover" 
               />
