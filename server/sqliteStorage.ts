@@ -709,12 +709,21 @@ export const sqliteStorage = {
         totalDoctors: doctorCount?.count || 0,
         totalReviews: reviewCount?.count || 0,
         activeUsers: activeUserCount?.count || 0,
-        usersGrowth: calculateGrowth(userCount?.count || 0, prevUserCount?.count || 0),
-        doctorsGrowth: calculateGrowth(doctorCount?.count || 0, prevDoctorCount?.count || 0),
-        reviewsGrowth: calculateGrowth(reviewCount?.count || 0, prevReviewCount?.count || 0),
+      const usersGrowth = calculateGrowth(userCount?.count || 0, prevUserCount?.count || 0);
+      const doctorsGrowth = calculateGrowth(doctorCount?.count || 0, prevDoctorCount?.count || 0);
+      const reviewsGrowth = calculateGrowth(reviewCount?.count || 0, prevReviewCount?.count || 0);
+
+      return {
+        totalUsers: Number(userCount?.count || 0),
+        totalDoctors: Number(doctorCount?.count || 0),
+        totalReviews: Number(reviewCount?.count || 0),
+        activeUsers: Number(activeUserCount?.count || 0),
+        usersGrowth,
+        doctorsGrowth,
+        reviewsGrowth,
       };
     } catch (e) {
-      console.error("getStats error:", e);
+      console.error("CRITICAL: getStats error in sqliteStorage:", e);
       return { 
         totalUsers: 0, 
         totalDoctors: 0, 
