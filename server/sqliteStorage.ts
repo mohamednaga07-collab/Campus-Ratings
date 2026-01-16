@@ -393,6 +393,7 @@ export const sqliteStorage = {
       const fields: string[] = [];
       const values: any[] = [];
       
+      // Basic info
       if (updates.profileImageUrl !== undefined) {
         fields.push("profileImageUrl = ?");
         values.push(updates.profileImageUrl);
@@ -412,6 +413,28 @@ export const sqliteStorage = {
       if (updates.username !== undefined) {
         fields.push("username = ?");
         values.push(updates.username);
+      }
+
+      // Security & status fields (CRITICAL for re-registration)
+      if (updates.password !== undefined) {
+        fields.push("password = ?");
+        values.push(updates.password);
+      }
+      if (updates.role !== undefined) {
+        fields.push("role = ?");
+        values.push(updates.role);
+      }
+      if (updates.emailVerified !== undefined) {
+        // Convert boolean to number for SQLite if needed, but Drizzle/BetterSqlite usually handles partials. 
+        // Current schema uses boolean. Better-sqlite3 maps 0/1. 
+        // However, I should check how `db.prepare` handles booleans. 
+        // Usually it works. I'll rely on the driver.
+        fields.push("emailVerified = ?");
+        values.push(updates.emailVerified ? 1 : 0);
+      }
+      if (updates.verificationToken !== undefined) {
+        fields.push("verificationToken = ?");
+        values.push(updates.verificationToken);
       }
       
       if (fields.length > 0) {

@@ -1101,11 +1101,34 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/auth/reset-password", async (req: any, res) => {
     try {
-      const { token, newPassword } = req.body;
+      const { token, newPassword, recaptchaToken } = req.body;
       console.log(`[RESET-PASSWORD] Processing reset request for token: ${token ? token.substring(0, 8) + '...' : 'NONE'}`);
       
       if (!token || !newPassword) {
         return res.status(400).json({ message: "Token and new password are required" });
+      }
+
+      // ReCAPTCHA Verification
+      const recaptchaEnabled = process.env.RECAPTCHA_ENABLED === "true";
+      if (recaptchaEnabled) {
+          if (!recaptchaToken) {
+             return res.status(400).json({ message: "reCAPTCHA verification is required" });
+          }
+          try {
+             const recaptchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+               method: "POST",
+               headers: { "Content-Type": "application/x-www-form-urlencoded" },
+               body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`,
+             });
+             const recaptchaData = await recaptchaResponse.json();
+             if (!recaptchaData.success) {
+               console.warn("❌ reCAPTCHA verification failed:", recaptchaData["error-codes"]);
+               return res.status(400).json({ message: "reCAPTCHA verification failed" });
+             }
+          } catch (error) {
+             console.error("reCAPTCHA error:", error);
+             return res.status(500).json({ message: "reCAPTCHA verification error" });
+          }
       }
 
       const user = await storage.getUserByResetToken(token);
