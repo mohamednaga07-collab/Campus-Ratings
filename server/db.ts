@@ -13,9 +13,7 @@ if (!process.env.DATABASE_URL) {
   pool = undefined;
 } else {
   console.log("✓ Using PostgreSQL database");
-  // Force SSL in production, or if the URL looks like a cloud URL
-  const isProduction = process.env.NODE_ENV === "production";
-  // Log the host we are trying to connect to for debugging (sanitized)
+
   try {
     const dbUrl = new URL(process.env.DATABASE_URL);
     console.log(`✓ Connecting to database at: ${dbUrl.hostname}`);
@@ -23,15 +21,13 @@ if (!process.env.DATABASE_URL) {
     console.log("✓ Connecting to database (URL parsing failed)");
   }
 
-  const useSsl = isProduction || process.env.DATABASE_URL.includes("render.com") || process.env.DATABASE_URL.includes("neon.tech");
-  
+  // Always use SSL for external connections (required by Render, Neon, etc.)
   pool = new Pool({ 
     connectionString: process.env.DATABASE_URL,
-    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 10000, 
   });
   
-  // Test connection immediately to catch errors early
   pool.connect((err, client, release) => {
     if (err) {
       console.error("❌ Database connection failed:", err.message);

@@ -26,8 +26,11 @@ async function runMigrations() {
       }
       
       // Use --url to provide connection string explicitly
-      // Schema is now aligned so prompts should not occur
-      execSync(`npx drizzle-kit push --dialect=postgresql --schema=shared/schema.ts --url="${process.env.DATABASE_URL}" --force`, {
+      // Append sslmode=require for external Render URLs
+      const dbUrl = process.env.DATABASE_URL.includes('?') 
+        ? `${process.env.DATABASE_URL}&sslmode=require` 
+        : `${process.env.DATABASE_URL}?sslmode=require`;
+      execSync(`npx drizzle-kit push --dialect=postgresql --schema=shared/schema.ts --url="${dbUrl}" --force`, {
         stdio: 'inherit',
         env: { ...process.env, NODE_ENV: 'production' }
       });
