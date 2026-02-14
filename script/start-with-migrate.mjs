@@ -26,11 +26,15 @@ async function runMigrations() {
       }
       
       // Use --url to provide connection string explicitly
-      // Append sslmode=require for external Render URLs
-      const dbUrl = process.env.DATABASE_URL.includes('?') 
-        ? `${process.env.DATABASE_URL}&sslmode=require` 
-        : `${process.env.DATABASE_URL}?sslmode=require`;
-      console.log('🚀 Running drizzle-kit push...');
+      // ONLY append sslmode=require for external URLs (internal Render connections don't use SSL)
+      const isExternal = process.env.DATABASE_URL.includes('.render.com') || process.env.DATABASE_URL.includes('.neon.tech');
+      let dbUrl = process.env.DATABASE_URL;
+      
+      if (isExternal && !dbUrl.includes('sslmode=')) {
+        dbUrl += dbUrl.includes('?') ? '&sslmode=require' : '?sslmode=require';
+      }
+
+      console.log(`🚀 Running drizzle-kit push (${isExternal ? 'external with SSL' : 'internal without SSL'})...`);
       const output = execSync(`npx drizzle-kit push --dialect=postgresql --schema=shared/schema.ts --url="${dbUrl}" --force`, {
         env: { ...process.env, NODE_ENV: 'production', NODE_TLS_REJECT_UNAUTHORIZED: '0' },
         encoding: 'utf-8'
