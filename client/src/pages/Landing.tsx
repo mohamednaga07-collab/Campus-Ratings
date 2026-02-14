@@ -330,7 +330,7 @@ export default function Landing({ defaultTab = "login" }: LandingProps) {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
-              className="space-y-6 pt-6 md:pt-12" // Pushed up and left via container alignment
+              className="space-y-6"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:bg-white/10 dark:border-white/15 dark:text-white text-sm font-medium">
                 <Shield className="h-4 w-4" />
