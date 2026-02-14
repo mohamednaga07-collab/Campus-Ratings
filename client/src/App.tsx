@@ -77,10 +77,10 @@ function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="w-full flex-1"
+      className="w-full flex-1 pt-16"
       style={{ willChange: "transform, opacity" }}
     >
-      <div className="w-full h-full min-h-screen">
+      <div className="w-full h-full min-h-[calc(100vh-64px)]">
         {children}
       </div>
     </motion.div>
@@ -285,6 +285,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <Header />
         <ErrorBoundary>
           <Suspense 
             fallback={

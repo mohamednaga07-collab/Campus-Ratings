@@ -93,7 +93,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
 
       {/* Hero Section with Infinite Continuous Strip Carousel */}
       <section className="relative h-[280px] sm:h-[350px] lg:h-[450px] overflow-hidden bg-slate-900 -mt-0" dir="ltr">
