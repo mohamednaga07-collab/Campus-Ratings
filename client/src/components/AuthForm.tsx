@@ -577,20 +577,22 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
   return (
     <motion.div
       id="auth-form-container"
-      initial={{ opacity: 0, y: 60, scale: 0.92 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{
-        duration: 0.6,
-        ease: [0.34, 1.56, 0.64, 1],
-        staggerChildren: 0.04
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        mass: 1,
       }}
     >
       {registrationSuccess && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-          className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          animate={{ opacity: 1, backdropFilter: "blur(4px)" }}
+          exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60"
         >
           <Card className="w-full max-w-md mx-4 shadow-2xl border-green-500/50">
             <CardContent className="pt-12 pb-12 text-center space-y-4">
@@ -625,10 +627,8 @@ export function AuthForm({ onSuccess, defaultTab = "login" }: AuthFormProps) {
 
       <motion.div
         ref={authCardRef}
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1], delay: 0.05 }}
         className="w-full max-w-md mx-auto"
+        style={{ willChange: "transform, opacity" }}
       >
         <Card className="w-full shadow-xl hover:shadow-2xl transition-shadow duration-300 border-border/50">
           <motion.div

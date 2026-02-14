@@ -35,19 +35,28 @@ const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 const pageVariants = {
   initial: {
     opacity: 0,
+    scale: 0.99,
+    y: 10,
   },
   animate: {
     opacity: 1,
+    scale: 1,
+    y: 0,
     transition: {
-      duration: 0.2,
-      ease: "easeOut",
+      type: "spring",
+      stiffness: 350,
+      damping: 30,
+      mass: 0.8,
+      velocity: 2,
     },
   },
   exit: {
     opacity: 0,
+    scale: 1.01,
+    y: -10,
     transition: {
-      duration: 0.15,
-      ease: "easeIn",
+      duration: 0.2,
+      ease: "easeInOut",
     },
   },
 };
@@ -69,8 +78,12 @@ function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
       initial="initial"
       animate="animate"
       exit="exit"
+      className="w-full flex-1"
+      style={{ willChange: "transform, opacity" }}
     >
-      {children}
+      <div className="w-full h-full min-h-screen">
+        {children}
+      </div>
     </motion.div>
   );
 }
@@ -93,7 +106,7 @@ function Router() {
   }
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="popLayout" initial={false}>
       <Switch location={location}>
         {/* Public routes - always accessible */}
         <Route path="/reset-password">

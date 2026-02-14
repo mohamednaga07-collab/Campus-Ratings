@@ -30,6 +30,14 @@ html {
 body {
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  /* Prevent layout shifts during transitions */
+  min-height: 100vh;
+  position: relative;
+}
+
+#root {
+  min-height: 100vh;
+  will-change: transform, opacity;
 }
 
 /* Base mobile padding adjustments */
@@ -50,14 +58,16 @@ body {
 
 /* Smooth transitions for main layout elements */
 body, header, footer, nav, aside, main, section, .card, [role="dialog"], [role="menu"], [role="tabpanel"] {
-  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background-color, border-color, color;
 }
 
 button,
 input,
 textarea,
 select {
-  @apply transition-all duration-150 ease-out;
+  @apply transition-all duration-200;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* RTL Support for Arabic */
@@ -125,9 +135,12 @@ html[dir="rtl"] body {
   button,
   [role="button"],
   a[class*="button"] {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-300;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transform: translate3d(0, 0, 0);
+    will-change: transform, opacity;
     backface-visibility: hidden;
+    perspective: 1000px;
   }
 
   button:active:not(:disabled),
