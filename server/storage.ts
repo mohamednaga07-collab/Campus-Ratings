@@ -433,4 +433,4 @@ export class DatabaseStorage implements IStorage {
 
 export const storage: IStorage = process.env.DATABASE_URL
   ? new DatabaseStorage()
-  : new SqliteStorage();();
+  : new SqliteStorage();
