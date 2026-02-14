@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
 // Page imports - explicitly typed to help IDE resolution
+import { Header } from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Suspense, lazy } from "react";
@@ -77,10 +78,10 @@ function AnimatedPageWrapper({ children }: { children: React.ReactNode }) {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="w-full flex-1"
+      className="w-full flex-1 pt-20"
       style={{ willChange: "transform, opacity" }}
     >
-      <div className="w-full h-full min-h-screen">
+      <div className="w-full h-full min-h-[calc(100vh-80px)]">
         {children}
       </div>
     </motion.div>
@@ -285,6 +286,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <Header />
         <ErrorBoundary>
           <Suspense 
             fallback={
