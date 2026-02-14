@@ -6,8 +6,8 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     retry: false,
     refetchOnMount: true,
-    staleTime: 0, // Always considered stale
-    gcTime: 0, // Don't cache in garbage collection
+    staleTime: 60000, // Consider data fresh for 1 minute
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
   // Only authenticated if we have a real user from the server

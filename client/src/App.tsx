@@ -97,9 +97,9 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+      <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[9999]">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -289,10 +289,8 @@ function App() {
         <ErrorBoundary>
           <Suspense 
             fallback={
-              <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-                </div>
+              <div className="w-full min-h-[50vh] flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
               </div>
             }
           >
