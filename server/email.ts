@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 // Email configuration
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = (process.env.EMAIL_PASSWORD || "").replace(/\s/g, "");
-const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate Support <${EMAIL_USER || 'noreply@campus-ratings.com'}>`;
+const EMAIL_FROM = process.env.EMAIL_FROM || `ProfRate <${EMAIL_USER || 'noreply@profrate.com'}>`;
 
 // Resend configuration (primary on cloud providers)
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -133,7 +133,7 @@ function generateBaseEmailHtml({
   buttonText?: string;
   footerMessage?: string;
 }) {
-  const logoUrl = "https://campus-ratings.onrender.com/favicon.png";
+  const logoUrl = "https://raw.githubusercontent.com/mohamednaga07-collab/ProfRate/main/client/public/favicon.png";
   const supportAvatarUrl = logoUrl;
   
   let safeProfileImage = profileImageUrl;
@@ -155,34 +155,64 @@ function generateBaseEmailHtml({
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f8fafc; }
-        .wrapper { background-color: #f8fafc; padding: 30px 15px; }
-        .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
-        .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 45px 20px; text-align: center; }
-        .content { padding: 35px 25px; }
-        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 40px; text-decoration: none !important; border-radius: 12px; font-weight: 600; font-size: 16px; }
-        .footer { font-size: 12px; color: #94a3b8; text-align: center; padding: 25px; background-color: #fcfcfc; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f1f5f9; }
+        .wrapper { background-color: #f1f5f9; padding: 40px 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 60px 20px; text-align: center; }
+        .logo-img { width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .content { padding: 40px 30px; }
+        .greeting-table { margin-bottom: 30px; }
+        .user-avatar { width: 48px; height: 48px; border-radius: 24px; object-fit: cover; border: 3px solid #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .user-initials { width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-align: center; line-height: 48px; font-weight: 700; font-size: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .greeting-text { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0; }
+        .main-text { font-size: 16px; color: #475569; margin: 0 0 30px 0; }
+        .cta-container { text-align: center; margin: 40px 0; }
+        .button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 16px 48px; text-decoration: none !important; border-radius: 14px; font-weight: 700; font-size: 16px; transition: all 0.2s; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        .footer { font-size: 13px; color: #94a3b8; text-align: center; padding: 30px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; }
+        .footer-links { margin-top: 15px; }
+        .footer-link { color: #3b82f6; text-decoration: none; margin: 0 10px; }
       </style>
     </head>
     <body>
       <div class="wrapper">
         <div class="container">
           <div class="header">
-            <h1 style="margin: 0;">${title}</h1>
+            <img src="${logoUrl}" class="logo-img" alt="ProfRate Logo">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.025em;">${title}</h1>
           </div>
           <div class="content">
-            <table width="100%">
+            <table class="greeting-table" width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                ${profileImageCell}
-                <td><h2 style="margin: 0;">Hi ${username},</h2></td>
+                <td style="width: 64px;">
+                  ${safeProfileImage 
+                    ? `<img src="${safeProfileImage}" class="user-avatar" alt="${username}">`
+                    : `<div class="user-initials">${username.charAt(0).toUpperCase()}</div>`
+                  }
+                </td>
+                <td style="padding-left: 16px;">
+                  <h2 class="greeting-text">Hi ${username},</h2>
+                </td>
               </tr>
             </table>
-            <div style="margin: 25px 0;">${contentHtml}</div>
-            ${buttonLink ? `<div style="text-align: center;"><a href="${buttonLink}" class="button">${buttonText}</a></div>` : ""}
-            <p style="font-size: 13px; color: #94a3b8; margin-top: 25px;">${footerMessage}</p>
+            
+            <div class="main-text">${contentHtml}</div>
+            
+            ${buttonLink ? `
+              <div class="cta-container">
+                <a href="${buttonLink}" class="button">${buttonText}</a>
+              </div>
+            ` : ""}
+            
+            <p style="font-size: 14px; color: #64748b; margin-top: 40px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+              ${footerMessage}
+            </p>
           </div>
           <div class="footer">
-            <p>© 2026 ProfRate. All rights reserved.</p>
+            <p style="margin: 0; font-weight: 600;">© 2026 ProfRate. All rights reserved.</p>
+            <div class="footer-links">
+              <a href="https://profrate.onrender.com" class="footer-link">Website</a>
+              <a href="mailto:support@profrate.com" class="footer-link">Support</a>
+            </div>
           </div>
         </div>
       </div>

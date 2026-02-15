@@ -782,7 +782,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           console.log(`📧 [Async Registration] Attempting to send verification email to: ${email}`);
           await sendEmail({
             to: email,
-            subject: "Verify Your Campus Ratings Account",
+            subject: "Verify Your ProfRate Account",
             html: emailHtml,
             text: emailText,
           });
@@ -1111,7 +1111,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           console.log(`[FORGOT-PASSWORD] 📧 Attempting to dispatch email to: ${email}`);
           await sendEmail({
             to: email,
-            subject: "Reset Your Campus Ratings Password",
+            subject: "Reset Your ProfRate Password",
             html: emailHtml,
             text: emailText,
           });
@@ -1256,7 +1256,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       try {
         await sendEmail({
           to: email,
-          subject: "Your Campus Ratings Username",
+            subject: "Your ProfRate Username",
           html: emailHtml,
         });
       } catch (emailError: any) {
@@ -1341,7 +1341,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
          try {
            await sendEmail({
              to: email,
-             subject: "Verify Your Campus Ratings Account (Resent)",
+             subject: "Verify Your ProfRate Account",
              html: emailHtml,
            });
          } catch(e) { console.error("Resend email failed", e); }
@@ -1847,7 +1847,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       
       const result = await sendEmail({
         to: target,
-        subject: "Campus Ratings Diagnostic Test",
+        subject: "ProfRate Diagnostic Test",
         text: "This is a diagnostic test to verify your email server configuration. If you received this, your email setup is WORKING CORRECTLY.",
         html: "<h1>Email Diagnostic</h1><p>This is a diagnostic test to verify your email server configuration.</p><p>If you received this, your email setup is <b>WORKING CORRECTLY</b>.</p>"
       });
